@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook Sender PRO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <h1>Webhook Sender PRO</h1>
+            </div>
+            <div class="header-controls">
+                <div class="theme-selector">
+                    <select id="theme-selector">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="neon">Neon</option>
+                        <option value="terminal">Terminal</option>
+                        <option value="blur">Discord Blur</option>
+                    </select>
+                </div>
+                <div class="dropdown">
+                    <button id="export-menu-btn" class="btn-icon"><i class="fas fa-file-export"></i></button>
+                    <div class="dropdown-content">
+                        <button id="export-json-menu"><i class="fas fa-file-code"></i> Export JSON</button>
+                        <button id="export-screenshot-menu"><i class="fas fa-camera"></i> Screenshot</button>
+                        <button id="import-json-menu"><i class="fas fa-file-import"></i> Import JSON</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-content">
+            <div class="settings-column">
+                <div class="card settings-card">
+                    <h2><i class="fas fa-cog"></i> Settings</h2>
+                    <div class="form-group">
+                        <label for="webhook-url">Discord Webhook URL</label>
+                        <div class="input-with-actions">
+                            <input type="password" id="webhook-url" placeholder="Enter your webhook URL">
+                            <button id="toggle-visibility" class="btn-icon-small"><i class="fas fa-eye"></i></button>
+                            <button id="history-btn" class="btn-icon-small"><i class="fas fa-history"></i></button>
+                        </div>
+                        <div id="webhook-warning" class="warning-message hidden">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            This appears to be a public webhook. Be careful!
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="message-content">Message Content</label>
+                        <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Interval & Limit</label>
+                        <div class="interval-limit-group">
+                            <div><input type="number" id="interval-value" min="1" value="10"></div>
+                            <div><select id="interval-unit"><option value="seconds">Seconds</option><option value="minutes">Minutes</option><option value="hours">Hours</option></select></div>
+                            <div><input type="number" id="message-limit" min="1" placeholder="Optional message limit"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="username">Custom Username</label>
+                        <input type="text" id="username" placeholder="Webhook Sender">
+                    </div>
+                    <div class="form-group">
+                        <label for="avatar-url">Avatar URL</label>
+                        <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="random-messages">
+                            <span class="checkmark"></span>
+                            Send random messages (one per line)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="preview-column">
+                <div class="card preview-card">
+                    <h2><i class="fas fa-eye"></i> Live Preview</h2>
+                    <div class="discord-message">
+                        <div class="discord-avatar">
+                            <img id="preview-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
+                        </div>
+                        <div class="discord-content">
+                            <div class="discord-username" id="preview-username">Webhook Sender</div>
+                            <div class="discord-text" id="preview-text">Your message will appear here...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card stats-card">
+                    <h2><i class="fas fa-chart-bar"></i> Statistics</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-total">0</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-success">0</div>
+                            <div class="stat-label">Success</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-failed">0</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-avg-time">0ms</div>
+                            <div class="stat-label">Avg. Response</div>
+                        </div>
+                    </div>
+                    <div class="stats-reset">
+                        <button id="reset-stats" class="btn-small"><i class="fas fa-trash"></i> Reset Session</button>
+                    </div>
+                </div>
+                <div class="card controls-card">
+                    <h2><i class="fas fa-play"></i> Controls</h2>
+                    <div class="button-group">
+                        <button id="start-btn" class="btn-primary"><i class="fas fa-play"></i> Start Sending</button>
+                        <button id="stop-btn" class="btn-secondary" disabled><i class="fas fa-stop"></i> Stop</button>
+                        <button id="test-btn" class="btn-tertiary"><i class="fas fa-paper-plane"></i> Test Now</button>
+                    </div>
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        <span id="status-text">Ready</span>
+                    </div>
+                    <div class="sound-toggle">
+                        <label>
+                            <input type="checkbox" id="enable-sounds" checked>
+                            <span class="custom-checkbox"></span>
+                            <span class="checkbox-label">Enable Sounds</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card logs-card">
+                <div class="logs-header">
+                    <h2><i class="fas fa-list"></i> Activity Log</h2>
+                    <div class="log-actions">
+                        <button id="clear-logs" class="btn-small"><i class="fas fa-trash-alt"></i> Clear Logs</button>
+                    </div>
+                </div>
+                <div id="log-container"></div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            © 2025 Discord Spammer :P | v2.0
+        </footer>
+    </div>
+
+    <div id="history-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Webhook History</h3>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="history-list" class="history-items"></div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="success-sound" src="success.mp3"></audio>
+    <audio id="error-sound" src="error.mp3"></audio>
+    <audio id="notification-sound" src="notification.mp3"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
