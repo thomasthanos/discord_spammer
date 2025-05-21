@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord Spammer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="icon" href="https://i.imgur.com/Cw5I3yp.png" type="image/png">
+
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -57,20 +59,65 @@
                         <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Interval & Limit</label>
-                        <div class="interval-limit-group">
-                            <div><input type="number" id="interval-value" min="1" value="10"></div>
-                            <div><select id="interval-unit"><option value="seconds">Seconds</option><option value="minutes">Minutes</option><option value="hours">Hours</option></select></div>
-                            <div><input type="number" id="message-limit" min="1" placeholder="Optional message limit"></div>
-                        </div>
-                    </div>
+<!-- Send Interval and Limit Controls -->
+<div class="form-group">
+  <label><i class="fas fa-hourglass-half"></i> Send Interval & Message Limit</label>
+
+  <div class="interval-limit-group">
+    
+    <!-- How Often -->
+    <div class="input-group">
+      <label for="interval-value"><i class="fas fa-clock"></i> Every</label>
+      <div class="input-with-buttons">
+  <button class="interval-btn minus" data-action="decrement"><i class="fas fa-minus"></i></button>
+
+  <div class="input-wrapper">
+    <!-- Κρυφό input για το script.js -->
+    <input type="number" id="interval-value" value="10" min="1" style="display: none;">
+
+    <!-- Αυτό εμφανίζεται στο UI -->
+    <span id="interval-display" class="interval-display">10 s</span>
+  </div>
+
+  <button class="interval-btn plus" data-action="increment"><i class="fas fa-plus"></i></button>
+</div>
+
+    </div>
+
+    <!-- Time Unit -->
+    <div class="input-group">
+      <label for="interval-unit"><i class="fas fa-stopwatch"></i> Time Unit</label>
+      <div class="custom-select">
+        <select id="interval-unit">
+          <option value="seconds">Seconds</option>
+          <option value="minutes">Minutes</option>
+          <option value="hours">Hours</option>
+        </select>
+        <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+      </div>
+    </div>
+
+    <!-- Max Messages -->
+    <div class="input-group">
+      <label for="message-limit"><i class="fas fa-envelope"></i> Max Messages</label>
+      <div class="input-with-buttons">
+        <button class="interval-btn minus" data-action="decrement"><i class="fas fa-minus"></i></button>
+        <input type="number" id="message-limit" min="1" placeholder="∞" onfocus="this.select()">
+        <button class="interval-btn plus" data-action="increment"><i class="fas fa-plus"></i></button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
                     <div class="form-group">
                         <label for="username">Custom Username</label>
                         <input type="text" id="username" placeholder="Webhook Sender">
                     </div>
                     <div class="form-group">
-                        <label for="avatar-url">Avatar URL</label>
-                        <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
+                          <label for="avatar-url">Avatar URL</label><input type="url" id="avatar-url" placeholder="https : //example.com/avatar.png">
                     </div>
                     <div class="form-group">
                         <label class="checkbox-container">
@@ -81,6 +128,15 @@
                     </div>
                 </div>
             </div>
+                    </div>
+
+
+
+
+
+
+
+                    
 
             <div class="preview-column">
                 <div class="card preview-card">

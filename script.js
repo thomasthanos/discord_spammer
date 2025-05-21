@@ -91,6 +91,21 @@ document.addEventListener('DOMContentLoaded', () => {
         startScheduler();
     }
 
+function updateIntervalDisplay() {
+    const value = elements.intervalValue.value;
+    const unit = elements.intervalUnit.value;
+    const symbolMap = {
+        seconds: 's',
+        minutes: 'm',
+        hours: 'h'
+    };
+    const symbol = symbolMap[unit] || '';
+    document.getElementById('interval-display').textContent = `${value} ${symbol}`;
+}
+
+elements.intervalUnit.addEventListener('change', updateIntervalDisplay);
+elements.intervalValue.addEventListener('input', updateIntervalDisplay);
+updateIntervalDisplay();
 
     function exportLogsAsJson() {
         // Συλλογή όλων των δεδομένων
@@ -273,7 +288,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Message preview
     function updatePreview() {
-        elements.previewText.textContent = elements.messageContent.value || 'Your message will appear here...';
+        let messageContent = elements.messageContent.value || 'Your message will appear here...';
+        
+        // Process Discord mentions
+        messageContent = messageContent
+            .replace(/<@!?(\d+)>/g, '<span class="discord-mention">@user</span>') // User mentions
+            .replace(/<#(\d+)>/g, '<span class="discord-mention">#channel</span>') // Channel mentions
+            .replace(/<@&(\d+)>/g, '<span class="discord-mention">@role</span>') // Role mentions
+            .replace(/\n/g, '<br>'); // New lines
+
+        elements.previewText.innerHTML = messageContent;
         elements.previewUsername.textContent = elements.username.value || 'Webhook Sender';
         elements.previewAvatar.src = elements.avatarUrl.value || 'https://cdn.discordapp.com/embed/avatars/0.png';
     }
@@ -330,9 +354,29 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.historyModal.classList.remove('hidden');
     }
 
-    // Close modals
-    document.querySelectorAll('.close-modal').forEach(btn => {
-        btn.addEventListener('click', () => btn.closest('.modal').classList.add('hidden'));
+    // Increment/Decrement buttons
+    document.querySelectorAll('.interval-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        const action = btn.getAttribute('data-action');
+        const input = btn.closest('.input-with-buttons').querySelector('input');
+        let value = parseInt(input.value) || (input.id === 'message-limit' ? 0 : 10);
+        
+        if (action === 'increment') {
+        input.value = value + 1;
+        } else if (action === 'decrement' && value > (input.id === 'message-limit' ? 1 : 1)) {
+        input.value = value - 1;
+        }
+        
+        // Trigger input event for live updates
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    });
+
+    // Auto-select text on input focus
+    document.querySelectorAll('.input-with-buttons input').forEach(input => {
+    input.addEventListener('focus', function() {
+        this.select();
+    });
     });
 
     window.addEventListener('click', e => {
