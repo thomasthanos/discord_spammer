@@ -1452,7 +1452,9 @@ logoutBtn.addEventListener('click', async () => {
 
 // === Check user session on load ===
 async function checkUserSession() {
-  const { data: { user } } = await supabase.auth.getUser();
+const { data: { user }, error } = await supabase.auth.getUser();
+console.log("User:", user, "Error:", error);
+
   if (user) {
     userInfo.textContent = `Logged in as ${user.email || user.id}`;
   } else {
