@@ -3,29 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord Spammer</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<link rel="icon" href="https://i.imgur.com/Cw5I3yp.png" type="image/png">
-
+    <title>Discord Webhook Sender PRO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
 <body>
     <div class="app-container">
         <header class="app-header">
             <div class="logo">
                 <i class="fas fa-robot"></i>
-                <h1>Discord Spammer</h1>
+                <h1>Webhook Sender PRO</h1>
             </div>
             <div class="header-controls">
-                <div class="theme-selector">
-                    <select id="theme-selector">
-                        <option value="dark">Dark</option>
-                        <option value="light">Light</option>
-                        <option value="neon">Neon</option>
-                        <option value="terminal">Terminal</option>
-                        <option value="blur">Discord Blur</option>
-                    </select>
+                <div class="theme-carousel">
+                    <div class="theme-preview active" data-theme="dark" title="Dark Theme">
+                        <i class="fas fa-moon"></i>
+                    </div>
+                    <div class="theme-preview" data-theme="light" title="Light Theme">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="theme-preview" data-theme="neon" title="Neon Theme">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="theme-preview" data-theme="terminal" title="Terminal Theme">
+                        <i class="fas fa-terminal"></i>
+                    </div>
                 </div>
                 <div class="dropdown">
                     <button id="export-menu-btn" class="btn-icon"><i class="fas fa-file-export"></i></button>
@@ -39,179 +44,215 @@
         </header>
 
         <main class="app-content">
-            <div class="settings-column">
-                <div class="card settings-card">
+            <div class="settings-column card" data-card="settings">
+                <div class="card-header">
                     <h2><i class="fas fa-cog"></i> Settings</h2>
+                </div>
+                <div class="card-body">
                     <div class="form-group">
                         <label for="webhook-url">Discord Webhook URL</label>
                         <div class="input-with-actions">
-                            <input type="password" id="webhook-url" placeholder="Enter your webhook URL">
+                            <input type="password" id="webhook-url" placeholder="https://discord.com/api/webhooks/...">
                             <button id="toggle-visibility" class="btn-icon-small"><i class="fas fa-eye"></i></button>
                             <button id="history-btn" class="btn-icon-small"><i class="fas fa-history"></i></button>
                         </div>
-                        <div id="webhook-warning" class="warning-message hidden">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            This appears to be a public webhook. Be careful!
-                        </div>
+
                     </div>
+                    
                     <div class="form-group">
                         <label for="message-content">Message Content</label>
                         <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
                     </div>
+
+<!-- Inside the "Settings" card, replace the existing embed section -->
+<div class="embed-section">
+    <button id="embed-toggle-btn" class="embed-toggle-btn"><i class="fas fa-chevron-down"></i> Embed Options</button>
+    <div id="embed-content" class="embed-content">
+        <div id="embed-list">
+            <!-- Initial embed fields -->
+            <div class="embed-item" data-embed-index="0">
+                <div class="form-row embed-row">
                     <div class="form-group">
-<!-- Send Interval and Limit Controls -->
-<div class="form-group">
-  <label><i class="fas fa-hourglass-half"></i> Send Interval & Message Limit</label>
-
-  <div class="interval-limit-group">
-    
-    <!-- How Often -->
-    <div class="input-group">
-      <label for="interval-value"><i class="fas fa-clock"></i> Every</label>
-      <div class="input-with-buttons">
-  <button class="interval-btn minus" data-action="decrement"><i class="fas fa-minus"></i></button>
-
-  <div class="input-wrapper">
-    <!-- Κρυφό input για το script.js -->
-    <input type="number" id="interval-value" value="10" min="1" style="display: none;">
-
-    <!-- Αυτό εμφανίζεται στο UI -->
-    <span id="interval-display" class="interval-display">10 s</span>
-  </div>
-
-  <button class="interval-btn plus" data-action="increment"><i class="fas fa-plus"></i></button>
-</div>
-
-    </div>
-
-    <!-- Time Unit -->
-    <div class="input-group">
-      <label for="interval-unit"><i class="fas fa-stopwatch"></i> Time Unit</label>
-      <div class="custom-select">
-        <select id="interval-unit">
-          <option value="seconds">Seconds</option>
-          <option value="minutes">Minutes</option>
-          <option value="hours">Hours</option>
-        </select>
-        <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
-      </div>
-    </div>
-
-    <!-- Max Messages -->
-    <div class="input-group">
-      <label for="message-limit"><i class="fas fa-envelope"></i> Max Messages</label>
-      <div class="input-with-buttons">
-        <button class="interval-btn minus" data-action="decrement"><i class="fas fa-minus"></i></button>
-        <input type="number" id="message-limit" min="1" placeholder="∞" onfocus="this.select()">
-        <button class="interval-btn plus" data-action="increment"><i class="fas fa-plus"></i></button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-
-                    <div class="form-group">
-                        <label for="username">Custom Username</label>
-                        <input type="text" id="username" placeholder="Webhook Sender">
+                        <label for="embed-title-0"><i class="fas fa-heading"></i> Embed Title</label>
+                        <input type="text" id="embed-title-0" placeholder="Enter embed title">
                     </div>
                     <div class="form-group">
-                          <label for="avatar-url">Avatar URL</label><input type="url" id="avatar-url" placeholder="https : //example.com/avatar.png">
+                        <label for="embed-color-0"><i class="fas fa-palette"></i> Embed Color</label>
+                        <input type="color" id="embed-color-0" value="#5865F2">
                     </div>
+                    <button class="btn-icon delete-embed-btn hidden" data-embed-index="0" title="Delete Embed"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="form-group">
+                    <label for="embed-description-0"><i class="fas fa-align-left"></i> Embed Description</label>
+                    <textarea id="embed-description-0" rows="3" placeholder="Enter embed description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="embed-footer-0"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
+                    <input type="text" id="embed-footer-0" placeholder="Enter footer text">
+                </div>
+            </div>
+        </div>
+        <button id="add-embed-btn" class="btn-small"><i class="fas fa-plus"></i> Add Another Embed</button>
+        <div class="message-tools">
+            <button id="suggest-message" class="btn-small"><i class="fas fa-lightbulb"></i> Suggest</button>
+            <button id="format-help" class="btn-small"><i class="fas fa-question-circle"></i> Format Help</button>
+        </div>
+    </div>
+</div>
+                    
                     <div class="form-group">
-                        <label class="checkbox-container">
-                            <input type="checkbox" id="random-messages">
-                            <span class="checkmark"></span>
-                            Send random messages (one per line)
-                        </label>
+                        <label><i class="fas fa-hourglass-half"></i> Send Interval & Limit</label>
+                        <div class="interval-limit-group">
+                            <div class="input-group">
+                                <label for="interval-value"><i class="fas fa-clock"></i> Every</label>
+                                <div class="input-with-buttons">
+                                    <button class="interval-btn minus" data-action="decrement"><i class="fas fa-minus"></i></button>
+                                    <div class="input-wrapper">
+                                        <input type="number" id="interval-value" value="10" min="1" style="display: none;">
+                                        <span id="interval-display" class="interval-display">10 s</span>
+                                    </div>
+                                    <button class="interval-btn plus" data-action="increment"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="interval-unit"><i class="fas fa-stopwatch"></i> Time Unit</label>
+                                <div class="custom-select">
+                                    <select id="interval-unit">
+                                        <option value="seconds">Seconds</option>
+                                        <option value="minutes">Minutes</option>
+                                        <option value="hours">Hours</option>
+                                    </select>
+                                    <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group">
+                                <label for="message-limit"><i class="fas fa-envelope"></i> Max Messages</label>
+                                <div class="input-with-buttons">
+                                    <button class="interval-btn minus" data-action="decrement"><i class="fas fa-minus"></i></button>
+                                    <input type="number" id="message-limit" min="0" value="1" placeholder="∞">
+                                    <button class="interval-btn plus" data-action="increment"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group half-width">
+                            <label for="username">Custom Username</label>
+                            <input type="text" id="username" placeholder="Webhook Sender">
+                        </div>
+
+                        <div class="form-group half-width">
+                            <label for="avatar-url">Avatar URL</label>
+                            <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
+                        </div>
                     </div>
                 </div>
             </div>
-                    </div>
-
-
-
-
-
-
-
-                    
 
             <div class="preview-column">
-                <div class="card preview-card">
-                    <h2><i class="fas fa-eye"></i> Live Preview</h2>
-                    <div class="discord-message">
-                        <div class="discord-avatar">
-                            <img id="preview-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
-                        </div>
-                        <div class="discord-content">
-                            <div class="discord-username" id="preview-username">Webhook Sender</div>
-                            <div class="discord-text" id="preview-text">Your message will appear here...</div>
+                <div class="card preview-card" data-card="preview">
+                    <div class="card-header">
+                        <h2><i class="fas fa-eye"></i> Live Preview</h2>
+                        <button class="card-move"><i class="fas fa-arrows-alt"></i></button>
+                    </div>
+                    <div class="card-body">
+                        <div class="discord-message">
+                            <div class="discord-avatar">
+                                <img id="preview-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
+                            </div>
+                            <div class="discord-content">
+                                <div class="discord-username" id="preview-username">Webhook Sender</div>
+                                <div class="discord-text" id="preview-text">Your message will appear here...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="card stats-card">
-                    <h2><i class="fas fa-chart-bar"></i> Statistics</h2>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-value" id="stat-total">0</div>
-                            <div class="stat-label">Total</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="stat-success">0</div>
-                            <div class="stat-label">Success</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="stat-failed">0</div>
-                            <div class="stat-label">Failed</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="stat-avg-time">0ms</div>
-                            <div class="stat-label">Avg. Response</div>
-                        </div>
+                
+                <div class="card stats-card" data-card="stats">
+                    <div class="card-header">
+                        <h2><i class="fas fa-chart-bar"></i> Statistics</h2>
+                        <button class="card-move"><i class="fas fa-arrows-alt"></i></button>
                     </div>
-                    <div class="stats-reset">
-                        <button id="reset-stats" class="btn-small"><i class="fas fa-trash"></i> Reset Session</button>
+                    <div class="card-body">
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="stat-total">0</div>
+                                <div class="stat-label">Total</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="stat-success">0</div>
+                                <div class="stat-label">Success</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="stat-failed">0</div>
+                                <div class="stat-label">Failed</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="stat-avg-time">0ms</div>
+                                <div class="stat-label">Avg. Response</div>
+                            </div>
+                        </div>
+                        <div class="stats-reset">
+                            <button id="reset-stats" class="btn-small"><i class="fas fa-trash"></i> Reset Session</button>
+                        </div>
                     </div>
                 </div>
-                <div class="card controls-card">
-                    <h2><i class="fas fa-play"></i> Controls</h2>
-                    <div class="button-group">
-                        <button id="start-btn" class="btn-primary"><i class="fas fa-play"></i> Start Sending</button>
-                        <button id="stop-btn" class="btn-secondary" disabled><i class="fas fa-stop"></i> Stop</button>
-                        <button id="test-btn" class="btn-tertiary"><i class="fas fa-paper-plane"></i> Test Now</button>
+                
+                <div class="card controls-card" data-card="controls">
+                    <div class="card-header">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h2><i class="fas fa-play"></i> Controls</h2>
+                            <div class="status-indicator">
+                                <div class="status-dot"></div>
+                                <span id="status-text">Ready</span>
+                            </div>
+                            <button class="card-move"><i class="fas fa-arrows-alt"></i></button>
+                        </div>
                     </div>
-                    <div class="status-indicator">
-                        <div class="status-dot"></div>
-                        <span id="status-text">Ready</span>
-                    </div>
-                    <div class="sound-toggle">
-                        <label>
-                            <input type="checkbox" id="enable-sounds" checked>
-                            <span class="custom-checkbox"></span>
-                            <span class="checkbox-label">Enable Sounds</span>
-                        </label>
+                    <div class="card-body">
+                        <div class="button-group">
+                            <button id="start-btn" class="btn-primary"><i class="fas fa-play"></i> Start Sending</button>
+                            <button id="stop-btn" class="btn-secondary" disabled><i class="fas fa-stop"></i> Stop</button>
+                            <button id="test-btn" class="btn-tertiary"><i class="fas fa-paper-plane"></i> Test Now</button>
+                        </div>
+                        <div class="checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="random-messages">
+                                <span class="checkmark"></span>
+                                Send random messages (one per line)
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="enable-sounds" checked>
+                                <span class="checkmark"></span>
+                                Enable sounds
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card logs-card">
-                <div class="logs-header">
+            <div class="card logs-card" data-card="logs">
+                <div class="card-header">
                     <h2><i class="fas fa-list"></i> Activity Log</h2>
-                    <div class="log-actions">
+                    <div class="card-actions">
                         <button id="clear-logs" class="btn-small"><i class="fas fa-trash-alt"></i> Clear Logs</button>
                     </div>
                 </div>
-                <div id="log-container"></div>
+                <div class="card-body">
+                    <div id="log-container"></div>
+                </div>
             </div>
         </main>
 
         <footer class="app-footer">
-            © 2025 Discord Spammer :P | v2.0 ThomasT
+            © 2023 Webhook Sender PRO | v3.0 Enhanced Edition
         </footer>
     </div>
 
+    <!-- Modals -->
     <div id="history-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -224,6 +265,41 @@
         </div>
     </div>
 
+    <div id="suggestions-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Message Suggestions</h3>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="suggestions-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="format-help-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Formatting Help</h3>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <table class="format-table">
+                    <tr><th>Format</th><th>Syntax</th><th>Preview</th></tr>
+                    <tr><td>Bold</td><td>**text**</td><td><strong>text</strong></td></tr>
+                    <tr><td>Italic</td><td>*text*</td><td><em>text</em></td></tr>
+                    <tr><td>Strikethrough</td><td>~~text~~</td><td><s>text</s></td></tr>
+                    <tr><td>Code</td><td>`text`</td><td><code>text</code></td></tr>
+                    <tr><td>Mention User</td><td><@123456789></td><td><span class="discord-mention">@user</span></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Audio Elements -->
     <audio id="success-sound" src="https://raw.githubusercontent.com/thomasthanos/discord_spammer/fa49abbd642e55fb162e6088caca5c81bcbf2bcb/sounds/success.mp3"></audio>
     <audio id="error-sound" src="https://raw.githubusercontent.com/thomasthanos/discord_spammer/fa49abbd642e55fb162e6088caca5c81bcbf2bcb/sounds/error.mp3"></audio>
     <audio id="notification-sound" src="https://raw.githubusercontent.com/thomasthanos/discord_spammer/fa49abbd642e55fb162e6088caca5c81bcbf2bcb/sounds/notification.mp3"></audio>

@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         webhookUrl: document.getElementById('webhook-url'),
         messageContent: document.getElementById('message-content'),
         intervalValue: document.getElementById('interval-value'),
+        intervalDisplay: document.getElementById('interval-display'),
         intervalUnit: document.getElementById('interval-unit'),
         messageLimit: document.getElementById('message-limit'),
         startBtn: document.getElementById('start-btn'),
@@ -12,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText: document.getElementById('status-text'),
         statusDot: document.querySelector('.status-dot'),
         logContainer: document.getElementById('log-container'),
-        themeSelector: document.getElementById('theme-selector'),
         toggleVisibility: document.getElementById('toggle-visibility'),
         webhookWarning: document.getElementById('webhook-warning'),
         historyBtn: document.getElementById('history-btn'),
@@ -36,7 +36,17 @@ document.addEventListener('DOMContentLoaded', () => {
         notificationSound: document.getElementById('notification-sound'),
         exportJsonMenu: document.getElementById('export-json-menu'),
         exportScreenshotMenu: document.getElementById('export-screenshot-menu'),
-        importJsonMenu: document.getElementById('import-json-menu')
+        importJsonMenu: document.getElementById('import-json-menu'),
+        suggestMessage: document.getElementById('suggest-message'),
+        formatHelp: document.getElementById('format-help'),
+        suggestionsModal: document.getElementById('suggestions-modal'),
+        formatHelpModal: document.getElementById('format-help-modal'),
+        toastContainer: document.getElementById('toast-container'),
+        themeCarousel: document.querySelector('.theme-carousel'),
+        embedList: document.getElementById('embed-list'),
+        addEmbedBtn: document.getElementById('add-embed-btn'),
+        embedContent: document.getElementById('embed-content'),
+        embedToggleBtn: document.getElementById('embed-toggle-btn'),
     };
 
     // Variables
@@ -49,14 +59,27 @@ document.addEventListener('DOMContentLoaded', () => {
         responseTimes: [] 
     };
     let scheduledJobs = [];
+    let embeds = [];
+    let embedCount = 1;
+    let firstEmbedHeight = 0; // Store the height of the first embed
 
     // Initialize app
     function initApp() {
+        // Load saved theme
         const savedTheme = localStorage.getItem('theme') || 'dark';
         document.body.setAttribute('data-theme', savedTheme);
-        elements.themeSelector.value = savedTheme;
+        
+        // Set active theme preview
+        document.querySelectorAll('.theme-preview').forEach(preview => {
+            if (preview.dataset.theme === savedTheme) {
+                preview.classList.add('active');
+            }
+        });
 
-        ['webhookUrl', 'messageContent', 'username', 'avatarUrl', 'randomMessages'].forEach(key => {
+        // Load saved settings
+        [
+            'webhookUrl', 'messageContent', 'username', 'avatarUrl', 'randomMessages'
+        ].forEach(key => {
             const value = localStorage.getItem(key);
             if (value) elements[key].value = value;
             if (key === 'randomMessages' && value === 'true') {
@@ -64,61 +87,815 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        if (elements.webhookUrl.value) checkWebhookPrivacy(elements.webhookUrl.value);
-        if (elements.messageContent.value) updatePreview();
-        if (elements.avatarUrl.value) elements.previewAvatar.src = elements.avatarUrl.value;
+        // Load embeds
+        const savedEmbeds = localStorage.getItem('embeds');
+        if (savedEmbeds) {
+            embeds = JSON.parse(savedEmbeds);
+            embedCount = embeds.length;
+            renderEmbeds();
+        } else {
+            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+            renderEmbeds();
+        }
 
+        // Load stats
         const savedStats = localStorage.getItem('stats');
         if (savedStats) {
             stats = JSON.parse(savedStats);
             updateStats();
         }
 
-        const savedJobs = localStorage.getItem('scheduledJobs');
-        if (savedJobs) {
-            scheduledJobs = JSON.parse(savedJobs);
-            renderScheduledJobs();
-        }
-
+        // Load sounds preference
         elements.enableSounds.checked = localStorage.getItem('soundsEnabled') !== 'false';
 
-        // Event listeners for export menu
+        // Initialize preview
+        if (elements.messageContent.value) updatePreview();
+        if (elements.avatarUrl.value) elements.previewAvatar.src = elements.avatarUrl.value;
+
+        // Setup event listeners
+        setupEventListeners();
+        setupEmbedEventListeners();
+        
+        // Initialize drag and drop (removed as per user request)
+        initDragAndDrop();
+    }
+
+    function setupEventListeners() {
+        // Helper function to update message-limit placeholder
+        function updateMessageLimitPlaceholder() {
+            const value = elements.messageLimit.value;
+            if (value === '0' || value === '') {
+                elements.messageLimit.value = ''; // Clear the input to show the placeholder
+                elements.messageLimit.placeholder = '∞';
+            } else {
+                elements.messageLimit.placeholder = 'Unlimited';
+            }
+        }
+
+        // Theme selection
+        elements.themeCarousel.addEventListener('click', (e) => {
+            const themePreview = e.target.closest('.theme-preview');
+            if (!themePreview) return;
+            
+            const theme = themePreview.dataset.theme;
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            // Update active state
+            document.querySelectorAll('.theme-preview').forEach(el => {
+                el.classList.remove('active');
+            });
+            themePreview.classList.add('active');
+            
+            showToast(`Theme changed to ${theme}`, 'success');
+        });
+
+        // Webhook URL visibility toggle
+        elements.toggleVisibility.addEventListener('click', () => {
+            const type = elements.webhookUrl.type === 'password' ? 'text' : 'password';
+            elements.webhookUrl.type = type;
+            elements.toggleVisibility.innerHTML = `<i class="fas fa-eye${type === 'password' ? '' : '-slash'}"></i>`;
+        });
+
+        // Input changes
+        elements.webhookUrl.addEventListener('input', () => {
+            localStorage.setItem('webhookUrl', elements.webhookUrl.value);
+            checkWebhookPrivacy(elements.webhookUrl.value);
+        });
+
+        elements.messageContent.addEventListener('input', () => {
+            localStorage.setItem('messageContent', elements.messageContent.value);
+            updatePreview();
+        });
+
+        elements.username.addEventListener('input', () => {
+            localStorage.setItem('username', elements.username.value);
+            updatePreview();
+        });
+
+        elements.avatarUrl.addEventListener('input', () => {
+            localStorage.setItem('avatarUrl', elements.avatarUrl.value);
+            updatePreview();
+        });
+
+        elements.randomMessages.addEventListener('change', () => {
+            localStorage.setItem('randomMessages', elements.randomMessages.checked);
+        });
+
+        elements.enableSounds.addEventListener('change', () => {
+            localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
+        });
+
+        // Interval controls
+        elements.intervalUnit.addEventListener('change', updateIntervalDisplay);
+        elements.intervalValue.addEventListener('input', updateIntervalDisplay);
+        updateIntervalDisplay();
+
+        // Message limit input
+        elements.messageLimit.addEventListener('input', () => {
+            updateMessageLimitPlaceholder();
+        });
+
+        // Increment/Decrement buttons
+        document.querySelectorAll('.interval-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = btn.getAttribute('data-action');
+                const input = btn.closest('.input-with-buttons').querySelector('input');
+                let value = parseInt(input.value) || (input.id === 'message-limit' ? 0 : 10);
+
+                if (input.id === 'message-limit' && input.value === '') {
+                    // If the input is empty (representing ∞), set value to 0 for now
+                    value = 0;
+                }
+
+                if (action === 'increment') {
+                    if (input.id === 'message-limit' && input.value === '') {
+                        // Transition from ∞ to 1
+                        input.value = 1;
+                    } else {
+                        // Normal increment
+                        input.value = value + 1;
+                    }
+                } else if (action === 'decrement' && value > 0) {
+                    input.value = value - 1;
+                    if (input.value === '0') {
+                        input.value = ''; // Clear to show ∞ placeholder
+                        updateMessageLimitPlaceholder(); // Ensure placeholder updates
+                    }
+                }
+
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        });
+
+        // Auto-select text on input focus
+        document.querySelectorAll('.input-with-buttons input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.select();
+            });
+        });
+
+        // Buttons
+        elements.startBtn.addEventListener('click', startSending);
+        elements.stopBtn.addEventListener('click', stopSending);
+        elements.testBtn.addEventListener('click', sendTestMessage);
+        elements.resetStats.addEventListener('click', resetStatistics);
+        elements.clearLogs.addEventListener('click', clearLogs);
+        elements.historyBtn.addEventListener('click', showHistoryModal);
+        elements.suggestMessage.addEventListener('click', showMessageSuggestions);
+        elements.formatHelp.addEventListener('click', showFormatHelp);
+
+        // Export/Import
         elements.exportJsonMenu.addEventListener('click', exportLogsAsJson);
         elements.exportScreenshotMenu.addEventListener('click', exportLogsAsScreenshot);
         elements.importJsonMenu.addEventListener('click', importLogsFromJson);
 
-        updatePreview();
-        startScheduler();
+        // Modals
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.closest('.modal').classList.add('hidden');
+            });
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.add('hidden');
+            }
+        });
+
+        // Initialize message-limit placeholder on page load
+        updateMessageLimitPlaceholder();
     }
 
-function updateIntervalDisplay() {
-    const value = elements.intervalValue.value;
-    const unit = elements.intervalUnit.value;
-    const symbolMap = {
-        seconds: 's',
-        minutes: 'm',
-        hours: 'h'
-    };
-    const symbol = symbolMap[unit] || '';
-    document.getElementById('interval-display').textContent = `${value} ${symbol}`;
-}
+    function setupEmbedEventListeners() {
+        elements.addEmbedBtn.addEventListener('click', () => {
+            if (embedCount >= 10) {
+                showToast('Maximum 10 embeds allowed', 'warning');
+                return;
+            }
+            embeds.push({ title: '', description: '', color: '#5865F2', footer: '' });
+            embedCount++;
+            localStorage.setItem('embeds', JSON.stringify(embeds));
+            renderEmbeds();
+            updatePreview();
+            showToast('New embed added', 'success');
+        });
 
-elements.intervalUnit.addEventListener('change', updateIntervalDisplay);
-elements.intervalValue.addEventListener('input', updateIntervalDisplay);
-updateIntervalDisplay();
+        elements.embedToggleBtn.addEventListener('click', () => {
+            const isExpanded = elements.embedContent.classList.toggle('expanded');
+            elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
+            if (isExpanded) {
+                if (embedCount > 1) {
+                    elements.embedContent.style.maxHeight = '500px'; // Consistent max-height for second+ embeds
+                } else {
+                    // Use the stored first embed height or calculate it
+                    if (firstEmbedHeight === 0) {
+                        firstEmbedHeight = elements.embedContent.scrollHeight;
+                    }
+                    elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
+                }
+            } else {
+                elements.embedContent.style.maxHeight = '0';
+            }
+        });
+    }
+
+    function renderEmbeds() {
+        elements.embedList.innerHTML = '';
+        embeds.forEach((embed, index) => {
+            const embedItem = document.createElement('div');
+            embedItem.className = 'embed-item';
+            embedItem.dataset.embedIndex = index;
+            embedItem.innerHTML = `
+                <div class="form-row embed-row">
+                    <div class="form-group">
+                        <label for="embed-title-${index}"><i class="fas fa-heading"></i> Embed Title</label>
+                        <input type="text" id="embed-title-${index}" placeholder="Enter embed title" value="${embed.title || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="embed-color-${index}"><i class="fas fa-palette"></i> Embed Color</label>
+                        <input type="color" id="embed-color-${index}" value="${embed.color || '#5865F2'}">
+                    </div>
+                    <button class="btn-icon delete-embed-btn ${index === 0 ? 'hidden' : ''}" data-embed-index="${index}" title="Delete Embed"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="form-group">
+                    <label for="embed-description-${index}"><i class="fas fa-align-left"></i> Embed Description</label>
+                    <textarea id="embed-description-${index}" rows="3" placeholder="Enter embed description">${embed.description || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="embed-footer-${index}"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
+                    <input type="text" id="embed-footer-${index}" placeholder="Enter footer text" value="${embed.footer || ''}">
+                </div>
+            `;
+            elements.embedList.appendChild(embedItem);
+
+            const titleInput = embedItem.querySelector(`#embed-title-${index}`);
+            const descriptionInput = embedItem.querySelector(`#embed-description-${index}`);
+            const colorInput = embedItem.querySelector(`#embed-color-${index}`);
+            const footerInput = embedItem.querySelector(`#embed-footer-${index}`);
+            
+            titleInput.addEventListener('input', () => {
+                embeds[index].title = titleInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+                renderEmbeds(); // Re-render to adjust height
+                if (index === 0 && elements.embedContent.classList.contains('expanded')) {
+                    firstEmbedHeight = elements.embedContent.scrollHeight; // Update height if first embed changes
+                    elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
+                }
+            });
+            descriptionInput.addEventListener('input', () => {
+                embeds[index].description = descriptionInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+                renderEmbeds(); // Re-render to adjust height
+                if (index === 0 && elements.embedContent.classList.contains('expanded')) {
+                    firstEmbedHeight = elements.embedContent.scrollHeight; // Update height if first embed changes
+                    elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
+                }
+            });
+            colorInput.addEventListener('input', () => {
+                embeds[index].color = colorInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+            });
+            footerInput.addEventListener('input', () => {
+                embeds[index].footer = footerInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+                renderEmbeds(); // Re-render to adjust height
+                if (index === 0 && elements.embedContent.classList.contains('expanded')) {
+                    firstEmbedHeight = elements.embedContent.scrollHeight; // Update height if first embed changes
+                    elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
+                }
+            });
+        });
+
+        if (elements.embedContent.classList.contains('expanded')) {
+            if (embedCount > 1) {
+                elements.embedContent.style.maxHeight = '500px'; // Consistent max-height for second+ embeds
+            } else {
+                if (firstEmbedHeight === 0) {
+                    firstEmbedHeight = elements.embedContent.scrollHeight;
+                }
+                elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
+            }
+        }
+
+        document.querySelectorAll('.delete-embed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const index = parseInt(btn.dataset.embedIndex);
+                if (index > 0) {
+                    embeds.splice(index, 1);
+                    embedCount--;
+                    localStorage.setItem('embeds', JSON.stringify(embeds));
+                    renderEmbeds();
+                    updatePreview();
+                    showToast('Embed deleted', 'success');
+                }
+            });
+        });
+    }
+
+    function loadLayout() {
+        const defaultLayout = ["settings", "preview", "stats", "controls", "logs"];
+        const savedLayout = localStorage.getItem('layout');
+        const container = document.querySelector('.app-content');
+        
+        if (!container) {
+            console.error('Error: .app-content container not found in DOM');
+            addLog('error', 'Failed to load layout: App content container missing');
+            return;
+        }
+
+        // Use saved layout if valid, otherwise use default
+        let layout = defaultLayout;
+        if (savedLayout) {
+            try {
+                const parsedLayout = JSON.parse(savedLayout);
+                // Validate that the layout contains all required cards
+                if (Array.isArray(parsedLayout) && parsedLayout.length === defaultLayout.length &&
+                    defaultLayout.every(card => parsedLayout.includes(card))) {
+                    layout = parsedLayout;
+                } else {
+                    console.warn('Invalid saved layout, using default:', parsedLayout);
+                }
+            } catch (e) {
+                console.error('Error parsing saved layout:', e);
+            }
+        }
+
+        // Store card elements to ensure they exist
+        const cardElements = {};
+        layout.forEach(card => {
+            const el = document.querySelector(`[data-card="${card}"]`);
+            if (el) {
+                cardElements[card] = el;
+            } else {
+                console.error(`Error: Card element for "${card}" not found in DOM`);
+            }
+        });
+
+        // Check if all cards were found
+        if (Object.keys(cardElements).length !== defaultLayout.length) {
+            console.error('Missing card elements:', defaultLayout.filter(card => !cardElements[card]));
+            addLog('error', 'Failed to load layout: One or more card elements missing');
+            // Fallback: Append all available cards in default order
+            defaultLayout.forEach(card => {
+                const el = document.querySelector(`[data-card="${card}"]`);
+                if (el && !container.contains(el)) {
+                    container.appendChild(el);
+                }
+            });
+            return;
+        }
+
+        // Remove cards from container and re-append in the correct order
+        layout.forEach(card => {
+            const el = cardElements[card];
+            if (el && !container.contains(el)) {
+                container.appendChild(el);
+            }
+        });
+
+        console.log('Layout applied:', layout);
+    }
+
+    function initDragAndDrop() {
+        // Drag-and-drop removed as per user request
+    }
+
+    function updateIntervalDisplay() {
+        const value = elements.intervalValue.value;
+        const unit = elements.intervalUnit.value;
+        const symbolMap = {
+            seconds: 's',
+            minutes: 'm',
+            hours: 'h'
+        };
+        const symbol = symbolMap[unit] || '';
+        elements.intervalDisplay.textContent = `${value} ${symbol}`;
+    }
+
+    function checkWebhookPrivacy(url) {
+        const isPublic = url.includes('discord.com/api/webhooks/') && !url.includes('localhost');
+        elements.webhookWarning.classList.toggle('hidden', !isPublic);
+    }
+
+    function updatePreview() {
+        let messageContent = elements.messageContent.value || 'Your message will appear here...';
+        messageContent = formatDiscordMarkdown(messageContent, 'description');
+        elements.previewText.innerHTML = messageContent;
+        elements.previewUsername.textContent = elements.username.value || 'Webhook Sender';
+        elements.previewAvatar.src = elements.avatarUrl.value || 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+        const existingPreviews = document.querySelectorAll('.embed-preview');
+        existingPreviews.forEach(preview => preview.remove());
+
+        embeds.forEach(embed => {
+            if (embed.title.trim() || embed.description.trim()) {
+                const embedPreview = document.createElement('div');
+                embedPreview.className = 'embed-preview';
+                const embedColor = embed.color || '#5865F2';
+                const embedTitle = formatDiscordMarkdown(embed.title.trim(), 'title');
+                const embedDesc = formatDiscordMarkdown(embed.description.trim(), 'description');
+                const embedFooter = formatDiscordMarkdown(embed.footer.trim(), 'description');
+                
+                embedPreview.innerHTML = `
+                    <div class="embed" style="border-left: 4px solid ${embedColor}">
+                        ${embedTitle ? `<div class="embed-title">${embedTitle}</div>` : ''}
+                        ${embedDesc ? `<div class="embed-description">${embedDesc}</div>` : ''}
+                        ${embedFooter ? `<div class="embed-footer">${embedFooter}</div>` : ''}
+                    </div>
+                `;
+                document.querySelector('.discord-content').appendChild(embedPreview);
+            }
+        });
+    }
+
+    function formatDiscordMarkdown(text, context = 'description') {
+        let formattedText = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/~~(.*?)~~/g, '<s>$1</s>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+
+        if (context === 'title') {
+            // For embed titles, keep mentions as raw IDs
+            return formattedText;
+        } else {
+            // For descriptions and other content, format mentions as resolved names
+            return formattedText
+                .replace(/<@!?(\d+)>/g, '<span class="discord-mention">@user</span>')
+                .replace(/<#(\d+)>/g, '<span class="discord-mention">#channel</span>')
+                .replace(/<@&(\d+)>/g, '<span class="discord-mention">@role</span>')
+                .replace(/<a?:(\w+):(\d+)>/g, '<img class="discord-emoji" src="https://cdn.discordapp.com/emojis/$2.png" alt="$1">');
+        }
+    }
+
+    function getRandomMessage() {
+        if (!elements.randomMessages.checked) {
+            return elements.messageContent.value.trim();
+        }
+        const messages = elements.messageContent.value.split('\n').filter(line => line.trim());
+        return messages.length ? messages[Math.floor(Math.random() * messages.length)] : elements.messageContent.value;
+    }
+
+    function showHistoryModal() {
+        elements.historyList.innerHTML = '';
+        const history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
+        
+        if (history.length === 0) {
+            elements.historyList.innerHTML = '<p>No history yet</p>';
+            return;
+        }
+
+        history.forEach(item => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            historyItem.innerHTML = `<span>${item.url.substring(0, 30)}...</span><i class="fas fa-arrow-right"></i>`;
+            historyItem.addEventListener('click', () => {
+                elements.webhookUrl.value = item.url;
+                localStorage.setItem('webhookUrl', item.url);
+                checkWebhookPrivacy(item.url);
+                elements.historyModal.classList.add('hidden');
+                showToast('Webhook URL loaded from history', 'success');
+            });
+            elements.historyList.appendChild(historyItem);
+        });
+
+        elements.historyModal.classList.remove('hidden');
+    }
+
+    function showMessageSuggestions() {
+        const suggestions = [
+            "Hello world! 👋",
+            "This is a test message 🧪",
+            "Webhook sender is awesome! 🚀",
+            "Customize me! 🎨",
+            `Random message: ${Math.random().toString(36).substring(7)}`,
+            "New notification! 🔔",
+            "Task completed! ✅",
+            "Error detected! ❌",
+            "Warning: Something happened ⚠️",
+            "Information update ℹ️"
+        ];
+        
+        const list = elements.suggestionsModal.querySelector('.suggestions-list');
+        list.innerHTML = '';
+        
+        suggestions.forEach(msg => {
+            const div = document.createElement('div');
+            div.textContent = msg;
+            div.addEventListener('click', () => {
+                elements.messageContent.value = msg;
+                updatePreview();
+                elements.suggestionsModal.classList.add('hidden');
+                showToast('Message suggestion applied', 'success');
+            });
+            list.appendChild(div);
+        });
+        
+        elements.suggestionsModal.classList.remove('hidden');
+    }
+
+    function showFormatHelp() {
+        elements.formatHelpModal.classList.remove('hidden');
+    }
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `<i class="fas ${getToastIcon(type)}"></i><span>${message}</span>`;
+        elements.toastContainer.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }, 100);
+    }
+
+    function getToastIcon(type) {
+        const icons = {
+            success: 'check-circle',
+            error: 'times-circle',
+            warning: 'exclamation-circle',
+            info: 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+
+    function playSound(type) {
+        if (!elements.enableSounds.checked) return;
+        const sound = { 
+            success: elements.successSound, 
+            error: elements.errorSound, 
+            notification: elements.notificationSound 
+        }[type];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => console.error('Error playing sound:', e));
+        }
+    }
+
+    function addLog(type, message) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        const iconClass = { 
+            success: 'fa-check-circle', 
+            error: 'fa-times-circle', 
+            warning: 'fa-exclamation-circle' 
+        }[type] || 'fa-info-circle';
+        logEntry.innerHTML = `<i class="fas ${iconClass}"></i><span class="log-time">${timestamp}</span><span class="log-message">${message}</span>`;
+        elements.logContainer.prepend(logEntry);
+        elements.logContainer.scrollTop = 0;
+        if (elements.logContainer.children.length > 100) {
+            elements.logContainer.removeChild(elements.logContainer.lastChild);
+        }
+    }
+
+    function updateStats() {
+        elements.statTotal.textContent = stats.total;
+        elements.statSuccess.textContent = stats.success;
+        elements.statFailed.textContent = stats.failed;
+        elements.statAvgTime.textContent = stats.responseTimes.length
+            ? `${Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)}ms`
+            : '0ms';
+    }
+
+    function saveStats() {
+        localStorage.setItem('stats', JSON.stringify(stats));
+    }
+
+    function saveToHistory(url) {
+        if (!url) return;
+        let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
+        history = history.filter(item => item.url !== url);
+        history.unshift({ url, lastUsed: new Date().toISOString() });
+        if (history.length > 10) history = history.slice(0, 10);
+        localStorage.setItem('webhookHistory', JSON.stringify(history));
+    }
+
+    async function startSending() {
+        const webhookUrl = elements.webhookUrl.value.trim();
+        const message = elements.messageContent.value.trim();
+        const intervalValue = parseInt(elements.intervalValue.value);
+        const intervalUnit = elements.intervalUnit.value.toLowerCase();
+        let messageLimit = parseInt(elements.messageLimit.value);
+        // Treat empty input as 0 (infinite)
+        if (isNaN(messageLimit) || elements.messageLimit.value === '') {
+            messageLimit = 0;
+        }
+        let sentCount = 1;
+
+        if (!webhookUrl) {
+            addLog('error', 'Please enter a valid Discord webhook URL');
+            playSound('error');
+            return;
+        }
+        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim())) {
+            addLog('error', 'Please enter a message or embed content to send');
+            playSound('error');
+            return;
+        }
+        if (isNaN(intervalValue) || intervalValue <= 0) {
+            addLog('error', 'Please enter a valid interval (greater than 0)');
+            playSound('error');
+            return;
+        }
+
+        stats.success = 0;
+        stats.failed = 0;
+        stats.responseTimes = [];
+        updateStats();
+        saveStats();
+
+        let intervalMs = intervalValue * 1000;
+        if (intervalUnit === 'minutes') intervalMs *= 60;
+        else if (intervalUnit === 'hours') intervalMs *= 3600;
+        if (intervalMs < 2000) {
+            intervalMs = 2000;
+            addLog('warning', 'Interval too short. Using minimum 2 seconds to avoid rate limits.');
+        }
+
+        saveToHistory(webhookUrl);
+
+        try {
+            await sendMessage(webhookUrl, getRandomMessage());
+            intervalId = setInterval(() => {
+                if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount >= messageLimit) {
+                    stopSending();
+                    addLog('success', `Stopped after sending ${sentCount} messages`);
+                    return;
+                }
+                sendMessage(webhookUrl, getRandomMessage());
+                sentCount++;
+            }, intervalMs);
+
+            isSending = true;
+            elements.startBtn.disabled = true;
+            elements.stopBtn.disabled = false;
+            elements.statusDot.classList.add('active');
+            const unitText = intervalValue === 1 ? intervalUnit.replace(/s$/, '') : intervalUnit;
+            elements.statusText.textContent = `Sending every ${intervalValue} ${unitText}${messageLimit === 0 ? ' (Unlimited)' : messageLimit ? ` (${sentCount}/${messageLimit})` : ''}`;
+            addLog('success', `Started sending messages every ${intervalValue} ${unitText}${messageLimit === 0 ? ' (unlimited)' : messageLimit ? ` for ${messageLimit} messages` : ''}`);
+            playSound('success');
+        } catch (error) {
+            addLog('error', `Failed to start sending: ${error.message}`);
+            playSound('error');
+        }
+    }
+
+    function stopSending() {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = null;
+        isSending = false;
+        elements.startBtn.disabled = false;
+        elements.stopBtn.disabled = true;
+        elements.statusDot.classList.remove('active');
+        elements.statusText.textContent = 'Ready';
+        addLog('warning', 'Stopped sending messages');
+        playSound('notification');
+    }
+
+    async function sendTestMessage() {
+        const webhookUrl = elements.webhookUrl.value.trim();
+        const message = elements.messageContent.value.trim();
+        if (!webhookUrl) {
+            addLog('error', 'Please enter a valid Discord webhook URL');
+            playSound('error');
+            return;
+        }
+        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim())) {
+            addLog('error', 'Please enter a message or embed content to send');
+            playSound('error');
+            return;
+        }
+        saveToHistory(webhookUrl);
+        sendMessage(webhookUrl, getRandomMessage());
+    }
+
+    async function sendMessage(webhookUrl, message, isScheduled = false) {
+        const startTime = Date.now();
+        const username = elements.username.value.trim() || 'Webhook Sender';
+        const avatarUrl = elements.avatarUrl.value.trim() || 'https://cdn.discordapp.com/embed/avatars/0.png';
+        
+        const embedsToSend = embeds
+            .filter(embed => embed.title.trim() || embed.description.trim())
+            .map(embed => ({
+                title: embed.title.trim(),
+                description: embed.description.trim(),
+                color: parseInt(embed.color.substring(1), 16),
+                footer: embed.footer.trim() ? { text: embed.footer.trim() } : undefined,
+                timestamp: new Date().toISOString()
+            }));
+
+        try {
+            const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    allowed_mentions: { parse: ["users", "roles", "everyone"] }, 
+                    content: message, 
+                    username, 
+                    avatar_url: avatarUrl,
+                    embeds: embedsToSend.length > 0 ? embedsToSend : undefined
+                })
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+            const responseTime = Date.now() - startTime;
+            stats.total++;
+            stats.success++;
+            stats.responseTimes.push(responseTime);
+            if (stats.responseTimes.length > 10) stats.responseTimes.shift();
+            updateStats();
+            saveStats();
+            addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
+            playSound('success');
+        } catch (error) {
+            stats.total++;
+            stats.failed++;
+            updateStats();
+            saveStats();
+            addLog('error', `${isScheduled ? '[Scheduled] ' : ''}Failed to send message: ${error.message}`);
+            playSound('error');
+        }
+    }
+
+    function resetStatistics() {
+        if (confirm('Are you sure you want to reset ALL settings and data? This cannot be undone!')) {
+            stopSending();
+            
+            elements.webhookUrl.value = '';
+            elements.messageContent.value = '';
+            elements.intervalValue.value = '10';
+            elements.intervalUnit.value = 'seconds';
+            elements.messageLimit.value = '1';
+            elements.username.value = '';
+            elements.avatarUrl.value = '';
+            elements.randomMessages.checked = false;
+            
+            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+            embedCount = 1;
+            firstEmbedHeight = 0; // Reset height
+            renderEmbeds();
+            
+            elements.previewText.textContent = 'Your message will appear here...';
+            elements.previewUsername.textContent = 'Webhook Sender';
+            elements.previewAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+            
+            stats = { total: 0, success: 0, failed: 0, responseTimes: [] };
+            updateStats();
+            
+            elements.logContainer.innerHTML = '';
+            
+            localStorage.removeItem('webhookUrl');
+            localStorage.removeItem('messageContent');
+            localStorage.removeItem('username');
+            localStorage.removeItem('avatarUrl');
+            localStorage.removeItem('randomMessages');
+            localStorage.removeItem('stats');
+            localStorage.removeItem('embeds');
+            localStorage.removeItem('layout');
+            
+            elements.statusText.textContent = 'Ready';
+            elements.statusDot.classList.remove('active');
+            
+            addLog('warning', 'Reset all settings and data');
+            playSound('notification');
+            
+            // Reload layout to reflect default
+            loadLayout();
+
+            // Update message-limit placeholder after reset
+            updateMessageLimitPlaceholder();
+        }
+    }
+
+    function clearLogs() {
+        if (confirm('Are you sure you want to clear all logs?')) {
+            elements.logContainer.innerHTML = '';
+            addLog('warning', 'Cleared all logs');
+        }
+    }
 
     function exportLogsAsJson() {
-        // Συλλογή όλων των δεδομένων
         const exportData = {
             metadata: {
                 app: "Webhook Sender PRO",
-                version: "2.0",
-                exportDate: new Date().toISOString(),
-                type: "full_export"
+                version: "3.0",
+                exportDate: new Date().toISOString()
             },
             settings: {
                 webhookUrl: elements.webhookUrl.value,
-                messageContent: elements.messageContent.value,  // Προσθήκη Message Content
+                messageContent: elements.messageContent.value,
                 username: elements.username.value,
                 avatarUrl: elements.avatarUrl.value,
                 randomMessages: elements.randomMessages.checked,
@@ -126,8 +903,9 @@ updateIntervalDisplay();
                     value: elements.intervalValue.value,
                     unit: elements.intervalUnit.value
                 },
-                messageLimit: elements.messageLimit.value || 'Unlimited',
-                enableSounds: elements.enableSounds.checked    // Προσθήκη sound settings
+                messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
+                enableSounds: elements.enableSounds.checked,
+                embeds: embeds
             },
             statistics: {
                 totalMessages: stats.total,
@@ -135,21 +913,19 @@ updateIntervalDisplay();
                 failed: stats.failed,
                 averageResponseTime: stats.responseTimes.length 
                     ? Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)
-                    : 0,
-                responseTimes: stats.responseTimes  // Προσθήκη πλήρους ιστορικού χρόνων
+                    : 0
             },
             logs: Array.from(elements.logContainer.querySelectorAll('.log-entry')).map(log => ({
                 time: log.querySelector('.log-time').textContent,
                 message: log.querySelector('.log-message').textContent,
                 type: log.classList.contains('log-success') ? 'success' : 
                     log.classList.contains('log-error') ? 'error' : 'warning'
-            })),
-            history: JSON.parse(localStorage.getItem('webhookHistory') || '[]')  // Προσθήκη ιστορικού webhooks
+            }))
         };
 
-        const fileName = `webhook-sender-full-export-${new Date().toISOString().slice(0, 10)}.json`;
+        const fileName = `webhook-sender-export-${new Date().toISOString().slice(0, 10)}.json`;
         downloadFile(JSON.stringify(exportData, null, 2), fileName, 'application/json');
-        addLog('success', 'Exported COMPLETE application data as JSON');
+        addLog('success', 'Exported application data as JSON');
         playSound('success');
     }
 
@@ -163,72 +939,6 @@ updateIntervalDisplay();
             addLog('success', 'Exported logs as screenshot');
             playSound('success');
         });
-    }
-
-    function importJsonData(jsonData) {
-        try {
-            // Stop any active sending first
-            stopSending();
-
-            // Import settings
-            if (jsonData.settings) {
-                elements.webhookUrl.value = jsonData.settings.webhookUrl || '';
-                elements.messageContent.value = jsonData.settings.messageContent || '';  // Message Content
-                elements.username.value = jsonData.settings.username || '';
-                elements.avatarUrl.value = jsonData.settings.avatarUrl || '';
-                elements.randomMessages.checked = jsonData.settings.randomMessages || false;
-                elements.enableSounds.checked = jsonData.settings.enableSounds !== false;
-                
-                if (jsonData.settings.interval) {
-                    elements.intervalValue.value = jsonData.settings.interval.value || '10';
-                    elements.intervalUnit.value = jsonData.settings.interval.unit || 'seconds';
-                }
-                
-                elements.messageLimit.value = jsonData.settings.messageLimit === 'Unlimited' ? '' : jsonData.settings.messageLimit || '';
-                
-                // Update preview and local storage
-                updatePreview();
-                localStorage.setItem('messageContent', elements.messageContent.value);
-                localStorage.setItem('enableSounds', elements.enableSounds.checked);
-            }
-            
-            // Import statistics
-            if (jsonData.statistics) {
-                stats = {
-                    total: jsonData.statistics.totalMessages || 0,
-                    success: jsonData.statistics.successful || 0,
-                    failed: jsonData.statistics.failed || 0,
-                    responseTimes: jsonData.statistics.responseTimes || []
-                };
-                updateStats();
-                localStorage.setItem('stats', JSON.stringify(stats));
-            }
-            
-            // Import logs
-            if (jsonData.logs && Array.isArray(jsonData.logs)) {
-                elements.logContainer.innerHTML = '';
-                jsonData.logs.forEach(log => {
-                    addLog(log.type || 'info', log.message || 'Imported log');
-                });
-            }
-            
-            // Import webhook history
-            if (jsonData.history && Array.isArray(jsonData.history)) {
-                localStorage.setItem('webhookHistory', JSON.stringify(jsonData.history));
-            }
-            
-            // Save other settings to local storage
-            localStorage.setItem('webhookUrl', elements.webhookUrl.value);
-            localStorage.setItem('username', elements.username.value);
-            localStorage.setItem('avatarUrl', elements.avatarUrl.value);
-            localStorage.setItem('randomMessages', elements.randomMessages.checked);
-            
-            addLog('success', 'Successfully imported ALL settings and data from JSON');
-            playSound('success');
-        } catch (error) {
-            addLog('error', `Failed to import data: ${error.message}`);
-            playSound('error');
-        }
     }
 
     function importLogsFromJson() {
@@ -254,6 +964,79 @@ updateIntervalDisplay();
         input.click();
     }
 
+    function importJsonData(jsonData) {
+        try {
+            stopSending();
+
+            if (jsonData.settings) {
+                elements.webhookUrl.value = jsonData.settings.webhookUrl || '';
+                elements.messageContent.value = jsonData.settings.messageContent || '';
+                elements.username.value = jsonData.settings.username || '';
+                elements.avatarUrl.value = jsonData.settings.avatarUrl || '';
+                elements.randomMessages.checked = jsonData.settings.randomMessages || false;
+                elements.enableSounds.checked = jsonData.settings.enableSounds !== false;
+                
+                if (jsonData.settings.embeds && Array.isArray(jsonData.settings.embeds)) {
+                    embeds = jsonData.settings.embeds;
+                    embedCount = embeds.length;
+                    renderEmbeds();
+                } else {
+                    embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+                    embedCount = 1;
+                    renderEmbeds();
+                }
+                
+                if (jsonData.settings.interval) {
+                    elements.intervalValue.value = jsonData.settings.interval.value || '10';
+                    elements.intervalUnit.value = jsonData.settings.interval.unit || 'seconds';
+                }
+                
+                elements.messageLimit.value = jsonData.settings.messageLimit === 'Unlimited' ? '' : jsonData.settings.messageLimit || '1';
+                
+                updatePreview();
+            }
+            
+            if (jsonData.statistics) {
+                stats = {
+                    total: jsonData.statistics.totalMessages || 0,
+                    success: jsonData.statistics.successful || 0,
+                    failed: jsonData.statistics.failed || 0,
+                    responseTimes: jsonData.statistics.responseTimes || []
+                };
+                updateStats();
+            }
+            
+            if (jsonData.logs && Array.isArray(jsonData.logs)) {
+                elements.logContainer.innerHTML = '';
+                jsonData.logs.forEach(log => {
+                    addLog(log.type || 'info', log.message || 'Imported log');
+                });
+            }
+            
+            // Save settings to localStorage
+            localStorage.setItem('webhookUrl', elements.webhookUrl.value);
+            localStorage.setItem('messageContent', elements.messageContent.value);
+            localStorage.setItem('username', elements.username.value);
+            localStorage.setItem('avatarUrl', elements.avatarUrl.value);
+            localStorage.setItem('randomMessages', elements.randomMessages.checked);
+            localStorage.setItem('stats', JSON.stringify(stats));
+            localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
+            localStorage.setItem('embeds', JSON.stringify(embeds));
+            
+            // Reapply layout to ensure correct card order
+            loadLayout();
+            
+            addLog('success', 'Successfully imported settings and data from JSON');
+            playSound('success');
+
+            // Update message-limit placeholder after import
+            updateMessageLimitPlaceholder();
+        } catch (error) {
+            addLog('error', `Failed to import data: ${error.message}`);
+            playSound('error');
+        }
+    }
+
     function downloadFile(content, fileName, type, isUrl = false) {
         const a = document.createElement('a');
         a.href = isUrl ? content : URL.createObjectURL(new Blob([content], { type }));
@@ -262,359 +1045,7 @@ updateIntervalDisplay();
         if (!isUrl) URL.revokeObjectURL(a.href);
     }
 
-    // Theme handling
-    elements.themeSelector.addEventListener('change', () => {
-        const theme = elements.themeSelector.value;
-        document.body.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    });
-
-    // Webhook URL handling
-    elements.toggleVisibility.addEventListener('click', () => {
-        const type = elements.webhookUrl.type === 'password' ? 'text' : 'password';
-        elements.webhookUrl.type = type;
-        elements.toggleVisibility.innerHTML = `<i class="fas fa-eye${type === 'password' ? '' : '-slash'}"></i>`;
-    });
-
-    elements.webhookUrl.addEventListener('input', () => {
-        localStorage.setItem('webhookUrl', elements.webhookUrl.value);
-        checkWebhookPrivacy(elements.webhookUrl.value);
-    });
-
-    function checkWebhookPrivacy(url) {
-        const isPublic = url.includes('discord.com/api/webhooks/') && !url.includes('localhost');
-        elements.webhookWarning.classList.toggle('hidden', !isPublic);
-    }
-
-    // Message preview
-    function updatePreview() {
-        let messageContent = elements.messageContent.value || 'Your message will appear here...';
-        
-        // Process Discord mentions
-        messageContent = messageContent
-            .replace(/<@!?(\d+)>/g, '<span class="discord-mention">@user</span>') // User mentions
-            .replace(/<#(\d+)>/g, '<span class="discord-mention">#channel</span>') // Channel mentions
-            .replace(/<@&(\d+)>/g, '<span class="discord-mention">@role</span>') // Role mentions
-            .replace(/\n/g, '<br>'); // New lines
-
-        elements.previewText.innerHTML = messageContent;
-        elements.previewUsername.textContent = elements.username.value || 'Webhook Sender';
-        elements.previewAvatar.src = elements.avatarUrl.value || 'https://cdn.discordapp.com/embed/avatars/0.png';
-    }
-
-    elements.messageContent.addEventListener('input', () => {
-        localStorage.setItem('messageContent', elements.messageContent.value);
-        updatePreview();
-    });
-
-    elements.username.addEventListener('input', () => {
-        localStorage.setItem('username', elements.username.value);
-        updatePreview();
-    });
-
-    elements.avatarUrl.addEventListener('input', () => {
-        localStorage.setItem('avatarUrl', elements.avatarUrl.value);
-        updatePreview();
-    });
-
-    elements.randomMessages.addEventListener('change', () => {
-        localStorage.setItem('randomMessages', elements.randomMessages.checked);
-    });
-
-    // Random message function
-    function getRandomMessage() {
-        if (!elements.randomMessages.checked) {
-            return elements.messageContent.value.trim();
-        }
-        const messages = elements.messageContent.value.split('\n').filter(line => line.trim());
-        return messages.length ? messages[Math.floor(Math.random() * messages.length)] : elements.messageContent.value;
-    }
-
-    // History modal
-    elements.historyBtn.addEventListener('click', showHistoryModal);
-
-    function showHistoryModal() {
-        elements.historyList.innerHTML = '';
-        const history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
-        elements.historyList.innerHTML = history.length ? '' : '<p>No history yet</p>';
-
-        history.forEach(item => {
-            const historyItem = document.createElement('div');
-            historyItem.className = 'history-item';
-            historyItem.innerHTML = `<span>${item.url.substring(0, 30)}...</span><i class="fas fa-arrow-right"></i>`;
-            historyItem.addEventListener('click', () => {
-                elements.webhookUrl.value = item.url;
-                localStorage.setItem('webhookUrl', item.url);
-                checkWebhookPrivacy(item.url);
-                elements.historyModal.classList.add('hidden');
-            });
-            elements.historyList.appendChild(historyItem);
-        });
-
-        elements.historyModal.classList.remove('hidden');
-    }
-
-    // Increment/Decrement buttons
-    document.querySelectorAll('.interval-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        const action = btn.getAttribute('data-action');
-        const input = btn.closest('.input-with-buttons').querySelector('input');
-        let value = parseInt(input.value) || (input.id === 'message-limit' ? 0 : 10);
-        
-        if (action === 'increment') {
-        input.value = value + 1;
-        } else if (action === 'decrement' && value > (input.id === 'message-limit' ? 1 : 1)) {
-        input.value = value - 1;
-        }
-        
-        // Trigger input event for live updates
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    });
-
-    // Auto-select text on input focus
-    document.querySelectorAll('.input-with-buttons input').forEach(input => {
-    input.addEventListener('focus', function() {
-        this.select();
-    });
-    });
-
-    window.addEventListener('click', e => {
-        if (e.target.classList.contains('modal')) e.target.classList.add('hidden');
-    });
-
-    // Statistics
-    function updateStats() {
-        elements.statTotal.textContent = stats.total;
-        elements.statSuccess.textContent = stats.success;
-        elements.statFailed.textContent = stats.failed;
-        elements.statAvgTime.textContent = stats.responseTimes.length
-            ? `${Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)}ms`
-            : '0ms';
-    }
-
-    function saveStats() {
-        localStorage.setItem('stats', JSON.stringify(stats));
-    }
-
-    elements.resetStats.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset ALL settings and data? This cannot be undone!')) {
-            // Stop any active sending
-            stopSending();
-            
-            // Reset all form fields
-            elements.webhookUrl.value = '';
-            elements.messageContent.value = '';
-            elements.intervalValue.value = '10';
-            elements.intervalUnit.value = 'seconds';
-            elements.messageLimit.value = '';
-            elements.username.value = '';
-            elements.avatarUrl.value = '';
-            elements.randomMessages.checked = false;
-            
-            // Reset preview
-            elements.previewText.textContent = 'Your message will appear here...';
-            elements.previewUsername.textContent = 'Webhook Sender';
-            elements.previewAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-            
-            // Reset stats
-            stats = { total: 0, success: 0, failed: 0, responseTimes: [] };
-            updateStats();
-            
-            // Clear logs
-            elements.logContainer.innerHTML = '';
-            
-            // Clear local storage
-            localStorage.removeItem('webhookUrl');
-            localStorage.removeItem('messageContent');
-            localStorage.removeItem('username');
-            localStorage.removeItem('avatarUrl');
-            localStorage.removeItem('randomMessages');
-            localStorage.removeItem('stats');
-            
-            // Update UI
-            elements.statusText.textContent = 'Ready';
-            elements.statusDot.classList.remove('active');
-            
-            addLog('warning', 'Reset all settings and data');
-            playSound('notification');
-        }
-    });
-
-    // Sound toggle
-    elements.enableSounds.addEventListener('change', () => {
-        localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
-    });
-
-    function playSound(type) {
-        if (!elements.enableSounds.checked) return;
-        const sound = { success: elements.successSound, error: elements.errorSound, notification: elements.notificationSound }[type];
-        if (sound) {
-            sound.currentTime = 0;
-            sound.play().catch(e => console.error('Error playing sound:', e));
-        }
-    }
-
-    elements.clearLogs.addEventListener('click', () => {
-        if (confirm('Are you sure you want to clear all logs?')) {
-            elements.logContainer.innerHTML = '';
-            addLog('warning', 'Cleared all logs');
-        }
-    });
-
-    // Start sending
-    elements.startBtn.addEventListener('click', async () => {
-        const webhookUrl = elements.webhookUrl.value.trim();
-        const message = elements.messageContent.value.trim();
-        const intervalValue = parseInt(elements.intervalValue.value);
-        const intervalUnit = elements.intervalUnit.value.toLowerCase();
-        const messageLimit = parseInt(elements.messageLimit.value);
-        let sentCount = 1;
-
-        if (!webhookUrl) return addLog('error', 'Please enter a valid Discord webhook URL'), playSound('error');
-        if (!message) return addLog('error', 'Please enter a message to send'), playSound('error');
-        if (isNaN(intervalValue) || intervalValue <= 0) return addLog('error', 'Please enter a valid interval (greater than 0)'), playSound('error');
-
-        // Reset session stats when starting new sending
-        stats.success = 0;
-        stats.failed = 0;
-        stats.responseTimes = [];
-        updateStats();
-        saveStats();
-
-        let intervalMs = intervalValue * 1000;
-        if (intervalUnit === 'minutes') intervalMs *= 60;
-        else if (intervalUnit === 'hours') intervalMs *= 3600;
-        if (intervalMs < 2000) {
-            intervalMs = 2000;
-            addLog('warning', 'Interval too short. Using minimum 2 seconds to avoid rate limits.');
-        }
-
-        saveToHistory(webhookUrl);
-
-        try {
-            await sendMessage(webhookUrl, getRandomMessage());
-            intervalId = setInterval(() => {
-                if (!isNaN(messageLimit) && sentCount >= messageLimit) {
-                    stopSending();
-                    addLog('success', `Stopped after sending ${sentCount} messages`);
-                    return;
-                }
-                sendMessage(webhookUrl, getRandomMessage());
-                sentCount++;
-            }, intervalMs);
-
-            isSending = true;
-            elements.startBtn.disabled = true;
-            elements.stopBtn.disabled = false;
-            elements.statusDot.classList.add('active');
-            const unitText = intervalValue === 1 ? intervalUnit.replace(/s$/, '') : intervalUnit;
-            elements.statusText.textContent = `Sending every ${intervalValue} ${unitText}`;
-            addLog('success', `Started sending messages every ${intervalValue} ${unitText}`);
-            playSound('success');
-        } catch (error) {
-            addLog('error', `Failed to start sending: ${error.message}`);
-            playSound('error');
-        }
-    });
-
-    // Stop sending
-    function stopSending() {
-        if (intervalId) clearInterval(intervalId);
-        intervalId = null;
-        isSending = false;
-        elements.startBtn.disabled = false;
-        elements.stopBtn.disabled = true;
-        elements.statusDot.classList.remove('active');
-        elements.statusText.textContent = 'Ready';
-        addLog('warning', 'Stopped sending messages');
-        playSound('notification');
-    }
-
-    elements.stopBtn.addEventListener('click', stopSending);
-
-    // Test button
-    elements.testBtn.addEventListener('click', () => {
-        const webhookUrl = elements.webhookUrl.value.trim();
-        const message = elements.messageContent.value.trim();
-        if (!webhookUrl) return addLog('error', 'Please enter a valid Discord webhook URL'), playSound('error');
-        if (!message) return addLog('error', 'Please enter a message to send'), playSound('error');
-        saveToHistory(webhookUrl);
-        sendMessage(webhookUrl, getRandomMessage());
-    });
-
-    // Send message to Discord webhook
-    async function sendMessage(webhookUrl, message, isScheduled = false) {
-        const startTime = Date.now();
-        const username = elements.username.value.trim() || 'Webhook Sender';
-        const avatarUrl = elements.avatarUrl.value.trim() || 'https://cdn.discordapp.com/embed/avatars/0.png';
-
-        try {
-            const response = await fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: message, username, avatar_url: avatarUrl })
-            });
-
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-            const responseTime = Date.now() - startTime;
-            stats.total++;
-            stats.success++;
-            stats.responseTimes.push(responseTime);
-            if (stats.responseTimes.length > 10) stats.responseTimes.shift();
-            updateStats();
-            saveStats();
-            addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
-            playSound('success');
-        } catch (error) {
-            stats.total++;
-            stats.failed++;
-            updateStats();
-            saveStats();
-            addLog('error', `${isScheduled ? '[Scheduled] ' : ''}Failed to send message: ${error.message}`);
-            playSound('error');
-        }
-    }
-
-    // Add log entry
-    function addLog(type, message) {
-        const timestamp = new Date().toLocaleTimeString();
-        const logEntry = document.createElement('div');
-        logEntry.className = `log-entry log-${type} animate__animated animate__fadeIn`;
-        const iconClass = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-circle' }[type] || 'fa-info-circle';
-        logEntry.innerHTML = `<i class="fas ${iconClass}"></i><span class="log-time">${timestamp}</span><span class="log-message">${message}</span>`;
-        elements.logContainer.prepend(logEntry);
-        elements.logContainer.scrollTop = 0;
-        if (elements.logContainer.children.length > 100) elements.logContainer.removeChild(elements.logContainer.lastChild);
-    }
-
-    // Save webhook to history
-    function saveToHistory(url) {
-        if (!url) return;
-        let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
-        history = history.filter(item => item.url !== url);
-        history.unshift({ url, lastUsed: new Date().toISOString() });
-        if (history.length > 10) history = history.slice(0, 10);
-        localStorage.setItem('webhookHistory', JSON.stringify(history));
-    }
-
-    // Scheduler
-    function startScheduler() {
-        function checkSchedule() {
-            const now = new Date();
-            const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-            const currentDay = now.getDay();
-            scheduledJobs.forEach(job => {
-                if (job.enabled && job.time === currentTime && job.days.includes(currentDay)) {
-                    sendMessage(elements.webhookUrl.value.trim(), getRandomMessage(), true);
-                }
-            });
-            requestAnimationFrame(checkSchedule);
-        }
-        requestAnimationFrame(checkSchedule);
-    }
-
-    // Initialize
+    // Initialize the app
     initApp();
+    loadLayout();
 });
