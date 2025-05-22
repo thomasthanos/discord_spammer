@@ -81,14 +81,35 @@
         <input type="file" id="message-attachments" multiple accept="image/*, video/*">
         <div id="message-attachments-preview" class="attachments-preview"></div>
     </div>
-    <div class="form-group half-width">
-        <label for="file-size-limit"><i class="fas fa-weight"></i> Max File Size</label>
-        <select id="file-size-limit">
-            <option value="8">8 MB Default</option>
-            <option value="50">50 MB (Level 2 server)</option>
-            <option value="100">100 MB (Level 3 server)</option>
-        </select>
+<div class="form-group half-width file-size-group">
+  <label for="file-size-limit" class="file-size-label">
+    <i class="fas fa-weight"></i> Max File Size
+  </label>
+  <div class="custom-file-select" id="file-size-custom-select">
+    <div class="selected-option">
+      <div class="center-content">
+        <img src="images/nitro_lvl1.png" id="selected-level-icon" class="option-icon">
+        <span id="selected-level-text" class="centered-text">8 MB Default</span>
+      </div>
+      <i class="fas fa-chevron-down"></i>
     </div>
+    <div class="options-list" style="display: none;">
+      <div class="option" data-value="8">
+        <img src="images/nitro_lvl1.png" class="option-icon"> 8 MB Default
+      </div>
+      <div class="option" data-value="50">
+        <img src="images/nitro_lvl2.png" class="option-icon"> 50 MB (Level 2 server)
+      </div>
+      <div class="option" data-value="100">
+        <img src="images/nitro_lvl3.png" class="option-icon"> 100 MB (Level 3 server)
+      </div>
+    </div>
+    <input type="hidden" name="file-size-limit" id="file-size-limit" value="8">
+  </div>
+</div>
+
+
+
 </div>
 
 

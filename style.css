@@ -1729,3 +1729,118 @@ input[type="color"]#embed-color:focus {
         max-height: 400px;
     }
 }
+
+
+
+
+.custom-file-select {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+}
+
+.selected-option {
+  display: flex;
+  align-items: center;
+  height: 72px;  /* Μπορείς να το κάνεις 60px ή 48px αν θέλεις πιο compact */
+  background: rgba(0,0,0,0.1);
+  border: 1.5px solid var(--text-secondary);
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  box-sizing: border-box;
+  transition: border .2s, box-shadow .2s;
+  cursor: pointer;
+  padding: 0 20px 0 14px;
+  width: 100%;
+  user-select: none;
+  white-space: nowrap;
+  line-height: 1;
+  position: relative;
+}
+
+.selected-option .center-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.selected-option .option-icon {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.selected-option .centered-text {
+  display: inline-block;
+  text-align: center;
+  width: auto;
+}
+
+.selected-option i.fas.fa-chevron-down {
+  font-size: 20px;
+  color: var(--text-secondary);
+  margin-left: 18px;
+}
+
+.options-list {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  top: 100%;
+  z-index: 99;
+  background: var(--card-color, #222);
+  border-radius: 12px;
+  border: 1px solid var(--primary-color);
+  margin-top: 2px;
+  box-shadow: 0 2px 12px #0005;
+  padding: 7px 0;
+  font-size: 16px;
+  max-height: 230px;
+  overflow-y: auto;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: center;    /* ΚΕΝΤΡΟ ΟΡΙΖΟΝΤΙΑ! */
+  padding: 13px 22px;
+  cursor: pointer;
+  transition: background 0.18s;
+  font-size: 16px;
+  gap: 12px;
+  font-weight: 600;
+  color: var(--text-color, #fff);
+  border-radius: 6px;
+  margin: 0 5px 3px 5px;
+  white-space: nowrap;
+  text-align: center;         /* Center text αν σπάσει σε 2 γραμμές */
+}
+
+.option .option-icon {
+  width: 32px;
+  height: 32px;
+  margin-right: 0; /* Μηδέν ή μικρό gap αν θες το icon απόλυτα δίπλα στο text */
+}
+
+.option:hover,
+.option:focus {
+  background: var(--primary-color, #5865F2);
+  color: #fff;
+}
+
+@media (max-width: 800px) {
+  .form-group.half-width.file-size-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .file-size-label {
+    min-width: 0;
+    padding-right: 0;
+    line-height: 1.2;
+  }
+}

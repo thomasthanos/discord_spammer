@@ -123,6 +123,37 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize preview
         if (elements.messageContent.value) updatePreview();
         if (elements.avatarUrl.value) elements.previewAvatar.src = elements.avatarUrl.value;
+document.querySelector('.selected-option').onclick = function() {
+    let opts = document.querySelector('.options-list');
+    opts.style.display = (opts.style.display === 'block' ? 'none' : 'block');
+};
+
+document.querySelectorAll('.option').forEach(opt => {
+    opt.onclick = function() {
+        let value = this.dataset.value;
+        let text = this.innerText.trim();
+        let icon = this.querySelector('.option-icon').src;
+        document.getElementById('file-size-limit').value = value;
+        document.getElementById('selected-level-text').textContent = text;
+        document.getElementById('selected-level-icon').src = icon;
+        document.querySelector('.options-list').style.display = 'none';
+    };
+});
+
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('file-size-custom-select').contains(e.target)) {
+        document.querySelector('.options-list').style.display = 'none';
+    }
+});
+
+
+
+// click έξω για να κλείνει
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('file-size-custom-select').contains(e.target)) {
+        document.querySelector('.options-list').style.display = 'none';
+    }
+});
 
         // Setup event listeners
         setupEventListeners();
