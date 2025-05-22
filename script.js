@@ -1431,15 +1431,18 @@ const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA'; // (Το δικό σου API key)
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// === Supabase Auth + JSON Fetch ===
+// === Elements ===
 const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const userInfo = document.getElementById('user-info');
 const fetchJsonBtn = document.getElementById('fetch-json-btn');
+const exportCloudBtn = document.getElementById('export-json-cloud');
+const importCloudBtn = document.getElementById('import-json-cloud');
 
+// === Login with Discord ===
 loginBtn.addEventListener('click', async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
-  if (error) console.error('Login error:', error.message);
+  const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
+  if (error) console.error('Login failed:', error.message);
 });
 
 logoutBtn.addEventListener('click', async () => {
@@ -1447,37 +1450,62 @@ logoutBtn.addEventListener('click', async () => {
   location.reload();
 });
 
-fetchJsonBtn.addEventListener('click', async () => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return alert('You must be logged in!');
-  fetchUserJson(user.id);
-});
-
+// === Check user session on load ===
 async function checkUserSession() {
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     userInfo.textContent = `Logged in as ${user.email || user.id}`;
-    fetchUserJson(user.id);
   } else {
     userInfo.textContent = 'Not logged in';
   }
 }
+checkUserSession();
 
-async function fetchUserJson(userId) {
-  const { data, error } = await supabase
+// === Export JSON to Supabase Cloud ===
+exportCloudBtn.addEventListener('click', async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return alert('❌ You must be logged in!');
+
+  const logsJson = localStorage.getItem('logs') || '[]';
+
+  const { error } = await supabase
     .from('user_jsons')
-    .select('json_data')
-    .eq('user_id', userId)
-    .single();
+    .upsert({ user_id: user.id, data: JSON.parse(logsJson) }, { onConflict: 'user_id' });
 
   if (error) {
-    console.error('Error loading JSON:', error.message);
+    console.error('Upload error:', error.message);
+    alert('❌ Upload failed.');
+  } else {
+    alert('✅ Logs saved to cloud!');
+  }
+});
+
+// === Import JSON from Supabase Cloud ===
+importCloudBtn.addEventListener('click', async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return alert('❌ You must be logged in!');
+
+  const { data, error } = await supabase
+    .from('user_jsons')
+    .select('data')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error || !data?.data) {
+    console.error('Fetch error:', error?.message);
+    alert('❌ Failed to load data.');
     return;
   }
 
-  console.log('Loaded user JSON:', data.json_data);
-  // 💡 Optional: update your UI using the JSON content here
-}
+  try {
+    localStorage.setItem('logs', JSON.stringify(data.data));
+    alert('✅ Logs imported from cloud!');
+    location.reload(); // Refresh to apply
+  } catch (e) {
+    console.error('Invalid JSON:', e);
+    alert('❌ Invalid cloud data.');
+  }
+});
 
 checkUserSession();
 
