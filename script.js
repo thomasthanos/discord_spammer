@@ -1426,8 +1426,62 @@ function stopSending() {
         a.click();
         if (!isUrl) URL.revokeObjectURL(a.href);
     }
+// --- SUPABASE JS: βάλε αυτό πριν το τέλος του DOMContentLoaded ---
+const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA'; // (Το δικό σου API key)
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Initialize the app
+// === Supabase Auth + JSON Fetch ===
+const loginBtn = document.getElementById('login-btn');
+const logoutBtn = document.getElementById('logout-btn');
+const userInfo = document.getElementById('user-info');
+const fetchJsonBtn = document.getElementById('fetch-json-btn');
+
+loginBtn.addEventListener('click', async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
+  if (error) console.error('Login error:', error.message);
+});
+
+logoutBtn.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  location.reload();
+});
+
+fetchJsonBtn.addEventListener('click', async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return alert('You must be logged in!');
+  fetchUserJson(user.id);
+});
+
+async function checkUserSession() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (user) {
+    userInfo.textContent = `Logged in as ${user.email || user.id}`;
+    fetchUserJson(user.id);
+  } else {
+    userInfo.textContent = 'Not logged in';
+  }
+}
+
+async function fetchUserJson(userId) {
+  const { data, error } = await supabase
+    .from('user_jsons')
+    .select('json_data')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error loading JSON:', error.message);
+    return;
+  }
+
+  console.log('Loaded user JSON:', data.json_data);
+  // 💡 Optional: update your UI using the JSON content here
+}
+
+checkUserSession();
+
+
     initApp();
     loadLayout();
 });
