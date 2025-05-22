@@ -40,7 +40,7 @@ A sleek, responsive web app to send customizable messages to Discord via webhook
 
 ## 📸 Preview
  
-> ![Στιγμιότυπο οθόνης 2025-05-20 170425](https://github.com/user-attachments/assets/7acaa8be-6ce8-43d1-81c5-dc3c3a5ca20f)
+> note ready
 
 
 ---
