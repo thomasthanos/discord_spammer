@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
 </head>
 <body>
     <div class="app-container">
@@ -63,6 +64,34 @@
                         <label for="message-content">Message Content</label>
                         <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
                     </div>
+                    <div class="message-tools">
+                        <button id="suggest-message" class="btn-small"><i class="fas fa-lightbulb"></i> Suggest</button>
+                        <button id="format-help" class="btn-small"><i class="fas fa-question-circle"></i> Format Help</button>
+                    </div>
+
+<!-- Μέσα στο settings-column card, μετά το message-content textarea -->
+<div class="form-row">
+    <div class="form-group half-width">
+        <label for="message-attachments"><i class="fas fa-paperclip"></i> Message Attachments</label>
+        <label for="message-attachments" class="custom-file-upload">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span>Click to upload files</span>
+            <div class="file-info">Supports images and videos</div>
+        </label>
+        <input type="file" id="message-attachments" multiple accept="image/*, video/*">
+        <div id="message-attachments-preview" class="attachments-preview"></div>
+    </div>
+    <div class="form-group half-width">
+        <label for="file-size-limit"><i class="fas fa-weight"></i> Max File Size</label>
+        <select id="file-size-limit">
+            <option value="8">8 MB Default</option>
+            <option value="50">50 MB (Level 2 server)</option>
+            <option value="100">100 MB (Level 3 server)</option>
+        </select>
+    </div>
+</div>
+
+
 
 <!-- Inside the "Settings" card, replace the existing embed section -->
 <div class="embed-section">
@@ -90,13 +119,22 @@
                     <label for="embed-footer-0"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
                     <input type="text" id="embed-footer-0" placeholder="Enter footer text">
                 </div>
+
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label for="embed-image-url"><i class="fas fa-image"></i> Embed Image URL</label>
+                        <input type="url" id="embed-image-url" placeholder="https://example.com/image.png">
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="embed-thumbnail-url"><i class="fas fa-image"></i> Embed Thumbnail URL</label>
+                        <input type="url" id="embed-thumbnail-url" placeholder="https://example.com/thumbnail.png">
+                    </div>
+                </div>
+
+
             </div>
         </div>
         <button id="add-embed-btn" class="btn-small"><i class="fas fa-plus"></i> Add Another Embed</button>
-        <div class="message-tools">
-            <button id="suggest-message" class="btn-small"><i class="fas fa-lightbulb"></i> Suggest</button>
-            <button id="format-help" class="btn-small"><i class="fas fa-question-circle"></i> Format Help</button>
-        </div>
     </div>
 </div>
                     

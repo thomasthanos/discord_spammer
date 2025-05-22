@@ -47,6 +47,11 @@ document.addEventListener('DOMContentLoaded', () => {
         addEmbedBtn: document.getElementById('add-embed-btn'),
         embedContent: document.getElementById('embed-content'),
         embedToggleBtn: document.getElementById('embed-toggle-btn'),
+        messageAttachments: document.getElementById('message-attachments'),
+        messageAttachmentsPreview: document.getElementById('message-attachments-preview'),
+        embedImageUrl: document.getElementById('embed-image-url'),
+        embedThumbnailUrl: document.getElementById('embed-thumbnail-url'),
+        fileSizeLimit: document.getElementById('file-size-limit')
     };
 
     // Variables
@@ -61,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let scheduledJobs = [];
     let embeds = [];
     let embedCount = 1;
-    let firstEmbedHeight = 0; // Store the height of the first embed
+    let firstEmbedHeight = 0;
+    let attachments = [];
 
     // Initialize app
     function initApp() {
@@ -78,12 +84,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Load saved settings
         [
-            'webhookUrl', 'messageContent', 'username', 'avatarUrl', 'randomMessages'
+            'webhookUrl', 'messageContent', 'username', 'avatarUrl', 'randomMessages',
+            'embedImageUrl', 'embedThumbnailUrl', 'fileSizeLimit'
         ].forEach(key => {
             const value = localStorage.getItem(key);
-            if (value) elements[key].value = value;
-            if (key === 'randomMessages' && value === 'true') {
-                elements[key].checked = true;
+            if (value) {
+                if (key === 'randomMessages' && value === 'true') {
+                    elements[key].checked = true;
+                } else if (key === 'fileSizeLimit') {
+                    elements.fileSizeLimit.value = value || '8'; // Default to 8 MB
+                } else {
+                    elements[key].value = value;
+                }
             }
         });
 
@@ -115,8 +127,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Setup event listeners
         setupEventListeners();
         setupEmbedEventListeners();
+        handleFileUploads();
         
-        // Initialize drag and drop (removed as per user request)
         initDragAndDrop();
     }
 
@@ -184,6 +196,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.enableSounds.addEventListener('change', () => {
             localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
+        });
+
+        // New input changes for attachments
+        elements.embedImageUrl.addEventListener('input', () => {
+            localStorage.setItem('embedImageUrl', elements.embedImageUrl.value);
+            updatePreview();
+        });
+
+        elements.embedThumbnailUrl.addEventListener('input', () => {
+            localStorage.setItem('embedThumbnailUrl', elements.embedThumbnailUrl.value);
+            updatePreview();
+        });
+
+        // File size limit dropdown
+        elements.fileSizeLimit.addEventListener('change', (e) => {
+            localStorage.setItem('fileSizeLimit', e.target.value);
         });
 
         // Interval controls
@@ -267,6 +295,110 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMessageLimitPlaceholder();
     }
 
+    function handleFileUploads() {
+        elements.messageAttachments.addEventListener('change', (e) => {
+            elements.messageAttachmentsPreview.innerHTML = '';
+            attachments = Array.from(e.target.files);
+
+            // Discord limits
+            const maxFileSizeMB = parseInt(elements.fileSizeLimit.value) || 8;
+            const maxAttachments = 10;
+            const supportedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+            const supportedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+
+            // Check maximum number of attachments
+            if (attachments.length > maxAttachments) {
+                showToast(`Too many attachments (${attachments.length}). Maximum allowed is ${maxAttachments}.`, 'error');
+                attachments = attachments.slice(0, maxAttachments);
+                const dataTransfer = new DataTransfer();
+                attachments.forEach(file => dataTransfer.items.add(file));
+                elements.messageAttachments.files = dataTransfer.files;
+            }
+
+            attachments.forEach((file, index) => {
+                const fileSizeMB = file.size / 1024 / 1024;
+
+                // Check file size
+                if (fileSizeMB > maxFileSizeMB) {
+                    showToast(`File "${file.name}" is too large (${fileSizeMB.toFixed(2)} MB). Maximum allowed is ${maxFileSizeMB} MB.`, 'error');
+                    return;
+                }
+
+                // Check file type
+                if (file.type.startsWith('image/') && !supportedImageTypes.includes(file.type)) {
+                    showToast(`Image format "${file.type}" is not supported by Discord.`, 'error');
+                    return;
+                }
+                if (file.type.startsWith('video/') && !supportedVideoTypes.includes(file.type)) {
+                    showToast(`Video format "${file.type}" is not supported by Discord.`, 'error');
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                reader.onload = (event) => {
+                    const previewElement = document.createElement('div');
+                    previewElement.className = 'attachment-preview-item';
+
+                    // Determine icon for non-image/video files
+                    let iconClass = 'fa-file';
+                    if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
+                    else if (file.type.includes('zip') || file.type.includes('compressed')) iconClass = 'fa-file-archive';
+                    else if (file.type.includes('msword') || file.type.includes('officedocument')) iconClass = 'fa-file-word';
+
+                    if (file.type.startsWith('image/')) {
+                        previewElement.innerHTML = `
+                            <img src="${event.target.result}" alt="${file.name}">
+                            <span>${file.name} (${fileSizeMB.toFixed(2)} MB)</span>
+                            <button class="btn-icon-small remove-attachment" data-index="${index}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                    } else if (file.type.startsWith('video/')) {
+                        previewElement.innerHTML = `
+                            <video controls>
+                                <source src="${event.target.result}" type="${file.type}">
+                            </video>
+                            <span>${file.name} (${fileSizeMB.toFixed(2)} MB)</span>
+                            <button class="btn-icon-small remove-attachment" data-index="${index}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                    } else {
+                        previewElement.innerHTML = `
+                            <i class="fas ${iconClass}"></i>
+                            <span>${file.name} (${fileSizeMB.toFixed(2)} MB)</span>
+                            <button class="btn-icon-small remove-attachment" data-index="${index}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                    }
+
+                    elements.messageAttachmentsPreview.appendChild(previewElement);
+
+                    // Add remove button listener dynamically
+                    const removeBtn = previewElement.querySelector('.remove-attachment');
+                    removeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const index = parseInt(removeBtn.getAttribute('data-index'));
+                        attachments.splice(index, 1);
+                        
+                        const dataTransfer = new DataTransfer();
+                        attachments.forEach(file => dataTransfer.items.add(file));
+                        elements.messageAttachments.files = dataTransfer.files;
+                        
+                        elements.messageAttachments.dispatchEvent(new Event('change'));
+                    });
+                };
+
+                reader.readAsDataURL(file);
+            });
+
+            // Update preview after adding attachments
+            updatePreview();
+        });
+    }
+
     function setupEmbedEventListeners() {
         elements.addEmbedBtn.addEventListener('click', () => {
             if (embedCount >= 10) {
@@ -327,6 +459,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label for="embed-footer-${index}"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
                     <input type="text" id="embed-footer-${index}" placeholder="Enter footer text" value="${embed.footer || ''}">
                 </div>
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label for="embed-image-url-${index}"><i class="fas fa-image"></i> Embed Image URL</label>
+                        <input type="url" id="embed-image-url-${index}" placeholder="https://example.com/image.png" value="${embed.imageUrl || ''}">
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="embed-thumbnail-url-${index}"><i class="fas fa-image"></i> Embed Thumbnail URL</label>
+                        <input type="url" id="embed-thumbnail-url-${index}" placeholder="https://example.com/thumbnail.png" value="${embed.thumbnailUrl || ''}">
+                    </div>
+                </div>
             `;
             elements.embedList.appendChild(embedItem);
 
@@ -334,59 +476,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const descriptionInput = embedItem.querySelector(`#embed-description-${index}`);
             const colorInput = embedItem.querySelector(`#embed-color-${index}`);
             const footerInput = embedItem.querySelector(`#embed-footer-${index}`);
+            const imageUrlInput = embedItem.querySelector(`#embed-image-url-${index}`);
+            const thumbnailUrlInput = embedItem.querySelector(`#embed-thumbnail-url-${index}`);
             
             titleInput.addEventListener('input', () => {
                 embeds[index].title = titleInput.value;
                 localStorage.setItem('embeds', JSON.stringify(embeds));
                 updatePreview();
-                renderEmbeds(); // Re-render to adjust height
-                if (index === 0 && elements.embedContent.classList.contains('expanded')) {
-                    firstEmbedHeight = elements.embedContent.scrollHeight; // Update height if first embed changes
-                    elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
-                }
             });
+            
             descriptionInput.addEventListener('input', () => {
                 embeds[index].description = descriptionInput.value;
                 localStorage.setItem('embeds', JSON.stringify(embeds));
                 updatePreview();
-                renderEmbeds(); // Re-render to adjust height
-                if (elements.embedContent.classList.contains('expanded')) {
-                        if (window.innerWidth < 768) { // Mobile
-                            elements.embedContent.style.maxHeight = '300px';
-                        } else { // Tablet/Desktop
-                            if (embedCount > 1) {
-                                elements.embedContent.style.maxHeight = '500px';
-                            } else {
-                                elements.embedContent.style.maxHeight = 'none';
-                            }
-                        }
-                    }
             });
+            
             colorInput.addEventListener('input', () => {
                 embeds[index].color = colorInput.value;
                 localStorage.setItem('embeds', JSON.stringify(embeds));
                 updatePreview();
             });
+            
             footerInput.addEventListener('input', () => {
                 embeds[index].footer = footerInput.value;
                 localStorage.setItem('embeds', JSON.stringify(embeds));
                 updatePreview();
-                renderEmbeds(); // Re-render to adjust height
-                if (index === 0 && elements.embedContent.classList.contains('expanded')) {
-                    firstEmbedHeight = elements.embedContent.scrollHeight; // Update height if first embed changes
-                    elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
-                }
+            });
+            
+            imageUrlInput.addEventListener('input', () => {
+                embeds[index].imageUrl = imageUrlInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+            });
+            
+            thumbnailUrlInput.addEventListener('input', () => {
+                embeds[index].thumbnailUrl = thumbnailUrlInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
             });
         });
 
         if (elements.embedContent.classList.contains('expanded')) {
-            if (embedCount > 1) {
-                elements.embedContent.style.maxHeight = '500px'; // Consistent max-height for second+ embeds
-            } else {
-                if (firstEmbedHeight === 0) {
-                    firstEmbedHeight = elements.embedContent.scrollHeight;
+            if (window.innerWidth < 768) { // Mobile
+                elements.embedContent.style.maxHeight = '300px';
+            } else { // Tablet/Desktop
+                if (embedCount > 1) {
+                    elements.embedContent.style.maxHeight = '500px';
+                } else {
+                    elements.embedContent.style.maxHeight = 'none';
                 }
-                elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
             }
         }
 
@@ -501,24 +639,73 @@ document.addEventListener('DOMContentLoaded', () => {
         existingPreviews.forEach(preview => preview.remove());
 
         embeds.forEach(embed => {
-            if (embed.title.trim() || embed.description.trim()) {
+            if (embed.title.trim() || embed.description.trim() || embed.imageUrl || embed.thumbnailUrl) {
                 const embedPreview = document.createElement('div');
                 embedPreview.className = 'embed-preview';
                 const embedColor = embed.color || '#5865F2';
-                const embedTitle = formatDiscordMarkdown(embed.title.trim(), 'title');
-                const embedDesc = formatDiscordMarkdown(embed.description.trim(), 'description');
-                const embedFooter = formatDiscordMarkdown(embed.footer.trim(), 'description');
                 
                 embedPreview.innerHTML = `
                     <div class="embed" style="border-left: 4px solid ${embedColor}">
-                        ${embedTitle ? `<div class="embed-title">${embedTitle}</div>` : ''}
-                        ${embedDesc ? `<div class="embed-description">${embedDesc}</div>` : ''}
-                        ${embedFooter ? `<div class="embed-footer">${embedFooter}</div>` : ''}
+                        ${embed.title.trim() ? `<div class="embed-title">${formatDiscordMarkdown(embed.title.trim(), 'title')}</div>` : ''}
+                        ${embed.description.trim() ? `<div class="embed-description">${formatDiscordMarkdown(embed.description.trim(), 'description')}</div>` : ''}
+                        ${embed.imageUrl ? `<div class="embed-image"><img src="${embed.imageUrl}" alt="Embed Image"></div>` : ''}
+                        ${embed.thumbnailUrl ? `<div class="embed-thumbnail"><img src="${embed.thumbnailUrl}" alt="Embed Thumbnail"></div>` : ''}
+                        ${embed.footer.trim() ? `<div class="embed-footer">${formatDiscordMarkdown(embed.footer.trim(), 'description')}</div>` : ''}
                     </div>
                 `;
                 document.querySelector('.discord-content').appendChild(embedPreview);
             }
         });
+
+        // Show attachments preview in the message
+        const attachmentsPreview = document.querySelector('.preview-attachments');
+        if (attachmentsPreview) attachmentsPreview.remove();
+        
+        if (attachments.length > 0) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'preview-attachments';
+            
+            attachments.forEach(file => {
+                const attachmentItem = document.createElement('div');
+                attachmentItem.className = 'attachment-preview-item';
+                
+                // Determine icon for non-image/video files
+                let iconClass = 'fa-file';
+                if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
+                else if (file.type.includes('zip') || file.type.includes('compressed')) iconClass = 'fa-file-archive';
+                else if (file.type.includes('msword') || file.type.includes('officedocument')) iconClass = 'fa-file-word';
+
+                // Display file name and size for all file types
+                const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                attachmentItem.innerHTML = `
+                    <div class="attachment-info">
+                        <i class="fas ${iconClass}"></i>
+                        <span>${file.name}</span>
+                        <span>(${fileSizeMB} MB)</span>
+                    </div>
+                `;
+                
+                // Add image or video preview if applicable
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.alt = file.name;
+                    attachmentItem.prepend(img);
+                } else if (file.type.startsWith('video/')) {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    const source = document.createElement('source');
+                    source.src = URL.createObjectURL(file);
+                    source.type = file.type;
+                    video.appendChild(source);
+                    attachmentItem.prepend(video);
+                }
+                
+                previewContainer.appendChild(attachmentItem);
+            });
+            
+            document.querySelector('.discord-content').appendChild(previewContainer);
+        }
     }
 
     function formatDiscordMarkdown(text, context = 'description') {
@@ -706,8 +893,8 @@ document.addEventListener('DOMContentLoaded', () => {
             playSound('error');
             return;
         }
-        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim())) {
-            addLog('error', 'Please enter a message or embed content to send');
+        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && attachments.length === 0) {
+            addLog('error', 'Please enter a message, add an embed, or attach a file to send');
             playSound('error');
             return;
         }
@@ -779,8 +966,8 @@ document.addEventListener('DOMContentLoaded', () => {
             playSound('error');
             return;
         }
-        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim())) {
-            addLog('error', 'Please enter a message or embed content to send');
+        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && attachments.length === 0) {
+            addLog('error', 'Please enter a message, add an embed, or attach a file to send');
             playSound('error');
             return;
         }
@@ -793,41 +980,142 @@ document.addEventListener('DOMContentLoaded', () => {
         const username = elements.username.value.trim() || 'Webhook Sender';
         const avatarUrl = elements.avatarUrl.value.trim() || 'https://cdn.discordapp.com/embed/avatars/0.png';
         
+        // Validate webhook URL
+        if (!webhookUrl.includes('discord.com/api/webhooks/')) {
+            throw new Error('Invalid Discord webhook URL');
+        }
+
         const embedsToSend = embeds
-            .filter(embed => embed.title.trim() || embed.description.trim())
+            .filter(embed => embed.title.trim() || embed.description.trim() || embed.imageUrl || embed.thumbnailUrl)
             .map(embed => ({
                 title: embed.title.trim(),
                 description: embed.description.trim(),
                 color: parseInt(embed.color.substring(1), 16),
                 footer: embed.footer.trim() ? { text: embed.footer.trim() } : undefined,
+                image: embed.imageUrl ? { url: embed.imageUrl } : undefined,
+                thumbnail: embed.thumbnailUrl ? { url: embed.thumbnailUrl } : undefined,
                 timestamp: new Date().toISOString()
             }));
 
+        // Create progress indicator with progress bar
+        const progressToast = document.createElement('div');
+        progressToast.className = 'toast toast-info';
+        progressToast.innerHTML = `
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Uploading...</span>
+            <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 0%"></div>
+            </div>
+        `;
+        elements.toastContainer.appendChild(progressToast);
+        progressToast.classList.add('show');
+
         try {
-            const response = await fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    allowed_mentions: { parse: ["users", "roles", "everyone"] }, 
-                    content: message, 
-                    username, 
+            if (attachments.length > 0) {
+                const formData = new FormData();
+                
+                attachments.forEach((file, index) => {
+                    formData.append(`file${index}`, file, file.name); // Include filename
+                });
+                
+                formData.append('payload_json', JSON.stringify({
+                    allowed_mentions: { parse: ["users", "roles", "everyone"] },
+                    content: message,
+                    username,
                     avatar_url: avatarUrl,
                     embeds: embedsToSend.length > 0 ? embedsToSend : undefined
-                })
-            });
+                }));
 
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', webhookUrl, true);
 
-            const responseTime = Date.now() - startTime;
-            stats.total++;
-            stats.success++;
-            stats.responseTimes.push(responseTime);
-            if (stats.responseTimes.length > 10) stats.responseTimes.shift();
-            updateStats();
-            saveStats();
-            addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
-            playSound('success');
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percentComplete = Math.round((event.loaded / event.total) * 100);
+                        progressToast.querySelector('.progress-bar-fill').style.width = `${percentComplete}%`;
+                    }
+                };
+
+                xhr.onload = () => {
+                    progressToast.remove();
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        const responseTime = Date.now() - startTime;
+                        stats.total++;
+                        stats.success++;
+                        stats.responseTimes.push(responseTime);
+                        if (stats.responseTimes.length > 10) stats.responseTimes.shift();
+                        updateStats();
+                        saveStats();
+                        addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
+                        playSound('success');
+                    } else {
+                        let errorMessage = `HTTP error! Status: ${xhr.status}`;
+                        if (xhr.status === 400) {
+                            errorMessage = 'Invalid request. Check file format, number of attachments (max 10), or webhook URL.';
+                        } else if (xhr.status === 401) {
+                            errorMessage = 'Unauthorized. Invalid webhook URL or token.';
+                        } else if (xhr.status === 404) {
+                            errorMessage = 'Webhook not found. Check the URL.';
+                        } else if (xhr.status === 413) {
+                            errorMessage = `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB).`;
+                        } else if (xhr.status === 429) {
+                            errorMessage = 'Rate limit exceeded. Please try again later.';
+                        }
+                        throw new Error(errorMessage);
+                    }
+                };
+
+                xhr.onerror = () => {
+                    progressToast.remove();
+                    throw new Error('Network error: Could not connect to the server.');
+                };
+
+                xhr.onabort = () => {
+                    progressToast.remove();
+                    throw new Error('Request aborted.');
+                };
+
+                xhr.send(formData);
+            } else {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allowed_mentions: { parse: ["users", "roles", "everyone"] },
+                        content: message,
+                        username,
+                        avatar_url: avatarUrl,
+                        embeds: embedsToSend.length > 0 ? embedsToSend : undefined
+                    })
+                });
+                
+                progressToast.remove();
+                if (!response.ok) {
+                    let errorMessage = `HTTP error! Status: ${response.status}`;
+                    if (response.status === 400) {
+                        errorMessage = 'Invalid request. Check message content or webhook URL.';
+                    } else if (response.status === 401) {
+                        errorMessage = 'Unauthorized. Invalid webhook URL or token.';
+                    } else if (response.status === 404) {
+                        errorMessage = 'Webhook not found. Check the URL.';
+                    } else if (response.status === 429) {
+                        errorMessage = 'Rate limit exceeded. Please try again later.';
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const responseTime = Date.now() - startTime;
+                stats.total++;
+                stats.success++;
+                stats.responseTimes.push(responseTime);
+                if (stats.responseTimes.length > 10) stats.responseTimes.shift();
+                updateStats();
+                saveStats();
+                addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
+                playSound('success');
+            }
         } catch (error) {
+            progressToast.remove();
             stats.total++;
             stats.failed++;
             updateStats();
@@ -849,10 +1137,16 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.username.value = '';
             elements.avatarUrl.value = '';
             elements.randomMessages.checked = false;
+            elements.embedImageUrl.value = '';
+            elements.embedThumbnailUrl.value = '';
+            elements.messageAttachments.value = '';
+            elements.messageAttachmentsPreview.innerHTML = '';
+            elements.fileSizeLimit.value = '8'; // Reset to Level 1 default
+            attachments = [];
             
             embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
             embedCount = 1;
-            firstEmbedHeight = 0; // Reset height
+            firstEmbedHeight = 0;
             renderEmbeds();
             
             elements.previewText.textContent = 'Your message will appear here...';
@@ -872,6 +1166,9 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('stats');
             localStorage.removeItem('embeds');
             localStorage.removeItem('layout');
+            localStorage.removeItem('embedImageUrl');
+            localStorage.removeItem('embedThumbnailUrl');
+            localStorage.removeItem('fileSizeLimit');
             
             elements.statusText.textContent = 'Ready';
             elements.statusDot.classList.remove('active');
@@ -879,10 +1176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addLog('warning', 'Reset all settings and data');
             playSound('notification');
             
-            // Reload layout to reflect default
             loadLayout();
-
-            // Update message-limit placeholder after reset
             updateMessageLimitPlaceholder();
         }
     }
@@ -913,7 +1207,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
                 enableSounds: elements.enableSounds.checked,
-                embeds: embeds
+                embeds: embeds,
+                fileSizeLimit: elements.fileSizeLimit.value
             },
             statistics: {
                 totalMessages: stats.total,
@@ -1000,6 +1295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 elements.messageLimit.value = jsonData.settings.messageLimit === 'Unlimited' ? '' : jsonData.settings.messageLimit || '1';
+                elements.fileSizeLimit.value = jsonData.settings.fileSizeLimit || '8';
                 
                 updatePreview();
             }
@@ -1030,6 +1326,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('stats', JSON.stringify(stats));
             localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
             localStorage.setItem('embeds', JSON.stringify(embeds));
+            localStorage.setItem('fileSizeLimit', elements.fileSizeLimit.value);
             
             // Reapply layout to ensure correct card order
             loadLayout();
