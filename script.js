@@ -54,6 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fileSizeLimit: document.getElementById('file-size-limit')
     };
 
+    function isValidImageUrl(url) {
+        return /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+    }
+
     // Variables
     let intervalId = null;
     let isSending = false;
@@ -148,12 +152,6 @@ document.addEventListener('click', function(e) {
 
 
 
-// click έξω για να κλείνει
-document.addEventListener('click', function(e) {
-    if (!document.getElementById('file-size-custom-select').contains(e.target)) {
-        document.querySelector('.options-list').style.display = 'none';
-    }
-});
 
         // Setup event listeners
         setupEventListeners();
@@ -326,109 +324,99 @@ document.addEventListener('click', function(e) {
         updateMessageLimitPlaceholder();
     }
 
-    function handleFileUploads() {
-        elements.messageAttachments.addEventListener('change', (e) => {
-            elements.messageAttachmentsPreview.innerHTML = '';
-            attachments = Array.from(e.target.files);
+function handleFileUploads() {
+    elements.messageAttachments.addEventListener('change', (e) => {
+        attachments = Array.from(e.target.files);
 
-            // Discord limits
-            const maxFileSizeMB = parseInt(elements.fileSizeLimit.value) || 8;
-            const maxAttachments = 10;
-            const supportedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-            const supportedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+        // Discord limits
+        const maxFileSizeMB = parseInt(elements.fileSizeLimit.value) || 8;
+        const maxAttachments = 10;
+        const supportedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+        const supportedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
 
-            // Check maximum number of attachments
-            if (attachments.length > maxAttachments) {
-                showToast(`Too many attachments (${attachments.length}). Maximum allowed is ${maxAttachments}.`, 'error');
-                attachments = attachments.slice(0, maxAttachments);
-                const dataTransfer = new DataTransfer();
-                attachments.forEach(file => dataTransfer.items.add(file));
-                elements.messageAttachments.files = dataTransfer.files;
-            }
+        // Limit number of attachments
+        if (attachments.length > maxAttachments) {
+            showToast(`Too many attachments (${attachments.length}). Maximum allowed is ${maxAttachments}.`, 'error');
+            attachments = attachments.slice(0, maxAttachments);
+            const dataTransfer = new DataTransfer();
+            attachments.forEach(file => dataTransfer.items.add(file));
+            elements.messageAttachments.files = dataTransfer.files;
+        }
 
-            attachments.forEach((file, index) => {
-                const fileSizeMB = file.size / 1024 / 1024;
+        renderAttachmentsPreview();
+        updatePreview();
+    });
+}
 
-                // Check file size
-                if (fileSizeMB > maxFileSizeMB) {
-                    showToast(`File "${file.name}" is too large (${fileSizeMB.toFixed(2)} MB). Maximum allowed is ${maxFileSizeMB} MB.`, 'error');
-                    return;
-                }
+// ΝΕΑ FUNCTION για rendering και σωστό remove
+function renderAttachmentsPreview() {
+    elements.messageAttachmentsPreview.innerHTML = '';
+    attachments.forEach((file, i) => {
+        const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+        const fileId = `${file.name}_${file.size}`; // μοναδικό id
 
-                // Check file type
-                if (file.type.startsWith('image/') && !supportedImageTypes.includes(file.type)) {
-                    showToast(`Image format "${file.type}" is not supported by Discord.`, 'error');
-                    return;
-                }
-                if (file.type.startsWith('video/') && !supportedVideoTypes.includes(file.type)) {
-                    showToast(`Video format "${file.type}" is not supported by Discord.`, 'error');
-                    return;
-                }
+        // Determine icon for non-image/video files
+        let iconClass = 'fa-file';
+        if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
+        else if (file.type.includes('zip') || file.type.includes('compressed')) iconClass = 'fa-file-archive';
+        else if (file.type.includes('msword') || file.type.includes('officedocument')) iconClass = 'fa-file-word';
 
-                const reader = new FileReader();
+        let innerHTML = '';
+        if (file.type.startsWith('image/')) {
+            innerHTML = `
+                <img src="${URL.createObjectURL(file)}" alt="${file.name}">
+                <span>${file.name} (${fileSizeMB} MB)</span>
+                <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        } else if (file.type.startsWith('video/')) {
+            innerHTML = `
+                <video controls>
+                    <source src="${URL.createObjectURL(file)}" type="${file.type}">
+                </video>
+                <span>${file.name} (${fileSizeMB} MB)</span>
+                <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        } else {
+            innerHTML = `
+                <i class="fas ${iconClass}"></i>
+                <span>${file.name} (${fileSizeMB} MB)</span>
+                <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        }
 
-                reader.onload = (event) => {
-                    const previewElement = document.createElement('div');
-                    previewElement.className = 'attachment-preview-item';
+        const previewElement = document.createElement('div');
+        previewElement.className = 'attachment-preview-item';
+        previewElement.innerHTML = innerHTML;
+        elements.messageAttachmentsPreview.appendChild(previewElement);
 
-                    // Determine icon for non-image/video files
-                    let iconClass = 'fa-file';
-                    if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
-                    else if (file.type.includes('zip') || file.type.includes('compressed')) iconClass = 'fa-file-archive';
-                    else if (file.type.includes('msword') || file.type.includes('officedocument')) iconClass = 'fa-file-word';
+        // Remove button: Σωστό remove by name+size
+        previewElement.querySelector('.remove-attachment').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const fileId = e.currentTarget.getAttribute('data-fid');
+            attachments = attachments.filter(f => (`${f.name}_${f.size}` !== fileId));
 
-                    if (file.type.startsWith('image/')) {
-                        previewElement.innerHTML = `
-                            <img src="${event.target.result}" alt="${file.name}">
-                            <span>${file.name} (${fileSizeMB.toFixed(2)} MB)</span>
-                            <button class="btn-icon-small remove-attachment" data-index="${index}">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        `;
-                    } else if (file.type.startsWith('video/')) {
-                        previewElement.innerHTML = `
-                            <video controls>
-                                <source src="${event.target.result}" type="${file.type}">
-                            </video>
-                            <span>${file.name} (${fileSizeMB.toFixed(2)} MB)</span>
-                            <button class="btn-icon-small remove-attachment" data-index="${index}">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        `;
-                    } else {
-                        previewElement.innerHTML = `
-                            <i class="fas ${iconClass}"></i>
-                            <span>${file.name} (${fileSizeMB.toFixed(2)} MB)</span>
-                            <button class="btn-icon-small remove-attachment" data-index="${index}">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        `;
-                    }
+            // Ενημέρωσε το file input
+            const dataTransfer = new DataTransfer();
+            attachments.forEach(file => dataTransfer.items.add(file));
+            elements.messageAttachments.files = dataTransfer.files;
 
-                    elements.messageAttachmentsPreview.appendChild(previewElement);
-
-                    // Add remove button listener dynamically
-                    const removeBtn = previewElement.querySelector('.remove-attachment');
-                    removeBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const index = parseInt(removeBtn.getAttribute('data-index'));
-                        attachments.splice(index, 1);
-                        
-                        const dataTransfer = new DataTransfer();
-                        attachments.forEach(file => dataTransfer.items.add(file));
-                        elements.messageAttachments.files = dataTransfer.files;
-                        
-                        elements.messageAttachments.dispatchEvent(new Event('change'));
-                    });
-                };
-
-                reader.readAsDataURL(file);
-            });
-
-            // Update preview after adding attachments
+            renderAttachmentsPreview();
             updatePreview();
+
+            // Αν δεν έμεινε τίποτα, καθάρισε το input (όπως ζήτησες)
+            if (attachments.length === 0) {
+                elements.messageAttachments.value = '';
+            }
         });
-    }
+    });
+}
+
 
     function setupEmbedEventListeners() {
         elements.addEmbedBtn.addEventListener('click', () => {
@@ -443,30 +431,31 @@ document.addEventListener('click', function(e) {
             updatePreview();
             showToast('New embed added', 'success');
         });
-
-        elements.embedToggleBtn.addEventListener('click', () => {
-            const isExpanded = elements.embedContent.classList.toggle('expanded');
-            elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
-            
-            if (isExpanded) {
-                if (window.innerWidth < 768) { // Mobile
-                    elements.embedContent.style.maxHeight = '300px';
-                } else { // Tablet/Desktop
-                    if (embedCount > 1) {
-                        elements.embedContent.style.maxHeight = '500px';
-                    } else {
-                        elements.embedContent.style.maxHeight = 'none';
-                    }
-                }
+elements.embedToggleBtn.addEventListener('click', () => {
+    const isExpanded = elements.embedContent.classList.toggle('expanded');
+    elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
+    if (isExpanded) {
+        if (window.innerWidth < 768) {
+            elements.embedContent.style.maxHeight = '300px';
+        } else {
+            if (embedCount > 1) {
+                elements.embedContent.style.maxHeight = '500px';
             } else {
-                elements.embedContent.style.maxHeight = '0';
+                elements.embedContent.style.maxHeight = 'none';
             }
-        });
+        }
+    } else {
+        elements.embedContent.style.maxHeight = '0';
+    }
+});
+
     }
 
     function renderEmbeds() {
         elements.embedList.innerHTML = '';
         embeds.forEach((embed, index) => {
+            embed.index = index; // re-index
+
             const embedItem = document.createElement('div');
             embedItem.className = 'embed-item';
             embedItem.dataset.embedIndex = index;
@@ -546,7 +535,20 @@ document.addEventListener('click', function(e) {
                 updatePreview();
             });
         });
-
+// Delete button: Κάνε σωστό re-render και re-index
+    document.querySelectorAll('.delete-embed-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.embedIndex);
+            if (index > 0) {
+                embeds.splice(index, 1);
+                embedCount--;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                renderEmbeds();
+                updatePreview();
+                showToast('Embed deleted', 'success');
+            }
+        });
+    });
         if (elements.embedContent.classList.contains('expanded')) {
             if (window.innerWidth < 768) { // Mobile
                 elements.embedContent.style.maxHeight = '300px';
@@ -680,7 +682,7 @@ document.addEventListener('click', function(e) {
                         ${embed.title.trim() ? `<div class="embed-title">${formatDiscordMarkdown(embed.title.trim(), 'title')}</div>` : ''}
                         ${embed.description.trim() ? `<div class="embed-description">${formatDiscordMarkdown(embed.description.trim(), 'description')}</div>` : ''}
                         ${embed.imageUrl ? `<div class="embed-image"><img src="${embed.imageUrl}" alt="Embed Image"></div>` : ''}
-                        ${embed.thumbnailUrl ? `<div class="embed-thumbnail"><img src="${embed.thumbnailUrl}" alt="Embed Thumbnail"></div>` : ''}
+                        ${embed.thumbnailUrl && isValidImageUrl(embed.thumbnailUrl) ? `<div class="embed-thumbnail"><img src="${embed.thumbnailUrl}" alt="Embed Thumbnail"></div>` : ''}
                         ${embed.footer.trim() ? `<div class="embed-footer">${formatDiscordMarkdown(embed.footer.trim(), 'description')}</div>` : ''}
                     </div>
                 `;
