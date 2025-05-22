@@ -910,7 +910,7 @@ body {
 
 .app-content {
     display: grid;
-    grid-template-columns: 1.2fr 1fr; /* Αρχή πλάτους του settings panel */
+    grid-template-columns: 1.2fr 1fr;
     gap: 20px;
 }
 
@@ -1000,7 +1000,7 @@ body {
     margin-top: 8px;
 }
 
-/* Προσαρμοσμένο στυλ για το color picker */
+/* Προσαρμογές για το color picker */
 input[type="color"]#embed-color {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -1038,17 +1038,6 @@ input[type="color"]#embed-color:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.3);
-}
-
-.form-group input:not([type="color"]) {
-    width: 100%;
-    padding: 12px 15px;
-    border-radius: var(--border-radius);
-    border: 1px solid var(--text-secondary);
-    background: rgba(0, 0, 0, 0.1);
-    color: var(--text-color);
-    font-size: 16px;
-    transition: var(--transition);
 }
 
 /* Flex container για embed-title και embed-color */
@@ -1109,128 +1098,148 @@ input[type="color"]#embed-color:focus {
 .embed-content {
     max-height: 0;
     overflow-y: hidden;
-    overflow-x: hidden; /* Disable horizontal scrollbar */
     transition: max-height 0.3s ease;
 }
 
 .embed-content.expanded {
-    /* Base style for expansion; JavaScript will override for first embed */
-    max-height: 500px;
+    max-height: 300px;
     overflow-y: auto;
-    overflow-x: hidden; /* Ensure horizontal scrollbar is disabled */
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Modern Dark Small Scrollbar - Default (Dark Theme) */
+@media (min-width: 769px) {
+    .embed-content.expanded {
+        max-height: 500px;
+    }
+}
+
+.embed-content.expanded:first-child {
+    max-height: none;
+}
+
 .embed-content.expanded::-webkit-scrollbar {
-    width: 8px; /* Slim scrollbar */
+    width: 6px;
+    height: 6px;
+}
+
+.embed-content {
+    overflow-x: hidden;
+}
+
+.embed-row {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 5px;
+}
+
+.embed-row .form-group {
+    display: inline-block;
+    white-space: normal;
+    vertical-align: top;
+    min-width: 200px;
 }
 
 .embed-content.expanded::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05); /* Subtle background with low opacity */
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .embed-content.expanded::-webkit-scrollbar-thumb {
-    background-color: var(--secondary-color); /* Matches secondary color for dark theme */
+    background-color: var(--secondary-color);
     border-radius: 4px;
     transition: background-color 0.3s ease;
 }
 
 .embed-content.expanded::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Primary color on hover */
+    background-color: var(--primary-color);
 }
 
 .embed-content.expanded::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
+    background-color: var(--card-color);
 }
 
-/* Firefox scrollbar styling - Default (Dark Theme) */
 .embed-content.expanded {
-    scrollbar-width: thin; /* Slim scrollbar for Firefox */
-    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05); /* Thumb and subtle track */
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05);
 }
 
-/* Light Theme Scrollbar */
 [data-theme="light"] .embed-content.expanded::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05); /* Subtle dark background for light theme */
+    background: rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="light"] .embed-content.expanded::-webkit-scrollbar-thumb {
-    background-color: var(--text-secondary); /* Use text-secondary for thumb */
+    background-color: var(--text-secondary);
 }
 
 [data-theme="light"] .embed-content.expanded::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Primary color on hover */
+    background-color: var(--primary-color);
 }
 
 [data-theme="light"] .embed-content.expanded::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
+    background-color: var(--card-color);
 }
 
 [data-theme="light"] .embed-content.expanded {
-    scrollbar-color: var(--text-secondary) rgba(0, 0, 0, 0.05); /* Thumb and track for Firefox */
+    scrollbar-color: var(--text-secondary) rgba(0, 0, 0, 0.05);
 }
 
-/* Neon Theme Scrollbar */
 [data-theme="neon"] .embed-content.expanded::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05); /* Subtle background */
+    background: rgba(255, 255, 255, 0.05);
 }
 
 [data-theme="neon"] .embed-content.expanded::-webkit-scrollbar-thumb {
-    background-color: var(--secondary-color); /* Neon secondary color */
+    background-color: var(--secondary-color);
 }
 
 [data-theme="neon"] .embed-content.expanded::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Neon primary color on hover */
+    background-color: var(--primary-color);
 }
 
 [data-theme="neon"] .embed-content.expanded::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
+    background-color: var(--card-color);
 }
 
 [data-theme="neon"] .embed-content.expanded {
-    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05); /* Thumb and track for Firefox */
+    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05);
 }
 
-/* Terminal Theme Scrollbar */
 [data-theme="terminal"] .embed-content.expanded::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05); /* Subtle background */
+    background: rgba(255, 255, 255, 0.05);
 }
 
 [data-theme="terminal"] .embed-content.expanded::-webkit-scrollbar-thumb {
-    background-color: var(--secondary-color); /* Terminal secondary color */
+    background-color: var(--secondary-color);
 }
 
 [data-theme="terminal"] .embed-content.expanded::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Terminal primary color on hover */
+    background-color: var(--primary-color);
 }
 
 [data-theme="terminal"] .embed-content.expanded::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
+    background-color: var(--card-color);
 }
 
 [data-theme="terminal"] .embed-content.expanded {
-    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05); /* Thumb and track for Firefox */
+    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05);
 }
 
-/* Blur Theme Scrollbar */
 [data-theme="blur"] .embed-content.expanded::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05); /* Subtle background */
+    background: rgba(255, 255, 255, 0.05);
 }
 
 [data-theme="blur"] .embed-content.expanded::-webkit-scrollbar-thumb {
-    background-color: var(--text-secondary); /* Use text-secondary for thumb */
+    background-color: var(--text-secondary);
 }
 
 [data-theme="blur"] .embed-content.expanded::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Primary color on hover */
+    background-color: var(--primary-color);
 }
 
 [data-theme="blur"] .embed-content.expanded::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
+    background-color: var(--card-color);
 }
 
 [data-theme="blur"] .embed-content.expanded {
-    scrollbar-color: var(--text-secondary) rgba(255, 255, 255, 0.05); /* Thumb and track for Firefox */
+    scrollbar-color: var(--text-secondary) rgba(255, 255, 255, 0.05);
 }
 
 [id="message-limit"] {
@@ -1273,36 +1282,191 @@ input[type="color"]#embed-color:focus {
     display: none;
 }
 
+/* Modern Dark Small Scrollbar for logs-card - Default (Dark Theme) */
+#log-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+#log-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#log-container::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+#log-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-color);
+}
+
+#log-container::-webkit-scrollbar-thumb:active {
+    background-color: var(--card-color);
+}
+
+#log-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] #log-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] #log-container::-webkit-scrollbar-thumb {
+    background-color: var(--text-secondary);
+}
+
+[data-theme="light"] #log-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-color);
+}
+
+[data-theme="light"] #log-container::-webkit-scrollbar-thumb:active {
+    background-color: var(--card-color);
+}
+
+[data-theme="light"] #log-container {
+    scrollbar-color: var(--text-secondary) rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="neon"] #log-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="neon"] #log-container::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+}
+
+[data-theme="neon"] #log-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-color);
+}
+
+[data-theme="neon"] #log-container::-webkit-scrollbar-thumb:active {
+    background-color: var(--card-color);
+}
+
+[data-theme="neon"] #log-container {
+    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="terminal"] #log-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="terminal"] #log-container::-webkit-scrollbar-thumb {
+    background-color: var(--secondary-color);
+}
+
+[data-theme="terminal"] #log-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-color);
+}
+
+[data-theme="terminal"] #log-container::-webkit-scrollbar-thumb:active {
+    background-color: var(--card-color);
+}
+
+[data-theme="terminal"] #log-container {
+    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="blur"] #log-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="blur"] #log-container::-webkit-scrollbar-thumb {
+    background-color: var(--text-secondary);
+}
+
+[data-theme="blur"] #log-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary-color);
+}
+
+[data-theme="blur"] #log-container::-webkit-scrollbar-thumb:active {
+    background-color: var(--card-color);
+}
+
+[data-theme="blur"] #log-container {
+    scrollbar-color: var(--text-secondary) rgba(255, 255, 255, 0.05);
+}
+
+/* Responsive Adjustments */
 @media (max-width: 768px) {
     .app-container {
         padding: 10px;
     }
-    
+
+    .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 15px;
+        gap: 10px;
+    }
+
+    .header-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .theme-preview {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .btn-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+
+    .btn-icon-small {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+
+    .logo {
+        margin-bottom: 5px;
+    }
+
     .app-content {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        gap: 15px;
     }
-    
+
+    .card {
+        width: 100%;
+        max-width: 350px;
+        margin: 0 auto;
+    }
+
     .logs-card {
-        grid-column: span 1;
+        max-width: 350px;
     }
-    
+
     .button-group {
         flex-direction: column;
     }
-    
+
     .interval-limit-group {
         flex-direction: column;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr 1fr;
     }
-    
+
     .dropdown-content {
         left: 0;
         right: auto;
     }
-    
+
     .form-row.embed-row {
         flex-direction: column;
         align-items: flex-start;
@@ -1313,120 +1477,56 @@ input[type="color"]#embed-color:focus {
     }
 
     .form-row.embed-row input[type="color"]#embed-color {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .embed-content.expanded {
+        max-height: 250px;
     }
 }
 
-/* Modern Dark Small Scrollbar for logs-card - Default (Dark Theme) */
-#log-container::-webkit-scrollbar {
-    width: 8px; /* Slim scrollbar */
-}
+@media (min-width: 769px) and (max-width: 1024px) {
+    .app-container {
+        padding: 15px;
+        max-width: 1000px;
+    }
 
-#log-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05); /* Subtle background with low opacity */
-}
+    .app-header {
+        padding: 12px 15px;
+    }
 
-#log-container::-webkit-scrollbar-thumb {
-    background-color: var(--secondary-color); /* Matches secondary color for dark theme */
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
-}
+    .header-controls {
+        gap: 10px;
+    }
 
-#log-container::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Primary color on hover */
-}
+    .theme-preview {
+        width: 32px;
+        height: 32px;
+    }
 
-#log-container::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
-}
+    .app-content {
+        grid-template-columns: 1fr 0.8fr;
+        gap: 15px;
+    }
 
-/* Firefox scrollbar styling - Default (Dark Theme) */
-#log-container {
-    scrollbar-width: thin; /* Slim scrollbar for Firefox */
-    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05); /* Thumb and subtle track */
-}
+    .card {
+        padding: 15px;
+    }
 
-/* Light Theme Scrollbar */
-[data-theme="light"] #log-container::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05); /* Subtle dark background for light theme */
-}
+    .logs-card {
+        grid-column: span 2;
+    }
 
-[data-theme="light"] #log-container::-webkit-scrollbar-thumb {
-    background-color: var(--text-secondary); /* Use text-secondary for thumb */
-}
+    .stats-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
 
-[data-theme="light"] #log-container::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Primary color on hover */
-}
+    .form-row.embed-row {
+        gap: 10px;
+    }
 
-[data-theme="light"] #log-container::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
-}
-
-[data-theme="light"] #log-container {
-    scrollbar-color: var(--text-secondary) rgba(0, 0, 0, 0.05); /* Thumb and track for Firefox */
-}
-
-/* Neon Theme Scrollbar */
-[data-theme="neon"] #log-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05); /* Subtle background */
-}
-
-[data-theme="neon"] #log-container::-webkit-scrollbar-thumb {
-    background-color: var(--secondary-color); /* Neon secondary color */
-}
-
-[data-theme="neon"] #log-container::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Neon primary color on hover */
-}
-
-[data-theme="neon"] #log-container::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
-}
-
-[data-theme="neon"] #log-container {
-    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05); /* Thumb and track for Firefox */
-}
-
-/* Terminal Theme Scrollbar */
-[data-theme="terminal"] #log-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05); /* Subtle background */
-}
-
-[data-theme="terminal"] #log-container::-webkit-scrollbar-thumb {
-    background-color: var(--secondary-color); /* Terminal secondary color */
-}
-
-[data-theme="terminal"] #log-container::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Terminal primary color on hover */
-}
-
-[data-theme="terminal"] #log-container::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
-}
-
-[data-theme="terminal"] #log-container {
-    scrollbar-color: var(--secondary-color) rgba(255, 255, 255, 0.05); /* Thumb and track for Firefox */
-}
-
-/* Blur Theme Scrollbar */
-[data-theme="blur"] #log-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05); /* Subtle background */
-}
-
-[data-theme="blur"] #log-container::-webkit-scrollbar-thumb {
-    background-color: var(--text-secondary); /* Use text-secondary for thumb */
-}
-
-[data-theme="blur"] #log-container::-webkit-scrollbar-thumb:hover {
-    background-color: var(--primary-color); /* Primary color on hover */
-}
-
-[data-theme="blur"] #log-container::-webkit-scrollbar-thumb:active {
-    background-color: var(--card-color); /* Card color on click */
-}
-
-[data-theme="blur"] #log-container {
-    scrollbar-color: var(--text-secondary) rgba(255, 255, 255, 0.05); /* Thumb and track for Firefox */
+    .embed-content.expanded {
+        max-height: 400px;
+    }
 }

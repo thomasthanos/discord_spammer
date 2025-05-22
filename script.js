@@ -284,15 +284,16 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.embedToggleBtn.addEventListener('click', () => {
             const isExpanded = elements.embedContent.classList.toggle('expanded');
             elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
+            
             if (isExpanded) {
-                if (embedCount > 1) {
-                    elements.embedContent.style.maxHeight = '500px'; // Consistent max-height for second+ embeds
-                } else {
-                    // Use the stored first embed height or calculate it
-                    if (firstEmbedHeight === 0) {
-                        firstEmbedHeight = elements.embedContent.scrollHeight;
+                if (window.innerWidth < 768) { // Mobile
+                    elements.embedContent.style.maxHeight = '300px';
+                } else { // Tablet/Desktop
+                    if (embedCount > 1) {
+                        elements.embedContent.style.maxHeight = '500px';
+                    } else {
+                        elements.embedContent.style.maxHeight = 'none';
                     }
-                    elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
                 }
             } else {
                 elements.embedContent.style.maxHeight = '0';
@@ -349,10 +350,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('embeds', JSON.stringify(embeds));
                 updatePreview();
                 renderEmbeds(); // Re-render to adjust height
-                if (index === 0 && elements.embedContent.classList.contains('expanded')) {
-                    firstEmbedHeight = elements.embedContent.scrollHeight; // Update height if first embed changes
-                    elements.embedContent.style.maxHeight = `${firstEmbedHeight}px`;
-                }
+                if (elements.embedContent.classList.contains('expanded')) {
+                        if (window.innerWidth < 768) { // Mobile
+                            elements.embedContent.style.maxHeight = '300px';
+                        } else { // Tablet/Desktop
+                            if (embedCount > 1) {
+                                elements.embedContent.style.maxHeight = '500px';
+                            } else {
+                                elements.embedContent.style.maxHeight = 'none';
+                            }
+                        }
+                    }
             });
             colorInput.addEventListener('input', () => {
                 embeds[index].color = colorInput.value;
