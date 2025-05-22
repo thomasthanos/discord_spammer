@@ -60,17 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Variables
     let intervalId = null;
-    let isSending = false;
     let stats = { 
         total: 0,
         success: 0,
         failed: 0,
         responseTimes: [] 
     };
-    let scheduledJobs = [];
     let embeds = [];
     let embedCount = 1;
-    let firstEmbedHeight = 0;
     let attachments = [];
 
     // Initialize app
@@ -157,8 +154,6 @@ document.addEventListener('click', function(e) {
         setupEventListeners();
         setupEmbedEventListeners();
         handleFileUploads();
-        
-        initDragAndDrop();
     }
 
     function setupEventListeners() {
@@ -251,7 +246,15 @@ document.addEventListener('click', function(e) {
         // Message limit input
         elements.messageLimit.addEventListener('input', () => {
             updateMessageLimitPlaceholder();
+            // Προσθήκη: Ενημέρωση status ready
+            const value = elements.messageLimit.value;
+            let label = 'Ready';
+            if (value && value !== "0") {
+                label = `Ready (${value}/${value})`;
+            }
+            elements.statusText.textContent = label;
         });
+
 
         // Increment/Decrement buttons
         document.querySelectorAll('.interval-btn').forEach(btn => {
@@ -326,27 +329,46 @@ document.addEventListener('click', function(e) {
 
 function handleFileUploads() {
     elements.messageAttachments.addEventListener('change', (e) => {
-        attachments = Array.from(e.target.files);
-
-        // Discord limits
+        let newFiles = Array.from(e.target.files);
         const maxFileSizeMB = parseInt(elements.fileSizeLimit.value) || 8;
         const maxAttachments = 10;
-        const supportedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
-        const supportedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
 
-        // Limit number of attachments
-        if (attachments.length > maxAttachments) {
-            showToast(`Too many attachments (${attachments.length}). Maximum allowed is ${maxAttachments}.`, 'error');
-            attachments = attachments.slice(0, maxAttachments);
-            const dataTransfer = new DataTransfer();
-            attachments.forEach(file => dataTransfer.items.add(file));
-            elements.messageAttachments.files = dataTransfer.files;
+        // Θα κρατήσουμε μόνο τα επιτρεπτά
+        let validFiles = [];
+        newFiles.forEach(file => {
+            const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                if (file.size > maxFileSizeMB * 1024 * 1024) {
+                    addLog('error', `Attachment '${file.name}' is too large (${fileSizeMB} MB > ${maxFileSizeMB} MB limit)`);
+                    showToast(`Το αρχείο '${file.name}' είναι πολύ μεγάλο (${fileSizeMB} MB / όριο ${maxFileSizeMB} MB)`, 'error');
+                } else {
+                    validFiles.push(file);
+                    addLog('success', `Attachment '${file.name}' uploaded (${fileSizeMB} MB)`);
+                }
+        });
+
+        if (validFiles.length > maxAttachments) {
+            addLog('warning', `Too many attachments (${validFiles.length}). Maximum allowed is ${maxAttachments}.`);
+            validFiles = validFiles.slice(0, maxAttachments);
         }
+
+        attachments = validFiles;
+
+        // Sync με file input
+        const dataTransfer = new DataTransfer();
+        attachments.forEach(file => dataTransfer.items.add(file));
+        elements.messageAttachments.files = dataTransfer.files;
 
         renderAttachmentsPreview();
         updatePreview();
+
+        // Αν κανένα δεν πέρασε, καθάρισε το input!
+        if (attachments.length === 0) {
+            elements.messageAttachments.value = '';
+        }
     });
 }
+
+
 
 // ΝΕΑ FUNCTION για rendering και σωστό remove
 function renderAttachmentsPreview() {
@@ -560,20 +582,6 @@ elements.embedToggleBtn.addEventListener('click', () => {
                 }
             }
         }
-
-        document.querySelectorAll('.delete-embed-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const index = parseInt(btn.dataset.embedIndex);
-                if (index > 0) {
-                    embeds.splice(index, 1);
-                    embedCount--;
-                    localStorage.setItem('embeds', JSON.stringify(embeds));
-                    renderEmbeds();
-                    updatePreview();
-                    showToast('Embed deleted', 'success');
-                }
-            });
-        });
     }
 
     function loadLayout() {
@@ -636,13 +644,8 @@ elements.embedToggleBtn.addEventListener('click', () => {
                 container.appendChild(el);
             }
         });
-
-        console.log('Layout applied:', layout);
     }
 
-    function initDragAndDrop() {
-        // Drag-and-drop removed as per user request
-    }
 
     function updateIntervalDisplay() {
         const value = elements.intervalValue.value;
@@ -668,15 +671,62 @@ elements.embedToggleBtn.addEventListener('click', () => {
         elements.previewUsername.textContent = elements.username.value || 'Webhook Sender';
         elements.previewAvatar.src = elements.avatarUrl.value || 'https://cdn.discordapp.com/embed/avatars/0.png';
 
-        const existingPreviews = document.querySelectorAll('.embed-preview');
-        existingPreviews.forEach(preview => preview.remove());
+        // Αφαίρεσε παλιά preview elements
+        document.querySelectorAll('.embed-preview').forEach(preview => preview.remove());
+        const attachmentsPreview = document.querySelector('.preview-attachments');
+        if (attachmentsPreview) attachmentsPreview.remove();
 
+        // 1. ΠΡΩΤΑ τα attachments (όπως στο Discord)
+        if (attachments.length > 0) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'preview-attachments';
+            previewContainer.style.display = 'flex';
+            previewContainer.style.gap = '15px';
+            previewContainer.style.flexWrap = 'wrap';
+            attachments.forEach(file => {
+                const attachmentItem = document.createElement('div');
+                attachmentItem.className = 'attachment-preview-item';
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.alt = file.name;
+                    attachmentItem.appendChild(img);
+                } else {
+                    // Only icon for non-image files
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-file';
+                    attachmentItem.appendChild(icon);
+                }
+                // Attachment info
+                const info = document.createElement('div');
+                info.className = 'attachment-info';
+                if (!file.type.startsWith('image/')) {
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-file';
+                    info.appendChild(icon);
+                }
+                const name = document.createElement('span');
+                name.style.color = '#4d73fa';
+                name.textContent = file.name;
+                info.appendChild(name);
+                const size = document.createElement('span');
+                size.style.color = '#b9bbbe';
+                size.textContent = `(${(file.size/1024/1024).toFixed(2)} MB)`;
+                info.appendChild(size);
+
+                attachmentItem.appendChild(info);
+                previewContainer.appendChild(attachmentItem);
+            });
+            document.querySelector('.discord-content').appendChild(previewContainer);
+        }
+
+
+        // 2. META τα embeds
         embeds.forEach(embed => {
             if (embed.title.trim() || embed.description.trim() || embed.imageUrl || embed.thumbnailUrl) {
                 const embedPreview = document.createElement('div');
                 embedPreview.className = 'embed-preview';
                 const embedColor = embed.color || '#5865F2';
-                
                 embedPreview.innerHTML = `
                     <div class="embed" style="border-left: 4px solid ${embedColor}">
                         ${embed.title.trim() ? `<div class="embed-title">${formatDiscordMarkdown(embed.title.trim(), 'title')}</div>` : ''}
@@ -689,57 +739,8 @@ elements.embedToggleBtn.addEventListener('click', () => {
                 document.querySelector('.discord-content').appendChild(embedPreview);
             }
         });
-
-        // Show attachments preview in the message
-        const attachmentsPreview = document.querySelector('.preview-attachments');
-        if (attachmentsPreview) attachmentsPreview.remove();
-        
-        if (attachments.length > 0) {
-            const previewContainer = document.createElement('div');
-            previewContainer.className = 'preview-attachments';
-            
-            attachments.forEach(file => {
-                const attachmentItem = document.createElement('div');
-                attachmentItem.className = 'attachment-preview-item';
-                
-                // Determine icon for non-image/video files
-                let iconClass = 'fa-file';
-                if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
-                else if (file.type.includes('zip') || file.type.includes('compressed')) iconClass = 'fa-file-archive';
-                else if (file.type.includes('msword') || file.type.includes('officedocument')) iconClass = 'fa-file-word';
-
-                // Display file name and size for all file types
-                const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
-                attachmentItem.innerHTML = `
-                    <div class="attachment-info">
-                        <i class="fas ${iconClass}"></i>
-                        <span>${file.name}</span>
-                        <span>(${fileSizeMB} MB)</span>
-                    </div>
-                `;
-                
-                // Add image or video preview if applicable
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(file);
-                    img.alt = file.name;
-                    attachmentItem.prepend(img);
-                } else if (file.type.startsWith('video/')) {
-                    const video = document.createElement('video');
-                    video.controls = true;
-                    const source = document.createElement('source');
-                    source.src = URL.createObjectURL(file);
-                    source.type = file.type;
-                    video.appendChild(source);
-                    attachmentItem.prepend(video);
-                }
-                
-                previewContainer.appendChild(attachmentItem);
-            });
-            
-            document.querySelector('.discord-content').appendChild(previewContainer);
-        }
     }
+
 
     function formatDiscordMarkdown(text, context = 'description') {
         let formattedText = text
@@ -909,75 +910,111 @@ elements.embedToggleBtn.addEventListener('click', () => {
         localStorage.setItem('webhookHistory', JSON.stringify(history));
     }
 
-    async function startSending() {
-        const webhookUrl = elements.webhookUrl.value.trim();
-        const message = elements.messageContent.value.trim();
-        const intervalValue = parseInt(elements.intervalValue.value);
-        const intervalUnit = elements.intervalUnit.value.toLowerCase();
-        let messageLimit = parseInt(elements.messageLimit.value);
-        // Treat empty input as 0 (infinite)
-        if (isNaN(messageLimit) || elements.messageLimit.value === '') {
-            messageLimit = 0;
-        }
-        let sentCount = 1;
-
-        if (!webhookUrl) {
-            addLog('error', 'Please enter a valid Discord webhook URL');
-            playSound('error');
-            return;
-        }
-        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && attachments.length === 0) {
-            addLog('error', 'Please enter a message, add an embed, or attach a file to send');
-            playSound('error');
-            return;
-        }
-        if (isNaN(intervalValue) || intervalValue <= 0) {
-            addLog('error', 'Please enter a valid interval (greater than 0)');
-            playSound('error');
-            return;
-        }
-
-        stats.success = 0;
-        stats.failed = 0;
-        stats.responseTimes = [];
-        updateStats();
-        saveStats();
-
-        let intervalMs = intervalValue * 1000;
-        if (intervalUnit === 'minutes') intervalMs *= 60;
-        else if (intervalUnit === 'hours') intervalMs *= 3600;
-        if (intervalMs < 2000) {
-            intervalMs = 2000;
-            addLog('warning', 'Interval too short. Using minimum 2 seconds to avoid rate limits.');
-        }
-
-        saveToHistory(webhookUrl);
-
-        try {
-            await sendMessage(webhookUrl, getRandomMessage());
-            intervalId = setInterval(() => {
-                if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount >= messageLimit) {
-                    stopSending();
-                    addLog('success', `Stopped after sending ${sentCount} messages`);
-                    return;
-                }
-                sendMessage(webhookUrl, getRandomMessage());
-                sentCount++;
-            }, intervalMs);
-
-            isSending = true;
-            elements.startBtn.disabled = true;
-            elements.stopBtn.disabled = false;
-            elements.statusDot.classList.add('active');
-            const unitText = intervalValue === 1 ? intervalUnit.replace(/s$/, '') : intervalUnit;
-            elements.statusText.textContent = `Sending every ${intervalValue} ${unitText}${messageLimit === 0 ? ' (Unlimited)' : messageLimit ? ` (${sentCount}/${messageLimit})` : ''}`;
-            addLog('success', `Started sending messages every ${intervalValue} ${unitText}${messageLimit === 0 ? ' (unlimited)' : messageLimit ? ` for ${messageLimit} messages` : ''}`);
-            playSound('success');
-        } catch (error) {
-            addLog('error', `Failed to start sending: ${error.message}`);
-            playSound('error');
-        }
+async function startSending() {
+    const webhookUrl = elements.webhookUrl.value.trim();
+    const message = elements.messageContent.value.trim();
+    const intervalValue = parseInt(elements.intervalValue.value);
+    const intervalUnit = elements.intervalUnit.value.toLowerCase();
+    let messageLimit = parseInt(elements.messageLimit.value);
+    if (isNaN(messageLimit) || elements.messageLimit.value === '') {
+        messageLimit = 0;
     }
+    let sentCount = 1;
+
+    if (!webhookUrl) {
+        addLog('error', 'Please enter a valid Discord webhook URL');
+        playSound('error');
+        return;
+    }
+    if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && attachments.length === 0) {
+        addLog('error', 'Please enter a message, add an embed, or attach a file to send');
+        playSound('error');
+        return;
+    }
+    if (isNaN(intervalValue) || intervalValue <= 0) {
+        addLog('error', 'Please enter a valid interval (greater than 0)');
+        playSound('error');
+        return;
+    }
+
+    stats.success = 0;
+    stats.failed = 0;
+    stats.responseTimes = [];
+    updateStats();
+    saveStats();
+
+    let intervalMs = intervalValue * 1000;
+    if (intervalUnit === 'minutes') intervalMs *= 60;
+    else if (intervalUnit === 'hours') intervalMs *= 3600;
+    if (intervalMs < 2000) {
+        intervalMs = 2000;
+        addLog('warning', 'Interval too short. Using minimum 2 seconds to avoid rate limits.');
+    }
+
+    saveToHistory(webhookUrl);
+
+    // Helper για το status update
+    function updateStatusText() {
+        const unitText = intervalValue === 1 ? intervalUnit.replace(/s$/, '') : intervalUnit;
+        elements.statusText.textContent =
+            `Sending every ${intervalValue} ${unitText}` +
+            (messageLimit === 0 ? ' (Unlimited)' : messageLimit ? ` (${sentCount}/${messageLimit})` : '');
+    }
+
+    async function sendAndSchedule() {
+        sentCount++;
+        updateStatusText();
+        if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount > messageLimit) {
+            stopSending();
+            addLog('success', `Stopped after sending ${messageLimit} messages`);
+            return;
+        }
+        intervalId = setTimeout(async () => {
+            await sendMessage(webhookUrl, getRandomMessage());
+            sendAndSchedule();
+        }, intervalMs);
+    }
+
+    try {
+        // Στέλνεις το πρώτο μήνυμα
+        await sendMessage(webhookUrl, getRandomMessage());
+        updateStatusText();
+        if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount >= messageLimit) {
+            stopSending();
+            addLog('success', `Stopped after sending ${sentCount} messages`);
+            return;
+        }
+        intervalId = setTimeout(async () => {
+            await sendMessage(webhookUrl, getRandomMessage());
+            sendAndSchedule();
+        }, intervalMs);
+
+        isSending = true;
+        elements.startBtn.disabled = true;
+        elements.stopBtn.disabled = false;
+        elements.statusDot.classList.add('active');
+        updateStatusText();
+        addLog('success', `Started sending messages every ${intervalValue} ${intervalUnit}` + (messageLimit === 0 ? ' (unlimited)' : messageLimit ? ` for ${messageLimit} messages` : ''));
+        playSound('success');
+    } catch (error) {
+        addLog('error', `Failed to start sending: ${error.message}`);
+        playSound('error');
+    }
+}
+
+// Και στη stopSending()
+function stopSending() {
+    if (intervalId) clearTimeout(intervalId); // Αντί για clearInterval!
+    intervalId = null;
+    isSending = false;
+    elements.startBtn.disabled = false;
+    elements.stopBtn.disabled = true;
+    elements.statusDot.classList.remove('active');
+    elements.statusText.textContent = 'Ready';
+    addLog('warning', 'Stopped sending messages');
+    playSound('notification');
+}
+
 
     function stopSending() {
         if (intervalId) clearInterval(intervalId);
@@ -1069,34 +1106,41 @@ elements.embedToggleBtn.addEventListener('click', () => {
                     }
                 };
 
-                xhr.onload = () => {
-                    progressToast.remove();
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        const responseTime = Date.now() - startTime;
-                        stats.total++;
-                        stats.success++;
-                        stats.responseTimes.push(responseTime);
-                        if (stats.responseTimes.length > 10) stats.responseTimes.shift();
-                        updateStats();
-                        saveStats();
-                        addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
-                        playSound('success');
-                    } else {
-                        let errorMessage = `HTTP error! Status: ${xhr.status}`;
-                        if (xhr.status === 400) {
-                            errorMessage = 'Invalid request. Check file format, number of attachments (max 10), or webhook URL.';
-                        } else if (xhr.status === 401) {
-                            errorMessage = 'Unauthorized. Invalid webhook URL or token.';
-                        } else if (xhr.status === 404) {
-                            errorMessage = 'Webhook not found. Check the URL.';
-                        } else if (xhr.status === 413) {
-                            errorMessage = `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB).`;
-                        } else if (xhr.status === 429) {
-                            errorMessage = 'Rate limit exceeded. Please try again later.';
-                        }
-                        throw new Error(errorMessage);
+            xhr.onload = () => {
+                progressToast.remove();
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const responseTime = Date.now() - startTime;
+                    stats.total++;
+                    stats.success++;
+                    stats.responseTimes.push(responseTime);
+                    if (stats.responseTimes.length > 10) stats.responseTimes.shift();
+                    updateStats();
+                    saveStats();
+                    addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
+                    playSound('success');
+                } else {
+                    let errorMessage = `HTTP error! Status: ${xhr.status}`;
+                    if (xhr.status === 400) {
+                        errorMessage = 'Invalid request. Check file format, number of attachments (max 10), or webhook URL.';
+                    } else if (xhr.status === 401) {
+                        errorMessage = 'Unauthorized. Invalid webhook URL or token.';
+                    } else if (xhr.status === 404) {
+                        errorMessage = 'Webhook not found. Check the URL.';
+                    } else if (xhr.status === 413) {
+                        errorMessage = `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB).`;
+                        // Εμφάνιση toast για πολύ μεγάλο αρχείο
+                        showToast(
+                            `Το αρχείο είναι πολύ μεγάλο! Μέγιστο επιτρεπτό μέγεθος για Discord: ${elements.fileSizeLimit.value || 8} MB`,
+                            'error'
+                        );
+                        addLog('error', `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB)`);
+                    } else if (xhr.status === 429) {
+                        errorMessage = 'Rate limit exceeded. Please try again later.';
                     }
-                };
+                    throw new Error(errorMessage);
+                }
+            };
+
 
                 xhr.onerror = () => {
                     progressToast.remove();
