@@ -34,7 +34,7 @@ A sleek, responsive web app to send customizable messages to Discord via webhook
 
 ## 🌐 Try it Live
 
-👉 [https://thomasthanos.github.io/discord_spammer/](https://thomasthanos.github.io/discord_spammer/)
+👉 [thomasthanos.github.io/discord_webhook_senter.com]([https://thomasthanos.github.io/discord_spammer/](https://thomasthanos.github.io/discord_webhook_senter/))
 
 ---
 
