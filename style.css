@@ -1840,7 +1840,7 @@ input[type="color"]#embed-color:focus {
   background: var(--card-color);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
-  margin-bottom: 20px;
+  margin-bottom: -16px;
 }
 
 #auth-section button {
