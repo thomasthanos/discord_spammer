@@ -1424,12 +1424,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // === Elements ===
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
     const userInfo = document.getElementById('user-info');
     const fetchJsonBtn = document.getElementById('fetch-json-btn');
     const exportCloudBtn = document.getElementById('export-json-cloud');
     const importCloudBtn = document.getElementById('import-json-cloud');
+    const loginBtn = document.getElementById('login-btn');
+    const userDropdown = document.getElementById('user-dropdown');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    const userLogoutBtn = document.getElementById('user-logout-btn');
 
     // === Login with Discord ===
     loginBtn.addEventListener('click', async () => {
@@ -1448,24 +1451,91 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === Check user session on load ===
-    async function checkUserSession() {
+async function checkUserSession() {
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error || !user) {
+            updateAuthUI(false);
+            if (error && error.name !== 'AuthSessionMissingError') {
+                addLog('error', `Error checking user session: ${error.message}`);
+            }
+        } else {
+            updateAuthUI(true, user);
+        }
+    } catch (e) {
+        updateAuthUI(false);
+        addLog('error', `Unexpected error: ${e.message}`);
+    }
+}
+
+
+// Add this function to update the user display
+function updateUserDisplay(user) {
+    const userDropdown = document.getElementById('user-dropdown');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    
+    // Set user avatar (Discord provides this in the user_metadata)
+    const avatarUrl = user.user_metadata?.avatar_url || 
+                     `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id) % 5}.png`;
+    
+    userAvatar.src = avatarUrl;
+    
+    // Set username (Discord provides this in the user_metadata)
+    const name = user.user_metadata?.full_name || 
+                user.user_metadata?.name || 
+                user.email || 
+                'Discord User';
+    
+    userName.textContent = name;
+    userDropdown.classList.remove('hidden');
+}
+
+// Update the login/logout handlers
+loginBtn.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+            redirectTo: window.location.href
+        }
+    });
+    
+    if (error) {
+        console.error('Login failed:', error.message);
+        addLog('error', `Login failed: ${error.message}`);
+    }
+});
+
+logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    document.getElementById('user-dropdown').classList.add('hidden');
+    addLog('success', 'Logged out successfully');
+    playSound('notification');
+});
+
+if (code && state) {
+    (async () => {
         try {
             const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                if (error.name === 'AuthSessionMissingError') {
-                    userInfo.textContent = 'Not logged in';
-                } else {
-                    console.error('Error checking user session:', error.message);
-                    addLog('error', `Error checking user session: ${error.message}`);
-                }
-                return;
+            
+            if (error) throw error;
+            
+            if (user) {
+                updateUserDisplay(user);
+                addLog('success', 'Successfully logged in via Discord');
+                playSound('success');
             }
-            userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
+            
+            // Clean up the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
         } catch (e) {
-            console.error('Unexpected error in checkUserSession:', e.message);
-            addLog('error', `Unexpected error checking session: ${e.message}`);
+            console.error('Error handling OAuth redirect:', e.message);
+            addLog('error', `OAuth error: ${e.message}`);
         }
-    }
+    })();
+} else {
+    checkUserSession();
+}
 
     // === Export JSON to Supabase Cloud ===
     exportCloudBtn.addEventListener('click', async () => {
@@ -1839,63 +1909,116 @@ async function deleteProfile(profileId) {
         addLog('error', `Error refreshing profiles: ${e.message}`);
     }
 }
-// Στο init:
-const userAuthMenu = document.getElementById('user-auth-menu');
-const avatarMenuBtn = document.getElementById('avatar-menu-btn');
-const userAvatar = document.getElementById('user-avatar');
-const userUsername = document.getElementById('user-username');
 
-// Προαιρετικό: κρύβεις τα παλιά auth κουμπιά/section αν υπάρχουν
-const oldAuthSection = document.getElementById('auth-section');
-if (oldAuthSection) oldAuthSection.style.display = "none";
 
-// 1. Login handler
-loginBtn.addEventListener('click', async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
-  // Redirect handled by Supabase/Discord
-});
 
-// 2. Logout handler
-logoutBtn.addEventListener('click', async () => {
-  await supabase.auth.signOut();
-  updateAuthUI(null);
-});
 
-// 3. Check user session on page load
-checkUserSession();
-
-// 4. Supabase session change (live update)
-supabase.auth.onAuthStateChange((event, session) => {
-  updateAuthUI(session?.user);
-});
-
-// === Core functions ===
-async function checkUserSession() {
-  const { data: { user } } = await supabase.auth.getUser();
-  updateAuthUI(user);
-}
-
-function updateAuthUI(user) {
-  if (user && user.user_metadata) {
-    loginBtn.style.display = "none";
-    userAuthMenu.style.display = "inline-block";
-    // Αλλαγή Avatar
-    let avatarUrl = user.user_metadata.avatar_url;
-    if (!avatarUrl && user.user_metadata.avatar) {
-      // Fallback αν το avatar_url δεν υπάρχει
-      avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png`;
+function updateAuthUI(isLoggedIn, user = null) {
+    const userDropdown = document.getElementById('user-dropdown');
+    const loginBtn = document.getElementById('login-btn');
+    if (isLoggedIn && user) {
+        userDropdown.classList.remove('hidden');
+        loginBtn.classList.add('hidden');
+        // Avatar & username
+        const avatarUrl = user.user_metadata?.avatar_url ||
+            `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id) % 5}.png`;
+        document.getElementById('user-avatar').src = avatarUrl;
+        document.getElementById('user-name').textContent =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email ||
+            'Discord User';
+    } else {
+        userDropdown.classList.add('hidden');
+        loginBtn.classList.remove('hidden');
+        document.getElementById('user-avatar').src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+        document.getElementById('user-name').textContent = '';
     }
-    userAvatar.src = avatarUrl || "https://cdn.discordapp.com/embed/avatars/0.png";
-    userUsername.textContent = user.user_metadata.full_name || user.user_metadata.username || "Discord User";
-  } else {
-    loginBtn.style.display = "inline-block";
-    userAuthMenu.style.display = "none";
-    userAvatar.src = "";
-    userUsername.textContent = "";
-  }
 }
 
-// Dropdown ανοίγει με hover/click (εξαρτάται πώς το έχεις, εδώ με hover είναι το default)
+
+// ==== CHECK USER SESSION ====
+async function checkUserSession() {
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+            updateAuthUI(false);
+            if (error.name !== 'AuthSessionMissingError') {
+                console.error('Error checking user session:', error.message);
+                addLog('error', `Error checking user session: ${error.message}`);
+            }
+            return;
+        }
+        if (user) {
+            updateAuthUI(true, user);
+        } else {
+            updateAuthUI(false);
+        }
+    } catch (e) {
+        console.error('Unexpected error in checkUserSession:', e.message);
+        addLog('error', `Unexpected error checking session: ${e.message}`);
+        updateAuthUI(false);
+    }
+}
+
+// ==== LOGIN HANDLER ====
+loginBtn.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: { redirectTo: window.location.href }
+    });
+    if (error) {
+        console.error('Login failed:', error.message);
+        addLog('error', `Login failed: ${error.message}`);
+    }
+});
+
+// ==== LOGOUT HANDLER ====
+userLogoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    updateAuthUI(false);
+    addLog('success', 'Logged out successfully');
+    playSound('notification');
+});
+
+
+if (code && state) {
+    (async () => {
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error) throw error;
+            if (user) {
+                updateAuthUI(true, user);
+                addLog('success', 'Successfully logged in via Discord');
+                playSound('success');
+            }
+            // Καθάρισε το URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {
+            console.error('Error handling OAuth redirect:', e.message);
+            addLog('error', `OAuth error: ${e.message}`);
+        }
+    })();
+} else {
+    checkUserSession();
+}
+document.getElementById('user-logout-btn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    updateAuthUI(false);
+    addLog('success', 'Logged out successfully');
+    playSound('notification');
+});
+document.getElementById('login-btn').addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: { redirectTo: window.location.href }
+    });
+    if (error) {
+        console.error('Login failed:', error.message);
+        addLog('error', `Login failed: ${error.message}`);
+    }
+});
+
 
     checkUserSession();
     initApp();
