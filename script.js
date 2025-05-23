@@ -766,31 +766,62 @@ document.addEventListener('DOMContentLoaded', () => {
         return messages.length ? messages[Math.floor(Math.random() * messages.length)] : elements.messageContent.value;
     }
 
-    function showHistoryModal() {
-        elements.historyList.innerHTML = '';
-        const history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
-        
-        if (history.length === 0) {
-            elements.historyList.innerHTML = '<p>No history yet</p>';
-            return;
-        }
+// Save to history χωρίς duplicates
+function saveToHistory(url) {
+    if (!url) return;
+    let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
+    // Φίλτρο: κρατά μόνο το πρώτο κάθε μοναδικού url (δηλ. αν υπάρχει, το αφαιρεί)
+    history = history.filter(item => item.url !== url);
+    history.unshift({ url, lastUsed: new Date().toISOString() });
+    if (history.length > 10) history = history.slice(0, 10);
+    localStorage.setItem('webhookHistory', JSON.stringify(history));
+}
 
-        history.forEach(item => {
-            const historyItem = document.createElement('div');
-            historyItem.className = 'history-item';
-            historyItem.innerHTML = `<span>${item.url.substring(0, 30)}...</span><i class="fas fa-arrow-right"></i>`;
-            historyItem.addEventListener('click', () => {
-                elements.webhookUrl.value = item.url;
-                localStorage.setItem('webhookUrl', item.url);
-                checkWebhookPrivacy(item.url);
-                elements.historyModal.classList.add('hidden');
-                showToast('Webhook URL loaded from history', 'success');
-            });
-            elements.historyList.appendChild(historyItem);
-        });
+// Εμφάνιση του modal με καθαρό, μοναδικό history
+function showHistoryModal() {
+    elements.historyList.innerHTML = '';
+    let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
 
-        elements.historyModal.classList.remove('hidden');
+    // Καθάρισε duplicates αν υπάρχουν (κρατάει το πιο πρόσφατο)
+    const seen = new Set();
+    history = history.filter(item => {
+        if (seen.has(item.url)) return false;
+        seen.add(item.url);
+        return true;
+    });
+    // Κράτα μόνο τα 10 πιο πρόσφατα
+    if (history.length > 10) history = history.slice(0, 10);
+    // Ανανέωσε το localStorage
+    localStorage.setItem('webhookHistory', JSON.stringify(history));
+
+    if (history.length === 0) {
+        elements.historyList.innerHTML = '<p>No history yet</p>';
+        return;
     }
+
+    history.forEach(item => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        const url = item.url;
+        const idx = url.indexOf('/api/');
+        const prettyUrl = idx !== -1 ? url.substring(idx + 5) : url;
+
+        historyItem.innerHTML = `<span>${prettyUrl}</span><i class="fas fa-arrow-right"></i>`;
+        historyItem.title = url;
+
+        historyItem.addEventListener('click', () => {
+            elements.webhookUrl.value = item.url;
+            localStorage.setItem('webhookUrl', item.url);
+            checkWebhookPrivacy(item.url);
+            elements.historyModal.classList.add('hidden');
+            showToast('Webhook URL loaded from history', 'success');
+        });
+        elements.historyList.appendChild(historyItem);
+    });
+
+    elements.historyModal.classList.remove('hidden');
+}
+
 
     function showMessageSuggestions() {
         const suggestions = [
@@ -899,11 +930,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveToHistory(url) {
         if (!url) return;
         let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
+        // Φίλτρο: κρατά μόνο το πρώτο κάθε μοναδικού url (δηλ. αν υπάρχει, το αφαιρεί)
         history = history.filter(item => item.url !== url);
         history.unshift({ url, lastUsed: new Date().toISOString() });
         if (history.length > 10) history = history.slice(0, 10);
         localStorage.setItem('webhookHistory', JSON.stringify(history));
     }
+
+
 
     async function startSending() {
         const webhookUrl = elements.webhookUrl.value.trim();
