@@ -1839,6 +1839,63 @@ async function deleteProfile(profileId) {
         addLog('error', `Error refreshing profiles: ${e.message}`);
     }
 }
+// Στο init:
+const userAuthMenu = document.getElementById('user-auth-menu');
+const avatarMenuBtn = document.getElementById('avatar-menu-btn');
+const userAvatar = document.getElementById('user-avatar');
+const userUsername = document.getElementById('user-username');
+
+// Προαιρετικό: κρύβεις τα παλιά auth κουμπιά/section αν υπάρχουν
+const oldAuthSection = document.getElementById('auth-section');
+if (oldAuthSection) oldAuthSection.style.display = "none";
+
+// 1. Login handler
+loginBtn.addEventListener('click', async () => {
+  const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
+  // Redirect handled by Supabase/Discord
+});
+
+// 2. Logout handler
+logoutBtn.addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  updateAuthUI(null);
+});
+
+// 3. Check user session on page load
+checkUserSession();
+
+// 4. Supabase session change (live update)
+supabase.auth.onAuthStateChange((event, session) => {
+  updateAuthUI(session?.user);
+});
+
+// === Core functions ===
+async function checkUserSession() {
+  const { data: { user } } = await supabase.auth.getUser();
+  updateAuthUI(user);
+}
+
+function updateAuthUI(user) {
+  if (user && user.user_metadata) {
+    loginBtn.style.display = "none";
+    userAuthMenu.style.display = "inline-block";
+    // Αλλαγή Avatar
+    let avatarUrl = user.user_metadata.avatar_url;
+    if (!avatarUrl && user.user_metadata.avatar) {
+      // Fallback αν το avatar_url δεν υπάρχει
+      avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png`;
+    }
+    userAvatar.src = avatarUrl || "https://cdn.discordapp.com/embed/avatars/0.png";
+    userUsername.textContent = user.user_metadata.full_name || user.user_metadata.username || "Discord User";
+  } else {
+    loginBtn.style.display = "inline-block";
+    userAuthMenu.style.display = "none";
+    userAvatar.src = "";
+    userUsername.textContent = "";
+  }
+}
+
+// Dropdown ανοίγει με hover/click (εξαρτάται πώς το έχεις, εδώ με hover είναι το default)
 
     checkUserSession();
     initApp();
