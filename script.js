@@ -51,7 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
         messageAttachmentsPreview: document.getElementById('message-attachments-preview'),
         embedImageUrl: document.getElementById('embed-image-url'),
         embedThumbnailUrl: document.getElementById('embed-thumbnail-url'),
-        fileSizeLimit: document.getElementById('file-size-limit')
+        fileSizeLimit: document.getElementById('file-size-limit'),
+        saveProfileBtn: document.getElementById('save-profile-btn'),
+        manageProfilesBtn: document.getElementById('manage-profiles-btn'),
+        profilesModal: document.getElementById('profiles-modal'),
+        profilesList: document.getElementById('profiles-list'),
+        noProfilesMessage: document.getElementById('no-profiles-message')
     };
 
     function isValidImageUrl(url) {
@@ -1594,125 +1599,231 @@ document.addEventListener('DOMContentLoaded', () => {
         checkUserSession();
     }
 
+// === Profile Management ===
+const MAX_PROFILES = 10;
 
-// ========== CLOUD PROFILES MODAL ==========
-
-// Άνοιγμα modal και φόρτωση profiles από Supabase
-window.importJsonFromCloud = async function() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        showToast('Πρέπει να είσαι συνδεδεμένος!', 'error');
+// Save current configuration as a profile
+elements.saveProfileBtn.addEventListener('click', async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+        alert('❌ You must be logged in to save profiles!');
+        addLog('error', 'Profile save failed: User not logged in');
         return;
     }
-    const { data: profiles } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
 
-    const listDiv = document.getElementById('profiles-list');
-    listDiv.innerHTML = '';
-
-    if (!profiles.length) {
-        listDiv.innerHTML = "<div style='color:#aaa; text-align:center; margin:20px;'>Δεν έχεις αποθηκεύσει προφίλ ακόμα.</div>";
-    } else {
-        profiles.forEach(profile => {
-            const row = document.createElement('div');
-            row.className = 'profile-row';
-            row.style = 'display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #36393f;';
-            row.innerHTML = `
-                <span style="flex:1;color:#fff;">${profile.name}</span>
-                <span style="color:#b5bac1;font-size:12px;margin-left:10px;">${new Date(profile.created_at).toLocaleString()}</span>
-                <span>
-                  <button class="btn-small" onclick="window.loadProfileFromCloud('${profile.id}')">Load</button>
-                  <button class="btn-small" style="background:#ed4245;" onclick="window.deleteProfileFromCloud('${profile.id}')"><i class="fas fa-trash"></i></button>
-                </span>
-            `;
-            listDiv.appendChild(row);
-        });
-    }
-    document.getElementById('profiles-modal').classList.remove('hidden');
-};
-
-// Κλείσιμο modal
-window.closeProfilesModal = function() {
-    document.getElementById('profiles-modal').classList.add('hidden');
-};
-
-// Νέο save στο cloud (ή overwrite)
-window.exportJsonToCloud = async function() {
-    const name = prompt("Όνομα για το save (π.χ. TEST, MAIN, XPRESS):");
-    if (!name) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        showToast('Πρέπει να είσαι συνδεδεμένος!', 'error');
-        return;
-    }
-    // Φέρε τα profiles
-    const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name')
+    // Check how many profiles the user already has
+    const { count } = await supabase
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
-    if (profiles.length >= 10 && !profiles.find(p => p.name === name)) {
-        showToast('Έχεις ήδη 10 προφίλ. Σβήσε κάποιο πρώτα!', 'error');
+    if (count >= MAX_PROFILES) {
+        alert(`❌ You've reached the maximum of ${MAX_PROFILES} saved profiles. Please delete one first.`);
+        addLog('error', `Profile save failed: Maximum of ${MAX_PROFILES} profiles reached`);
         return;
     }
-    // Τα settings προς αποθήκευση
-    const jsonData = getExportedSettingsAsJson ? getExportedSettingsAsJson() : {};
-    // Αν υπάρχει ήδη με ίδιο όνομα, κάνε update
-    const existing = profiles.find(p => p.name === name);
-    if (existing) {
-        await supabase
-            .from('profiles')
-            .update({ data: jsonData, created_at: new Date().toISOString() })
-            .eq('id', existing.id);
-        showToast('Το προφίλ ανανεώθηκε!', 'success');
+
+    const profileName = prompt('Enter a name for this profile:');
+    if (!profileName) return;
+
+    const profileData = {
+        webhookUrl: elements.webhookUrl.value,
+        messageContent: elements.messageContent.value,
+        username: elements.username.value,
+        avatarUrl: elements.avatarUrl.value,
+        randomMessages: elements.randomMessages.checked,
+        interval: {
+            value: elements.intervalValue.value,
+            unit: elements.intervalUnit.value
+        },
+        messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
+        enableSounds: elements.enableSounds.checked,
+        embeds: embeds,
+        fileSizeLimit: elements.fileSizeLimit.value
+    };
+
+    const { error } = await supabase
+        .from('user_profiles')
+        .insert({
+            user_id: user.id,
+            name: profileName,
+            data: profileData,
+            last_updated: new Date().toISOString()
+        });
+
+    if (error) {
+        console.error('Profile save error:', error.message);
+        alert('❌ Failed to save profile.');
+        addLog('error', `Profile save failed: ${error.message}`);
     } else {
-        await supabase
-            .from('profiles')
-            .insert([{ user_id: user.id, name, data: jsonData }]);
-        showToast('Το προφίλ αποθηκεύτηκε!', 'success');
+        alert('✅ Profile saved successfully!');
+        addLog('success', `Profile "${profileName}" saved to cloud`);
+        playSound('success');
     }
-    window.importJsonFromCloud(); // Αυτόματα refresh το modal!
-};
-
-// Load από cloud profile
-window.loadProfileFromCloud = async function(id) {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .single();
-    if (!data) return showToast('Σφάλμα στο load!', 'error');
-    if (typeof loadSettingsFromJson === 'function') {
-        loadSettingsFromJson(data.data);
-        showToast(`Φορτώθηκε το: ${data.name}`, 'success');
-        window.closeProfilesModal();
-    }
-};
-
-// Delete cloud profile
-window.deleteProfileFromCloud = async function(id) {
-    if (!confirm('Σίγουρα διαγραφή;')) return;
-    await supabase.from('profiles').delete().eq('id', id);
-    window.importJsonFromCloud(); // refresh λίστα
-};
-
-// ========== ΣΥΝΔΕΣΗ ΚΟΥΜΠΙΩΝ ==========
-
-// Συνδέεις τα cloud κουμπιά με το modal (ΠΑΝΤΑ μια φορά, όχι διπλό!)
-document.getElementById('export-json-cloud').onclick = window.exportJsonToCloud;
-document.getElementById('import-json-cloud').onclick = window.importJsonFromCloud;
-document.getElementById('add-profile-btn').onclick = window.exportJsonToCloud;
-
-// Κλείσιμο με ESC
-window.addEventListener('keydown', e => {
-    if (e.key === 'Escape') window.closeProfilesModal();
 });
 
+// Manage profiles (load/delete)
+elements.manageProfilesBtn.addEventListener('click', async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+        alert('❌ You must be logged in to manage profiles!');
+        addLog('error', 'Profile management failed: User not logged in');
+        return;
+    }
 
+    const { data: profiles, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('last_updated', { ascending: false });
+
+    if (error) {
+        console.error('Profile fetch error:', error.message);
+        alert('❌ Failed to load profiles.');
+        addLog('error', `Profile load failed: ${error.message}`);
+        return;
+    }
+
+    renderProfilesList(profiles);
+    elements.profilesModal.classList.remove('hidden');
+});
+
+function renderProfilesList(profiles) {
+    const profilesList = document.getElementById('profiles-list');
+    const noProfilesMsg = document.getElementById('no-profiles-message');
+    
+    profilesList.innerHTML = '';
+    
+    if (profiles.length === 0) {
+        noProfilesMsg.style.display = 'block';
+        return;
+    }
+    
+    noProfilesMsg.style.display = 'none';
+    
+    profiles.forEach(profile => {
+        const profileItem = document.createElement('div');
+        profileItem.className = 'profile-item';
+        
+        const date = new Date(profile.last_updated);
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        
+        profileItem.innerHTML = `
+            <div class="profile-info">
+                <div class="profile-name">${profile.name}</div>
+                <div class="profile-date">${formattedDate}</div>
+            </div>
+            <div class="profile-actions">
+                <button class="btn-icon-small load-profile" data-profile-id="${profile.id}">
+                    <i class="fas fa-download" title="Load Profile"></i>
+                </button>
+                <button class="btn-icon-small delete-profile" data-profile-id="${profile.id}">
+                    <i class="fas fa-trash" title="Delete Profile"></i>
+                </button>
+            </div>
+        `;
+        
+        profilesList.appendChild(profileItem);
+        
+        // Add event listeners
+        profileItem.querySelector('.load-profile').addEventListener('click', () => loadProfile(profile));
+        profileItem.querySelector('.delete-profile').addEventListener('click', () => deleteProfile(profile.id));
+    });
+}
+
+async function loadProfile(profile) {
+    if (!confirm(`Load profile "${profile.name}"? This will overwrite your current settings.`)) {
+        return;
+    }
+    
+    try {
+        // Stop any active sending
+        stopSending();
+        
+        // Load profile data
+        const profileData = profile.data;
+        
+        // Update UI elements
+        elements.webhookUrl.value = profileData.webhookUrl || '';
+        elements.messageContent.value = profileData.messageContent || '';
+        elements.username.value = profileData.username || '';
+        elements.avatarUrl.value = profileData.avatarUrl || '';
+        elements.randomMessages.checked = profileData.randomMessages || false;
+        elements.enableSounds.checked = profileData.enableSounds !== false;
+        
+        // Update interval settings
+        if (profileData.interval) {
+            elements.intervalValue.value = profileData.interval.value || '10';
+            elements.intervalUnit.value = profileData.interval.unit || 'seconds';
+        }
+        
+        elements.messageLimit.value = profileData.messageLimit === 'Unlimited' ? '' : profileData.messageLimit || '';
+        elements.fileSizeLimit.value = profileData.fileSizeLimit || '8';
+        
+        // Update embeds
+        if (profileData.embeds && Array.isArray(profileData.embeds)) {
+            embeds = profileData.embeds;
+            embedCount = embeds.length;
+            renderEmbeds();
+        } else {
+            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+            embedCount = 1;
+            renderEmbeds();
+        }
+        
+        // Update preview
+        updatePreview();
+        
+        // Save to localStorage
+        localStorage.setItem('webhookUrl', elements.webhookUrl.value);
+        localStorage.setItem('messageContent', elements.messageContent.value);
+        localStorage.setItem('username', elements.username.value);
+        localStorage.setItem('avatarUrl', elements.avatarUrl.value);
+        localStorage.setItem('randomMessages', elements.randomMessages.checked);
+        localStorage.setItem('enableSounds', elements.enableSounds.checked);
+        localStorage.setItem('embeds', JSON.stringify(embeds));
+        localStorage.setItem('fileSizeLimit', elements.fileSizeLimit.value);
+        
+        // Close modal
+        elements.profilesModal.classList.add('hidden');
+        
+        addLog('success', `Profile "${profile.name}" loaded successfully`);
+        playSound('success');
+        showToast(`Profile "${profile.name}" loaded`, 'success');
+    } catch (error) {
+        addLog('error', `Failed to load profile: ${error.message}`);
+        playSound('error');
+    }
+}
+
+async function deleteProfile(profileId) {
+    if (!confirm('Are you sure you want to delete this profile? This cannot be undone.')) {
+        return;
+    }
+    
+    const { error } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', profileId);
+    
+    if (error) {
+        console.error('Profile delete error:', error.message);
+        alert('❌ Failed to delete profile.');
+        addLog('error', `Profile delete failed: ${error.message}`);
+    } else {
+        // Refresh the profiles list
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: profiles } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('last_updated', { ascending: false });
+        
+        renderProfilesList(profiles);
+        addLog('warning', 'Profile deleted successfully');
+        playSound('notification');
+    }
+}
 
     checkUserSession();
     initApp();

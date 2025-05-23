@@ -49,6 +49,10 @@
                         <button id="export-json-cloud"><i class="fas fa-cloud-upload-alt"></i> Export JSON (Personal Cloud)</button>
                         <button id="import-json-cloud"><i class="fas fa-cloud-download-alt"></i> Import JSON (Personal Cloud)</button>
 
+                        <!-- In the dropdown menu where other export/import buttons are -->
+                        <button id="save-profile-btn"><i class="fas fa-save"></i> Save Profile</button>
+                        <button id="manage-profiles-btn"><i class="fas fa-folder-open"></i> Manage Profiles</button>
+
                     </div>
                 </div>
             </div>
@@ -58,32 +62,19 @@
   <button id="logout-btn">Logout</button>
   <span id="user-info"></span>
 </div>
-<!-- Cloud Profiles Actions -->
-<div style="display:flex;gap:10px;margin-bottom:24px;">
-  <button id="export-json-cloud" class="btn-small" style="background:#5865F2;color:#fff;border:none;border-radius:6px;padding:8px 20px;cursor:pointer;">
-    Export JSON (Personal Cloud)
-  </button>
-  <button id="import-json-cloud" class="btn-small" style="background:#5865F2;color:#fff;border:none;border-radius:6px;padding:8px 20px;cursor:pointer;">
-    Import JSON (Personal Cloud)
-  </button>
-</div>
-
-<!-- Cloud Profiles Modal -->
+<!-- Add this with the other modals -->
 <div id="profiles-modal" class="modal hidden">
-  <div class="modal-content" style="background:#23272a; border-radius:10px; padding:20px; min-width:320px; max-width:95vw;">
-    <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;">
-      <h3 style="color:#fff; margin-bottom:10px;">Τα Cloud Προφίλ σου</h3>
-      <button class="close-modal" onclick="window.closeProfilesModal()" style="background:none;border:none;font-size:22px;color:#fff;cursor:pointer;">&times;</button>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Your Saved Profiles</h3>
+            <button class="close-modal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div id="profiles-list" class="profile-items"></div>
+            <div id="no-profiles-message" class="empty-state">No saved profiles yet</div>
+        </div>
     </div>
-    <div class="modal-body">
-      <div id="profiles-list"></div>
-      <button id="add-profile-btn" class="btn-small" style="margin-top:15px;background:#5865F2;color:#fff;border:none;border-radius:6px;padding:8px 20px;cursor:pointer;">
-        + Νέο Cloud Save
-      </button>
-    </div>
-  </div>
 </div>
-
 <div>
 </div>
 
@@ -393,8 +384,6 @@
             </div>
         </div>
     </div>
-
-
 
 
 

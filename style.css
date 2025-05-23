@@ -1892,12 +1892,46 @@ input[type="color"]#embed-color:focus {
 #fetch-json-btn:hover {
   background: var(--secondary-color);
 }
-.btn-small {
-    padding: 5px 10px;
-    margin-left: 5px;
-    background: #5865F2;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+/* Profile Management Styles */
+.profile-items {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.profile-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.profile-item:hover {
+    background-color: var(--hover-color);
+}
+
+.profile-info {
+    flex: 1;
+}
+
+.profile-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.profile-date {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.profile-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-secondary);
 }
