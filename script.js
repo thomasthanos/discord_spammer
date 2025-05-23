@@ -1424,12 +1424,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // === Elements ===
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
     const userInfo = document.getElementById('user-info');
     const fetchJsonBtn = document.getElementById('fetch-json-btn');
     const exportCloudBtn = document.getElementById('export-json-cloud');
     const importCloudBtn = document.getElementById('import-json-cloud');
+    const loginBtn = document.getElementById('login-btn');
+    const userDropdown = document.getElementById('user-dropdown');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    const userLogoutBtn = document.getElementById('user-logout-btn');
 
     // === Login with Discord ===
     loginBtn.addEventListener('click', async () => {
@@ -1448,30 +1451,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === Check user session on load ===
-// Update the checkUserSession function
 async function checkUserSession() {
     try {
         const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) {
-            if (error.name === 'AuthSessionMissingError') {
-                document.getElementById('user-dropdown').classList.add('hidden');
-            } else {
-                console.error('Error checking user session:', error.message);
+        if (error || !user) {
+            updateAuthUI(false);
+            if (error && error.name !== 'AuthSessionMissingError') {
                 addLog('error', `Error checking user session: ${error.message}`);
             }
-            return;
-        }
-        
-        if (user) {
-            updateUserDisplay(user);
         } else {
-            document.getElementById('user-dropdown').classList.add('hidden');
+            updateAuthUI(true, user);
         }
     } catch (e) {
-        console.error('Unexpected error in checkUserSession:', e.message);
-        addLog('error', `Unexpected error checking session: ${e.message}`);
+        updateAuthUI(false);
+        addLog('error', `Unexpected error: ${e.message}`);
     }
 }
+
 
 // Add this function to update the user display
 function updateUserDisplay(user) {
@@ -1913,6 +1909,116 @@ async function deleteProfile(profileId) {
         addLog('error', `Error refreshing profiles: ${e.message}`);
     }
 }
+
+
+
+
+function updateAuthUI(isLoggedIn, user = null) {
+    const userDropdown = document.getElementById('user-dropdown');
+    const loginBtn = document.getElementById('login-btn');
+    if (isLoggedIn && user) {
+        userDropdown.classList.remove('hidden');
+        loginBtn.classList.add('hidden');
+        // Avatar & username
+        const avatarUrl = user.user_metadata?.avatar_url ||
+            `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id) % 5}.png`;
+        document.getElementById('user-avatar').src = avatarUrl;
+        document.getElementById('user-name').textContent =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email ||
+            'Discord User';
+    } else {
+        userDropdown.classList.add('hidden');
+        loginBtn.classList.remove('hidden');
+        document.getElementById('user-avatar').src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+        document.getElementById('user-name').textContent = '';
+    }
+}
+
+
+// ==== CHECK USER SESSION ====
+async function checkUserSession() {
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+            updateAuthUI(false);
+            if (error.name !== 'AuthSessionMissingError') {
+                console.error('Error checking user session:', error.message);
+                addLog('error', `Error checking user session: ${error.message}`);
+            }
+            return;
+        }
+        if (user) {
+            updateAuthUI(true, user);
+        } else {
+            updateAuthUI(false);
+        }
+    } catch (e) {
+        console.error('Unexpected error in checkUserSession:', e.message);
+        addLog('error', `Unexpected error checking session: ${e.message}`);
+        updateAuthUI(false);
+    }
+}
+
+// ==== LOGIN HANDLER ====
+loginBtn.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: { redirectTo: window.location.href }
+    });
+    if (error) {
+        console.error('Login failed:', error.message);
+        addLog('error', `Login failed: ${error.message}`);
+    }
+});
+
+// ==== LOGOUT HANDLER ====
+userLogoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    updateAuthUI(false);
+    addLog('success', 'Logged out successfully');
+    playSound('notification');
+});
+
+
+if (code && state) {
+    (async () => {
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error) throw error;
+            if (user) {
+                updateAuthUI(true, user);
+                addLog('success', 'Successfully logged in via Discord');
+                playSound('success');
+            }
+            // Καθάρισε το URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (e) {
+            console.error('Error handling OAuth redirect:', e.message);
+            addLog('error', `OAuth error: ${e.message}`);
+        }
+    })();
+} else {
+    checkUserSession();
+}
+document.getElementById('user-logout-btn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    updateAuthUI(false);
+    addLog('success', 'Logged out successfully');
+    playSound('notification');
+});
+document.getElementById('login-btn').addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: { redirectTo: window.location.href }
+    });
+    if (error) {
+        console.error('Login failed:', error.message);
+        addLog('error', `Login failed: ${error.message}`);
+    }
+});
+
 
     checkUserSession();
     initApp();

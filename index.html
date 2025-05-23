@@ -39,16 +39,8 @@
                         <i class="fas fa-terminal"></i>
                     </div>
                 </div>
-                <div id="user-dropdown" class="dropdown hidden">
-                    <button id="user-dropdown-btn" class="btn-icon">
-                        <img id="user-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="User Avatar" class="avatar-small">
-                        <span id="user-name"></span>
-                        <i class="fas fa-caret-down"></i>
-                    </button>
-                                <div class="dropdown-content">
-                                    <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                                </div>
-                                        <div class="dropdown"></div>
+                
+                <div class="dropdown">
                     <button id="export-menu-btn" class="btn-icon"><i class="fas fa-file-export"></i></button>
                     <div class="dropdown-content">
                         <button id="export-json-menu"><i class="fas fa-file-code"></i> Export JSON</button>
@@ -64,8 +56,16 @@
 
                     </div>
                 </div>
+                <div class="dropdown auth-container">
+                    <i class="fab fa-discord auth-icon" title="Auth Options"></i>
+                    <div class="dropdown-content auth-dropdown">
+                        <button id="login-btn" class="auth-btn"><i class="fas fa-sign-in-alt"></i> Login with Discord</button>
+                        <button id="logout-btn" class="auth-btn hidden"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                </div>
             </div>
         </header>
+
 <!-- Add this with the other modals -->
 <div id="profiles-modal" class="modal hidden">
     <div class="modal-content">
