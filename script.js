@@ -60,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Variables
     let intervalId = null;
-    let isSending = false;
     let stats = { 
         total: 0,
         success: 0,
@@ -70,18 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let embeds = [];
     let embedCount = 1;
     let attachments = [];
-
-    // Moved to outer scope
-    function updateMessageLimitPlaceholder() {
-        console.log('updateMessageLimitPlaceholder defined');
-        const value = elements.messageLimit.value;
-        if (value === '0' || value === '') {
-            elements.messageLimit.value = ''; // Clear the input to show the placeholder
-            elements.messageLimit.placeholder = '∞';
-        } else {
-            elements.messageLimit.placeholder = 'Unlimited';
-        }
-    }
 
     // Initialize app
     function initApp() {
@@ -137,29 +124,31 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize preview
         if (elements.messageContent.value) updatePreview();
         if (elements.avatarUrl.value) elements.previewAvatar.src = elements.avatarUrl.value;
+document.querySelector('.selected-option').onclick = function() {
+    let opts = document.querySelector('.options-list');
+    opts.style.display = (opts.style.display === 'block' ? 'none' : 'block');
+};
 
-        document.querySelector('.selected-option').onclick = function() {
-            let opts = document.querySelector('.options-list');
-            opts.style.display = (opts.style.display === 'block' ? 'none' : 'block');
-        };
+document.querySelectorAll('.option').forEach(opt => {
+    opt.onclick = function() {
+        let value = this.dataset.value;
+        let text = this.innerText.trim();
+        let icon = this.querySelector('.option-icon').src;
+        document.getElementById('file-size-limit').value = value;
+        document.getElementById('selected-level-text').textContent = text;
+        document.getElementById('selected-level-icon').src = icon;
+        document.querySelector('.options-list').style.display = 'none';
+    };
+});
 
-        document.querySelectorAll('.option').forEach(opt => {
-            opt.onclick = function() {
-                let value = this.dataset.value;
-                let text = this.innerText.trim();
-                let icon = this.querySelector('.option-icon').src;
-                document.getElementById('file-size-limit').value = value;
-                document.getElementById('selected-level-text').textContent = text;
-                document.getElementById('selected-level-icon').src = icon;
-                document.querySelector('.options-list').style.display = 'none';
-            };
-        });
+document.addEventListener('click', function(e) {
+    if (!document.getElementById('file-size-custom-select').contains(e.target)) {
+        document.querySelector('.options-list').style.display = 'none';
+    }
+});
 
-        document.addEventListener('click', function(e) {
-            if (!document.getElementById('file-size-custom-select').contains(e.target)) {
-                document.querySelector('.options-list').style.display = 'none';
-            }
-        });
+
+
 
         // Setup event listeners
         setupEventListeners();
@@ -168,6 +157,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupEventListeners() {
+        // Helper function to update message-limit placeholder
+        function updateMessageLimitPlaceholder() {
+            const value = elements.messageLimit.value;
+            if (value === '0' || value === '') {
+                elements.messageLimit.value = ''; // Clear the input to show the placeholder
+                elements.messageLimit.placeholder = '∞';
+            } else {
+                elements.messageLimit.placeholder = 'Unlimited';
+            }
+        }
+
         // Theme selection
         elements.themeCarousel.addEventListener('click', (e) => {
             const themePreview = e.target.closest('.theme-preview');
@@ -246,6 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Message limit input
         elements.messageLimit.addEventListener('input', () => {
             updateMessageLimitPlaceholder();
+            // Προσθήκη: Ενημέρωση status ready
             const value = elements.messageLimit.value;
             let label = 'Ready';
             if (value && value !== "0") {
@@ -253,6 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             elements.statusText.textContent = label;
         });
+
 
         // Increment/Decrement buttons
         document.querySelectorAll('.interval-btn').forEach(btn => {
@@ -262,19 +264,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 let value = parseInt(input.value) || (input.id === 'message-limit' ? 0 : 10);
 
                 if (input.id === 'message-limit' && input.value === '') {
+                    // If the input is empty (representing ∞), set value to 0 for now
                     value = 0;
                 }
 
                 if (action === 'increment') {
                     if (input.id === 'message-limit' && input.value === '') {
+                        // Transition from ∞ to 1
                         input.value = 1;
                     } else {
+                        // Normal increment
                         input.value = value + 1;
                     }
                 } else if (action === 'decrement' && value > 0) {
                     input.value = value - 1;
                     if (input.value === '0') {
-                        input.value = '';
+                        input.value = ''; // Clear to show ∞ placeholder
                         updateMessageLimitPlaceholder(); // Ensure placeholder updates
                     }
                 }
@@ -322,16 +327,16 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMessageLimitPlaceholder();
     }
 
-    function handleFileUploads() {
-        elements.messageAttachments.addEventListener('change', (e) => {
-            let newFiles = Array.from(e.target.files);
-            const maxFileSizeMB = parseInt(elements.fileSizeLimit.value) || 8;
-            const maxAttachments = 10;
+function handleFileUploads() {
+    elements.messageAttachments.addEventListener('change', (e) => {
+        let newFiles = Array.from(e.target.files);
+        const maxFileSizeMB = parseInt(elements.fileSizeLimit.value) || 8;
+        const maxAttachments = 10;
 
-            // Keep only valid files
-            let validFiles = [];
-            newFiles.forEach(file => {
-                const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+        // Θα κρατήσουμε μόνο τα επιτρεπτά
+        let validFiles = [];
+        newFiles.forEach(file => {
+            const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
                 if (file.size > maxFileSizeMB * 1024 * 1024) {
                     addLog('error', `Attachment '${file.name}' is too large (${fileSizeMB} MB > ${maxFileSizeMB} MB limit)`);
                     showToast(`Το αρχείο '${file.name}' είναι πολύ μεγάλο (${fileSizeMB} MB / όριο ${maxFileSizeMB} MB)`, 'error');
@@ -339,16 +344,86 @@ document.addEventListener('DOMContentLoaded', () => {
                     validFiles.push(file);
                     addLog('success', `Attachment '${file.name}' uploaded (${fileSizeMB} MB)`);
                 }
-            });
+        });
 
-            if (validFiles.length > maxAttachments) {
-                addLog('warning', `Too many attachments (${validFiles.length}). Maximum allowed is ${maxAttachments}.`);
-                validFiles = validFiles.slice(0, maxAttachments);
-            }
+        if (validFiles.length > maxAttachments) {
+            addLog('warning', `Too many attachments (${validFiles.length}). Maximum allowed is ${maxAttachments}.`);
+            validFiles = validFiles.slice(0, maxAttachments);
+        }
 
-            attachments = validFiles;
+        attachments = validFiles;
 
-            // Sync with file input
+        // Sync με file input
+        const dataTransfer = new DataTransfer();
+        attachments.forEach(file => dataTransfer.items.add(file));
+        elements.messageAttachments.files = dataTransfer.files;
+
+        renderAttachmentsPreview();
+        updatePreview();
+
+        // Αν κανένα δεν πέρασε, καθάρισε το input!
+        if (attachments.length === 0) {
+            elements.messageAttachments.value = '';
+        }
+    });
+}
+
+
+
+// ΝΕΑ FUNCTION για rendering και σωστό remove
+function renderAttachmentsPreview() {
+    elements.messageAttachmentsPreview.innerHTML = '';
+    attachments.forEach((file, i) => {
+        const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+        const fileId = `${file.name}_${file.size}`; // μοναδικό id
+
+        // Determine icon for non-image/video files
+        let iconClass = 'fa-file';
+        if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
+        else if (file.type.includes('zip') || file.type.includes('compressed')) iconClass = 'fa-file-archive';
+        else if (file.type.includes('msword') || file.type.includes('officedocument')) iconClass = 'fa-file-word';
+
+        let innerHTML = '';
+        if (file.type.startsWith('image/')) {
+            innerHTML = `
+                <img src="${URL.createObjectURL(file)}" alt="${file.name}">
+                <span>${file.name} (${fileSizeMB} MB)</span>
+                <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        } else if (file.type.startsWith('video/')) {
+            innerHTML = `
+                <video controls>
+                    <source src="${URL.createObjectURL(file)}" type="${file.type}">
+                </video>
+                <span>${file.name} (${fileSizeMB} MB)</span>
+                <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        } else {
+            innerHTML = `
+                <i class="fas ${iconClass}"></i>
+                <span>${file.name} (${fileSizeMB} MB)</span>
+                <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+        }
+
+        const previewElement = document.createElement('div');
+        previewElement.className = 'attachment-preview-item';
+        previewElement.innerHTML = innerHTML;
+        elements.messageAttachmentsPreview.appendChild(previewElement);
+
+        // Remove button: Σωστό remove by name+size
+        previewElement.querySelector('.remove-attachment').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const fileId = e.currentTarget.getAttribute('data-fid');
+            attachments = attachments.filter(f => (`${f.name}_${f.size}` !== fileId));
+
+            // Ενημέρωσε το file input
             const dataTransfer = new DataTransfer();
             attachments.forEach(file => dataTransfer.items.add(file));
             elements.messageAttachments.files = dataTransfer.files;
@@ -356,80 +431,14 @@ document.addEventListener('DOMContentLoaded', () => {
             renderAttachmentsPreview();
             updatePreview();
 
-            // Clear input if no attachments remain
+            // Αν δεν έμεινε τίποτα, καθάρισε το input (όπως ζήτησες)
             if (attachments.length === 0) {
                 elements.messageAttachments.value = '';
             }
         });
-    }
+    });
+}
 
-    function renderAttachmentsPreview() {
-        elements.messageAttachmentsPreview.innerHTML = '';
-        attachments.forEach((file, i) => {
-            const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
-            const fileId = `${file.name}_${file.size}`; // Unique ID
-
-            // Determine icon for non-image/video files
-            let iconClass = 'fa-file';
-            if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
-            else if (file.type.includes('zip') || file.type.includes('compressed')) iconClass = 'fa-file-archive';
-            else if (file.type.includes('msword') || file.type.includes('officedocument')) iconClass = 'fa-file-word';
-
-            let innerHTML = '';
-            if (file.type.startsWith('image/')) {
-                innerHTML = `
-                    <img src="${URL.createObjectURL(file)}" alt="${file.name}">
-                    <span>${file.name} (${fileSizeMB} MB)</span>
-                    <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-            } else if (file.type.startsWith('video/')) {
-                innerHTML = `
-                    <video controls>
-                        <source src="${URL.createObjectURL(file)}" type="${file.type}">
-                    </video>
-                    <span>${file.name} (${fileSizeMB} MB)</span>
-                    <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-            } else {
-                innerHTML = `
-                    <i class="fas ${iconClass}"></i>
-                    <span>${file.name} (${fileSizeMB} MB)</span>
-                    <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-            }
-
-            const previewElement = document.createElement('div');
-            previewElement.className = 'attachment-preview-item';
-            previewElement.innerHTML = innerHTML;
-            elements.messageAttachmentsPreview.appendChild(previewElement);
-
-            // Remove button
-            previewElement.querySelector('.remove-attachment').addEventListener('click', (e) => {
-                e.stopPropagation();
-                const fileId = e.currentTarget.getAttribute('data-fid');
-                attachments = attachments.filter(f => (`${f.name}_${f.size}` !== fileId));
-
-                // Update file input
-                const dataTransfer = new DataTransfer();
-                attachments.forEach(file => dataTransfer.items.add(file));
-                elements.messageAttachments.files = dataTransfer.files;
-
-                renderAttachmentsPreview();
-                updatePreview();
-
-                // Clear input if no attachments remain
-                if (attachments.length === 0) {
-                    elements.messageAttachments.value = '';
-                }
-            });
-        });
-    }
 
     function setupEmbedEventListeners() {
         elements.addEmbedBtn.addEventListener('click', () => {
@@ -444,30 +453,30 @@ document.addEventListener('DOMContentLoaded', () => {
             updatePreview();
             showToast('New embed added', 'success');
         });
-
-        elements.embedToggleBtn.addEventListener('click', () => {
-            const isExpanded = elements.embedContent.classList.toggle('expanded');
-            elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
-            if (isExpanded) {
-                if (window.innerWidth < 768) {
-                    elements.embedContent.style.maxHeight = '300px';
-                } else {
-                    if (embedCount > 1) {
-                        elements.embedContent.style.maxHeight = '500px';
-                    } else {
-                        elements.embedContent.style.maxHeight = 'none';
-                    }
-                }
+elements.embedToggleBtn.addEventListener('click', () => {
+    const isExpanded = elements.embedContent.classList.toggle('expanded');
+    elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
+    if (isExpanded) {
+        if (window.innerWidth < 768) {
+            elements.embedContent.style.maxHeight = '300px';
+        } else {
+            if (embedCount > 1) {
+                elements.embedContent.style.maxHeight = '500px';
             } else {
-                elements.embedContent.style.maxHeight = '0';
+                elements.embedContent.style.maxHeight = 'none';
             }
-        });
+        }
+    } else {
+        elements.embedContent.style.maxHeight = '0';
+    }
+});
+
     }
 
     function renderEmbeds() {
         elements.embedList.innerHTML = '';
         embeds.forEach((embed, index) => {
-            embed.index = index; // Re-index
+            embed.index = index; // re-index
 
             const embedItem = document.createElement('div');
             embedItem.className = 'embed-item';
@@ -548,22 +557,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 updatePreview();
             });
         });
-
-        // Delete button
-        document.querySelectorAll('.delete-embed-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const index = parseInt(btn.dataset.embedIndex);
-                if (index > 0) {
-                    embeds.splice(index, 1);
-                    embedCount--;
-                    localStorage.setItem('embeds', JSON.stringify(embeds));
-                    renderEmbeds();
-                    updatePreview();
-                    showToast('Embed deleted', 'success');
-                }
-            });
+// Delete button: Κάνε σωστό re-render και re-index
+    document.querySelectorAll('.delete-embed-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const index = parseInt(btn.dataset.embedIndex);
+            if (index > 0) {
+                embeds.splice(index, 1);
+                embedCount--;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                renderEmbeds();
+                updatePreview();
+                showToast('Embed deleted', 'success');
+            }
         });
-
+    });
         if (elements.embedContent.classList.contains('expanded')) {
             if (window.innerWidth < 768) { // Mobile
                 elements.embedContent.style.maxHeight = '300px';
@@ -593,6 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedLayout) {
             try {
                 const parsedLayout = JSON.parse(savedLayout);
+                // Validate that the layout contains all required cards
                 if (Array.isArray(parsedLayout) && parsedLayout.length === defaultLayout.length &&
                     defaultLayout.every(card => parsedLayout.includes(card))) {
                     layout = parsedLayout;
@@ -638,6 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
     function updateIntervalDisplay() {
         const value = elements.intervalValue.value;
         const unit = elements.intervalUnit.value;
@@ -662,12 +671,12 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.previewUsername.textContent = elements.username.value || 'Webhook Sender';
         elements.previewAvatar.src = elements.avatarUrl.value || 'https://cdn.discordapp.com/embed/avatars/0.png';
 
-        // Remove old preview elements
+        // Αφαίρεσε παλιά preview elements
         document.querySelectorAll('.embed-preview').forEach(preview => preview.remove());
         const attachmentsPreview = document.querySelector('.preview-attachments');
         if (attachmentsPreview) attachmentsPreview.remove();
 
-        // Render attachments first
+        // 1. ΠΡΩΤΑ τα attachments (όπως στο Discord)
         if (attachments.length > 0) {
             const previewContainer = document.createElement('div');
             previewContainer.className = 'preview-attachments';
@@ -711,7 +720,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('.discord-content').appendChild(previewContainer);
         }
 
-        // Render embeds
+
+        // 2. META τα embeds
         embeds.forEach(embed => {
             if (embed.title.trim() || embed.description.trim() || embed.imageUrl || embed.thumbnailUrl) {
                 const embedPreview = document.createElement('div');
@@ -730,6 +740,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
 
     function formatDiscordMarkdown(text, context = 'description') {
         let formattedText = text
@@ -899,100 +910,114 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('webhookHistory', JSON.stringify(history));
     }
 
-    async function startSending() {
-        const webhookUrl = elements.webhookUrl.value.trim();
-        const message = elements.messageContent.value.trim();
-        const intervalValue = parseInt(elements.intervalValue.value);
-        const intervalUnit = elements.intervalUnit.value.toLowerCase();
-        let messageLimit = parseInt(elements.messageLimit.value);
-        if (isNaN(messageLimit) || elements.messageLimit.value === '') {
-            messageLimit = 0;
-        }
-        let sentCount = 1;
+async function startSending() {
+    const webhookUrl = elements.webhookUrl.value.trim();
+    const message = elements.messageContent.value.trim();
+    const intervalValue = parseInt(elements.intervalValue.value);
+    const intervalUnit = elements.intervalUnit.value.toLowerCase();
+    let messageLimit = parseInt(elements.messageLimit.value);
+    if (isNaN(messageLimit) || elements.messageLimit.value === '') {
+        messageLimit = 0;
+    }
+    let sentCount = 1;
 
-        if (!webhookUrl) {
-            addLog('error', 'Please enter a valid Discord webhook URL');
-            playSound('error');
-            return;
-        }
-        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && attachments.length === 0) {
-            addLog('error', 'Please enter a message, add an embed, or attach a file to send');
-            playSound('error');
-            return;
-        }
-        if (isNaN(intervalValue) || intervalValue <= 0) {
-            addLog('error', 'Please enter a valid interval (greater than 0)');
-            playSound('error');
-            return;
-        }
-
-        stats.success = 0;
-        stats.failed = 0;
-        stats.responseTimes = [];
-        updateStats();
-        saveStats();
-
-        let intervalMs = intervalValue * 1000;
-        if (intervalUnit === 'minutes') intervalMs *= 60;
-        else if (intervalUnit === 'hours') intervalMs *= 3600;
-        if (intervalMs < 2000) {
-            intervalMs = 2000;
-            addLog('warning', 'Interval too short. Using minimum 2 seconds to avoid rate limits.');
-        }
-
-        saveToHistory(webhookUrl);
-
-        // Helper for status update
-        function updateStatusText() {
-            const unitText = intervalValue === 1 ? intervalUnit.replace(/s$/, '') : intervalUnit;
-            elements.statusText.textContent =
-                `Sending every ${intervalValue} ${unitText}` +
-                (messageLimit === 0 ? ' (Unlimited)' : messageLimit ? ` (${sentCount}/${messageLimit})` : '');
-        }
-
-        async function sendAndSchedule() {
-            sentCount++;
-            updateStatusText();
-            if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount > messageLimit) {
-                stopSending();
-                addLog('success', `Stopped after sending ${messageLimit} messages`);
-                return;
-            }
-            intervalId = setTimeout(async () => {
-                await sendMessage(webhookUrl, getRandomMessage());
-                sendAndSchedule();
-            }, intervalMs);
-        }
-
-        try {
-            // Send first message
-            await sendMessage(webhookUrl, getRandomMessage());
-            updateStatusText();
-            if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount >= messageLimit) {
-                stopSending();
-                addLog('success', `Stopped after sending ${sentCount} messages`);
-                return;
-            }
-            intervalId = setTimeout(async () => {
-                await sendMessage(webhookUrl, getRandomMessage());
-                sendAndSchedule();
-            }, intervalMs);
-
-            isSending = true;
-            elements.startBtn.disabled = true;
-            elements.stopBtn.disabled = false;
-            elements.statusDot.classList.add('active');
-            updateStatusText();
-            addLog('success', `Started sending messages every ${intervalValue} ${intervalUnit}` + (messageLimit === 0 ? ' (unlimited)' : messageLimit ? ` for ${messageLimit} messages` : ''));
-            playSound('success');
-        } catch (error) {
-            addLog('error', `Failed to start sending: ${error.message}`);
-            playSound('error');
-        }
+    if (!webhookUrl) {
+        addLog('error', 'Please enter a valid Discord webhook URL');
+        playSound('error');
+        return;
+    }
+    if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && attachments.length === 0) {
+        addLog('error', 'Please enter a message, add an embed, or attach a file to send');
+        playSound('error');
+        return;
+    }
+    if (isNaN(intervalValue) || intervalValue <= 0) {
+        addLog('error', 'Please enter a valid interval (greater than 0)');
+        playSound('error');
+        return;
     }
 
+    stats.success = 0;
+    stats.failed = 0;
+    stats.responseTimes = [];
+    updateStats();
+    saveStats();
+
+    let intervalMs = intervalValue * 1000;
+    if (intervalUnit === 'minutes') intervalMs *= 60;
+    else if (intervalUnit === 'hours') intervalMs *= 3600;
+    if (intervalMs < 2000) {
+        intervalMs = 2000;
+        addLog('warning', 'Interval too short. Using minimum 2 seconds to avoid rate limits.');
+    }
+
+    saveToHistory(webhookUrl);
+
+    // Helper για το status update
+    function updateStatusText() {
+        const unitText = intervalValue === 1 ? intervalUnit.replace(/s$/, '') : intervalUnit;
+        elements.statusText.textContent =
+            `Sending every ${intervalValue} ${unitText}` +
+            (messageLimit === 0 ? ' (Unlimited)' : messageLimit ? ` (${sentCount}/${messageLimit})` : '');
+    }
+
+    async function sendAndSchedule() {
+        sentCount++;
+        updateStatusText();
+        if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount > messageLimit) {
+            stopSending();
+            addLog('success', `Stopped after sending ${messageLimit} messages`);
+            return;
+        }
+        intervalId = setTimeout(async () => {
+            await sendMessage(webhookUrl, getRandomMessage());
+            sendAndSchedule();
+        }, intervalMs);
+    }
+
+    try {
+        // Στέλνεις το πρώτο μήνυμα
+        await sendMessage(webhookUrl, getRandomMessage());
+        updateStatusText();
+        if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount >= messageLimit) {
+            stopSending();
+            addLog('success', `Stopped after sending ${sentCount} messages`);
+            return;
+        }
+        intervalId = setTimeout(async () => {
+            await sendMessage(webhookUrl, getRandomMessage());
+            sendAndSchedule();
+        }, intervalMs);
+
+        isSending = true;
+        elements.startBtn.disabled = true;
+        elements.stopBtn.disabled = false;
+        elements.statusDot.classList.add('active');
+        updateStatusText();
+        addLog('success', `Started sending messages every ${intervalValue} ${intervalUnit}` + (messageLimit === 0 ? ' (unlimited)' : messageLimit ? ` for ${messageLimit} messages` : ''));
+        playSound('success');
+    } catch (error) {
+        addLog('error', `Failed to start sending: ${error.message}`);
+        playSound('error');
+    }
+}
+
+// Και στη stopSending()
+function stopSending() {
+    if (intervalId) clearTimeout(intervalId); // Αντί για clearInterval!
+    intervalId = null;
+    isSending = false;
+    elements.startBtn.disabled = false;
+    elements.stopBtn.disabled = true;
+    elements.statusDot.classList.remove('active');
+    elements.statusText.textContent = 'Ready';
+    addLog('warning', 'Stopped sending messages');
+    playSound('notification');
+}
+
+
     function stopSending() {
-        if (intervalId) clearTimeout(intervalId);
+        if (intervalId) clearInterval(intervalId);
         intervalId = null;
         isSending = false;
         elements.startBtn.disabled = false;
@@ -1060,7 +1085,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const formData = new FormData();
                 
                 attachments.forEach((file, index) => {
-                    formData.append(`file${index}`, file, file.name);
+                    formData.append(`file${index}`, file, file.name); // Include filename
                 });
                 
                 formData.append('payload_json', JSON.stringify({
@@ -1081,39 +1106,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                xhr.onload = () => {
-                    progressToast.remove();
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        const responseTime = Date.now() - startTime;
-                        stats.total++;
-                        stats.success++;
-                        stats.responseTimes.push(responseTime);
-                        if (stats.responseTimes.length > 10) stats.responseTimes.shift();
-                        updateStats();
-                        saveStats();
-                        addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
-                        playSound('success');
-                    } else {
-                        let errorMessage = `HTTP error! Status: ${xhr.status}`;
-                        if (xhr.status === 400) {
-                            errorMessage = 'Invalid request. Check file format, number of attachments (max 10), or webhook URL.';
-                        } else if (xhr.status === 401) {
-                            errorMessage = 'Unauthorized. Invalid webhook URL or token.';
-                        } else if (xhr.status === 404) {
-                            errorMessage = 'Webhook not found. Check the URL.';
-                        } else if (xhr.status === 413) {
-                            errorMessage = `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB).`;
-                            showToast(
-                                `Το αρχείο είναι πολύ μεγάλο! Μέγιστο επιτρεπτό μέγεθος για Discord: ${elements.fileSizeLimit.value || 8} MB`,
-                                'error'
-                            );
-                            addLog('error', `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB)`);
-                        } else if (xhr.status === 429) {
-                            errorMessage = 'Rate limit exceeded. Please try again later.';
-                        }
-                        throw new Error(errorMessage);
+            xhr.onload = () => {
+                progressToast.remove();
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    const responseTime = Date.now() - startTime;
+                    stats.total++;
+                    stats.success++;
+                    stats.responseTimes.push(responseTime);
+                    if (stats.responseTimes.length > 10) stats.responseTimes.shift();
+                    updateStats();
+                    saveStats();
+                    addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
+                    playSound('success');
+                } else {
+                    let errorMessage = `HTTP error! Status: ${xhr.status}`;
+                    if (xhr.status === 400) {
+                        errorMessage = 'Invalid request. Check file format, number of attachments (max 10), or webhook URL.';
+                    } else if (xhr.status === 401) {
+                        errorMessage = 'Unauthorized. Invalid webhook URL or token.';
+                    } else if (xhr.status === 404) {
+                        errorMessage = 'Webhook not found. Check the URL.';
+                    } else if (xhr.status === 413) {
+                        errorMessage = `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB).`;
+                        // Εμφάνιση toast για πολύ μεγάλο αρχείο
+                        showToast(
+                            `Το αρχείο είναι πολύ μεγάλο! Μέγιστο επιτρεπτό μέγεθος για Discord: ${elements.fileSizeLimit.value || 8} MB`,
+                            'error'
+                        );
+                        addLog('error', `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB)`);
+                    } else if (xhr.status === 429) {
+                        errorMessage = 'Rate limit exceeded. Please try again later.';
                     }
-                };
+                    throw new Error(errorMessage);
+                }
+            };
+
 
                 xhr.onerror = () => {
                     progressToast.remove();
@@ -1176,17 +1203,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetStatistics() {
-        console.log('resetStatistics called');
         if (confirm('Are you sure you want to reset ALL settings and data? This cannot be undone!')) {
-            console.log('Calling updateMessageLimitPlaceholder');
             stopSending();
             
-            // Reset input fields
             elements.webhookUrl.value = '';
             elements.messageContent.value = '';
             elements.intervalValue.value = '10';
             elements.intervalUnit.value = 'seconds';
-            elements.messageLimit.value = ''; // Set to empty for 'Unlimited'
+            elements.messageLimit.value = '1';
             elements.username.value = '';
             elements.avatarUrl.value = '';
             elements.randomMessages.checked = false;
@@ -1197,24 +1221,20 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.fileSizeLimit.value = '8'; // Reset to Level 1 default
             attachments = [];
             
-            // Reset embeds
             embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
             embedCount = 1;
+            firstEmbedHeight = 0;
             renderEmbeds();
             
-            // Reset preview
             elements.previewText.textContent = 'Your message will appear here...';
             elements.previewUsername.textContent = 'Webhook Sender';
             elements.previewAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
             
-            // Reset stats
             stats = { total: 0, success: 0, failed: 0, responseTimes: [] };
             updateStats();
             
-            // Clear logs
             elements.logContainer.innerHTML = '';
             
-            // Clear localStorage
             localStorage.removeItem('webhookUrl');
             localStorage.removeItem('messageContent');
             localStorage.removeItem('username');
@@ -1226,9 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem('embedImageUrl');
             localStorage.removeItem('embedThumbnailUrl');
             localStorage.removeItem('fileSizeLimit');
-            localStorage.removeItem('logs');
             
-            // Update UI
             elements.statusText.textContent = 'Ready';
             elements.statusDot.classList.remove('active');
             
@@ -1243,7 +1261,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearLogs() {
         if (confirm('Are you sure you want to clear all logs?')) {
             elements.logContainer.innerHTML = '';
-            localStorage.removeItem('logs');
             addLog('warning', 'Cleared all logs');
         }
     }
@@ -1282,13 +1299,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 time: log.querySelector('.log-time').textContent,
                 message: log.querySelector('.log-message').textContent,
                 type: log.classList.contains('log-success') ? 'success' : 
-                      log.classList.contains('log-error') ? 'error' : 'warning'
+                    log.classList.contains('log-error') ? 'error' : 'warning'
             }))
         };
 
         const fileName = `webhook-sender-export-${new Date().toISOString().slice(0, 10)}.json`;
         downloadFile(JSON.stringify(exportData, null, 2), fileName, 'application/json');
-        localStorage.setItem('logs', JSON.stringify(exportData.logs));
         addLog('success', 'Exported application data as JSON');
         playSound('success');
     }
@@ -1332,7 +1348,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             stopSending();
 
-            // Import settings
             if (jsonData.settings) {
                 elements.webhookUrl.value = jsonData.settings.webhookUrl || '';
                 elements.messageContent.value = jsonData.settings.messageContent || '';
@@ -1341,7 +1356,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.randomMessages.checked = jsonData.settings.randomMessages || false;
                 elements.enableSounds.checked = jsonData.settings.enableSounds !== false;
                 
-                // Import embeds
                 if (jsonData.settings.embeds && Array.isArray(jsonData.settings.embeds)) {
                     embeds = jsonData.settings.embeds;
                     embedCount = embeds.length;
@@ -1352,19 +1366,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderEmbeds();
                 }
                 
-                // Import interval settings
                 if (jsonData.settings.interval) {
                     elements.intervalValue.value = jsonData.settings.interval.value || '10';
                     elements.intervalUnit.value = jsonData.settings.interval.unit || 'seconds';
                 }
                 
-                elements.messageLimit.value = jsonData.settings.messageLimit === 'Unlimited' ? '' : jsonData.settings.messageLimit || '';
+                elements.messageLimit.value = jsonData.settings.messageLimit === 'Unlimited' ? '' : jsonData.settings.messageLimit || '1';
                 elements.fileSizeLimit.value = jsonData.settings.fileSizeLimit || '8';
                 
                 updatePreview();
             }
             
-            // Import statistics
             if (jsonData.statistics) {
                 stats = {
                     total: jsonData.statistics.totalMessages || 0,
@@ -1375,7 +1387,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateStats();
             }
             
-            // Import and render logs
             if (jsonData.logs && Array.isArray(jsonData.logs)) {
                 elements.logContainer.innerHTML = '';
                 jsonData.logs.forEach(log => {
@@ -1393,12 +1404,15 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
             localStorage.setItem('embeds', JSON.stringify(embeds));
             localStorage.setItem('fileSizeLimit', elements.fileSizeLimit.value);
-            localStorage.setItem('logs', JSON.stringify(jsonData.logs || []));
             
+            // Reapply layout to ensure correct card order
             loadLayout();
-            updateMessageLimitPlaceholder();
+            
             addLog('success', 'Successfully imported settings and data from JSON');
             playSound('success');
+
+            // Update message-limit placeholder after import
+            updateMessageLimitPlaceholder();
         } catch (error) {
             addLog('error', `Failed to import data: ${error.message}`);
             playSound('error');
@@ -1413,188 +1427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isUrl) URL.revokeObjectURL(a.href);
     }
 
-    // --- SUPABASE JS ---
-    const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // === Elements ===
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const userInfo = document.getElementById('user-info');
-    const fetchJsonBtn = document.getElementById('fetch-json-btn');
-    const exportCloudBtn = document.getElementById('export-json-cloud');
-    const importCloudBtn = document.getElementById('import-json-cloud');
-
-    // === Login with Discord ===
-    loginBtn.addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
-        if (error) {
-            console.error('Login failed:', error.message);
-            addLog('error', `Login failed: ${error.message}`);
-        }
-    });
-
-    logoutBtn.addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        userInfo.textContent = 'Not logged in';
-        addLog('success', 'Logged out successfully');
-        playSound('notification');
-    });
-
-    // === Check user session on load ===
-    async function checkUserSession() {
-        try {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                if (error.name === 'AuthSessionMissingError') {
-                    userInfo.textContent = 'Not logged in';
-                } else {
-                    console.error('Error checking user session:', error.message);
-                    addLog('error', `Error checking user session: ${error.message}`);
-                }
-                return;
-            }
-            userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
-        } catch (e) {
-            console.error('Unexpected error in checkUserSession:', e.message);
-            addLog('error', `Unexpected error checking session: ${e.message}`);
-        }
-    }
-
-    // === Export JSON to Supabase Cloud ===
-    exportCloudBtn.addEventListener('click', async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-            alert('❌ You must be logged in!');
-            addLog('error', 'Export failed: User not logged in');
-            return;
-        }
-
-        const exportData = {
-            metadata: {
-                app: "Webhook Sender PRO",
-                version: "3.0",
-                exportDate: new Date().toISOString()
-            },
-            settings: {
-                webhookUrl: elements.webhookUrl.value,
-                messageContent: elements.messageContent.value,
-                username: elements.username.value,
-                avatarUrl: elements.avatarUrl.value,
-                randomMessages: elements.randomMessages.checked,
-                interval: {
-                    value: elements.intervalValue.value,
-                    unit: elements.intervalUnit.value
-                },
-                messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
-                enableSounds: elements.enableSounds.checked,
-                embeds: embeds,
-                fileSizeLimit: elements.fileSizeLimit.value
-            },
-            statistics: {
-                totalMessages: stats.total,
-                successful: stats.success,
-                failed: stats.failed,
-                averageResponseTime: stats.responseTimes.length 
-                    ? Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)
-                    : 0
-            },
-            logs: Array.from(elements.logContainer.querySelectorAll('.log-entry')).map(log => ({
-                time: log.querySelector('.log-time').textContent,
-                message: log.querySelector('.log-message').textContent,
-                type: log.classList.contains('log-success') ? 'success' : 
-                      log.classList.contains('log-error') ? 'error' : 'warning'
-            }))
-        };
-
-        const { error } = await supabase
-            .from('user_jsons')
-            .upsert({ user_id: user.id, data: exportData }, { onConflict: 'user_id' });
-
-        if (error) {
-            console.error('Upload error:', error.message);
-            alert('❌ Upload failed.');
-            addLog('error', `Upload failed: ${error.message}`);
-        } else {
-            localStorage.setItem('logs', JSON.stringify(exportData.logs));
-            alert('✅ Logs saved to cloud!');
-            addLog('success', 'Exported application data to cloud');
-            playSound('success');
-        }
-    });
-
-    // === Import JSON from Supabase Cloud ===
-    importCloudBtn.addEventListener('click', async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-            alert('❌ You must be logged in!');
-            addLog('error', 'Import failed: User not logged in');
-            return;
-        }
-
-        const { data, error } = await supabase
-            .from('user_jsons')
-            .select('data')
-            .eq('user_id', user.id)
-            .single();
-
-        if (error || !data?.data) {
-            console.error('Fetch error:', error?.message);
-            alert('❌ Failed to load data.');
-            addLog('error', `Failed to load data: ${error?.message || 'No data found'}`);
-            return;
-        }
-
-        try {
-            importJsonData(data.data);
-            alert('✅ Logs imported from cloud!');
-            addLog('success', 'Imported application data from cloud');
-        } catch (e) {
-            console.error('Invalid JSON:', e);
-            alert('❌ Invalid cloud data.');
-            addLog('error', `Invalid cloud data: ${e.message}`);
-        }
-    });
-
-    // === Handle OAuth redirect ===
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-
-    if (code && state) {
-        (async () => {
-            try {
-                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) {
-                    console.error('Error checking session:', sessionError.message);
-                    addLog('error', `Session check failed: ${sessionError.message}`);
-                    return;
-                }
-
-                if (!sessionData.session) {
-                    const { data, error } = await supabase.auth.exchangeCodeForSession({ code });
-                    if (error) {
-                        console.error('Error exchanging code:', error.message);
-                        addLog('error', `OAuth exchange failed: ${error.message}`);
-                        return;
-                    }
-                    console.log('OAuth session established:', data);
-                    userInfo.textContent = `Logged in as ${data.user.email || data.user.id}`;
-                    addLog('success', 'Successfully logged in via OAuth');
-                    playSound('success');
-                }
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } catch (e) {
-                console.error('Unexpected error in OAuth handling:', e.message);
-                addLog('error', `OAuth error: ${e.message}`);
-            }
-        })();
-    } else {
-        checkUserSession();
-    }
-
-    checkUserSession();
+    // Initialize the app
     initApp();
     loadLayout();
 });

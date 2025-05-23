@@ -8,14 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-    const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co';  // το URL σου
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA';  // το anon key σου
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    </script>
-
+    
 </head>
 <body>
     <div class="app-container">
@@ -45,22 +38,10 @@
                         <button id="export-json-menu"><i class="fas fa-file-code"></i> Export JSON</button>
                         <button id="export-screenshot-menu"><i class="fas fa-camera"></i> Screenshot</button>
                         <button id="import-json-menu"><i class="fas fa-file-import"></i> Import JSON</button>
-                        
-                        <button id="export-json-cloud"><i class="fas fa-cloud-upload-alt"></i> Export JSON (Personal Cloud)</button>
-                        <button id="import-json-cloud"><i class="fas fa-cloud-download-alt"></i> Import JSON (Personal Cloud)</button>
-
                     </div>
                 </div>
             </div>
         </header>
-<div id="auth-section">
-  <button id="login-btn">Login with Discord</button>
-  <button id="logout-btn">Logout</button>
-  <span id="user-info"></span>
-</div>
-<div>
-</div>
-
 
         <main class="app-content">
             <div class="settings-column card" data-card="settings">
@@ -368,8 +349,6 @@
         </div>
     </div>
 
-
-
     <!-- Toast Container -->
     <div id="toast-container"></div>
 
@@ -379,7 +358,5 @@
     <audio id="notification-sound" src="https://raw.githubusercontent.com/thomasthanos/discord_spammer/fa49abbd642e55fb162e6088caca5c81bcbf2bcb/sounds/notification.mp3"></audio>
 
     <script src="script.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 </body>
 </html>
