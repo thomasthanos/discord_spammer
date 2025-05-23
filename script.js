@@ -656,6 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkWebhookPrivacy(url) {
+        if (!elements.webhookWarning) return; // Skip if element doesn't exist
         const isPublic = url.includes('discord.com/api/webhooks/') && !url.includes('localhost');
         elements.webhookWarning.classList.toggle('hidden', !isPublic);
     }
