@@ -1663,7 +1663,7 @@ elements.saveProfileBtn.addEventListener('click', async () => {
     }
 });
 
-// Manage profiles (load/delete)
+// Update the manageProfilesBtn event listener to handle null cases
 elements.manageProfilesBtn.addEventListener('click', async () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
@@ -1672,30 +1672,35 @@ elements.manageProfilesBtn.addEventListener('click', async () => {
         return;
     }
 
-    const { data: profiles, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('last_updated', { ascending: false });
-
-    if (error) {
+    try {
+        const { data: profiles, error } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('last_updated', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Ensure we always pass an array to renderProfilesList
+        renderProfilesList(profiles || []);
+        elements.profilesModal.classList.remove('hidden');
+    } catch (error) {
         console.error('Profile fetch error:', error.message);
         alert('❌ Failed to load profiles.');
         addLog('error', `Profile load failed: ${error.message}`);
-        return;
+        // Still open modal but show empty state
+        renderProfilesList([]);
+        elements.profilesModal.classList.remove('hidden');
     }
-
-    renderProfilesList(profiles);
-    elements.profilesModal.classList.remove('hidden');
 });
-
 function renderProfilesList(profiles) {
     const profilesList = document.getElementById('profiles-list');
     const noProfilesMsg = document.getElementById('no-profiles-message');
     
     profilesList.innerHTML = '';
     
-    if (profiles.length === 0) {
+    // Handle null/undefined or empty array cases
+    if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
         noProfilesMsg.style.display = 'block';
         return;
     }
@@ -1706,12 +1711,12 @@ function renderProfilesList(profiles) {
         const profileItem = document.createElement('div');
         profileItem.className = 'profile-item';
         
-        const date = new Date(profile.last_updated);
+        const date = new Date(profile.last_updated || profile.created_at || new Date());
         const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
         
         profileItem.innerHTML = `
             <div class="profile-info">
-                <div class="profile-name">${profile.name}</div>
+                <div class="profile-name">${profile.name || 'Unnamed Profile'}</div>
                 <div class="profile-date">${formattedDate}</div>
             </div>
             <div class="profile-actions">
@@ -1803,7 +1808,7 @@ async function deleteProfile(profileId) {
     }
     
     const { error } = await supabase
-        .from('user_jsons')
+        .from('user_profiles')
         .delete()
         .eq('id', profileId);
     
@@ -1811,18 +1816,27 @@ async function deleteProfile(profileId) {
         console.error('Profile delete error:', error.message);
         alert('❌ Failed to delete profile.');
         addLog('error', `Profile delete failed: ${error.message}`);
-    } else {
-        // Refresh the profiles list
+        return;
+    }
+    
+    // Refresh the profiles list
+    try {
         const { data: { user } } = await supabase.auth.getUser();
-        const { data: profiles } = await supabase
-            .from('user_jsons')
+        const { data: profiles, error: fetchError } = await supabase
+            .from('user_profiles')
             .select('*')
             .eq('user_id', user.id)
             .order('last_updated', { ascending: false });
         
-        renderProfilesList(profiles);
+        if (fetchError) throw fetchError;
+        
+        // Make sure profiles is an array even if empty
+        renderProfilesList(profiles || []);
         addLog('warning', 'Profile deleted successfully');
         playSound('notification');
+    } catch (e) {
+        console.error('Error refreshing profiles:', e.message);
+        addLog('error', `Error refreshing profiles: ${e.message}`);
     }
 }
 
