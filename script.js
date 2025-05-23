@@ -1438,54 +1438,16 @@ function updateMessageLimitPlaceholder() {
     });
 
     // === Check user session on load ===
-async function checkUserSession() {
-    // Handle OAuth callback tokens
-    const url = new URL(window.location.href);
-    const fragment = url.hash.substring(1); // Remove '#'
-    if (fragment) {
-        const params = new URLSearchParams(fragment);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        const expiresIn = params.get('expires_in');
+    async function checkUserSession() {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        console.log("User:", user, "Error:", error);
 
-        if (accessToken && refreshToken) {
-            try {
-                // Set the session with Supabase
-                const { error } = await supabase.auth.setSession({
-                    access_token: accessToken,
-                    refresh_token: refreshToken,
-                    expires_in: parseInt(expiresIn),
-                });
-                if (error) {
-                    console.error('Error setting session:', error.message);
-                    addLog('error', `Failed to set session: ${error.message}`);
-                    alert('❌ Login failed.');
-                    return;
-                }
-
-                // Clean the URL to remove tokens
-                window.history.replaceState({}, document.title, url.pathname);
-            } catch (err) {
-                console.error('Session error:', err);
-                addLog('error', `Session error: ${err.message}`);
-            }
+        if (user) {
+            userInfo.textContent = `Logged in as ${user.email || user.id}`;
+        } else {
+            userInfo.textContent = 'Not logged in';
         }
     }
-
-    // Check user session
-    const { data: { user }, error } = await supabase.auth.getUser();
-    console.log("User:", user, "Error:", error);
-
-    if (user) {
-        userInfo.textContent = `Logged in as ${user.email || user.user_metadata?.name || user.id}`;
-        loginBtn.style.display = 'none';
-        logoutBtn.style.display = 'block';
-    } else {
-        userInfo.textContent = 'Not logged in';
-        loginBtn.style.display = 'block';
-        logoutBtn.style.display = 'none';
-    }
-}
     checkUserSession();
 
     // === Export JSON to Supabase Cloud ===
@@ -1570,7 +1532,14 @@ async function checkUserSession() {
             alert('❌ Invalid cloud data.');
         }
     });
-
+  supabase.auth.getSessionFromUrl({ storeSession: true }).then(({ data, error }) => {
+    if (error) {
+      console.error('Error restoring session from URL:', error.message);
+    } else {
+      console.log('Session restored from OAuth redirect:', data);
+      window.location.hash = '';
+    }
+  });
     checkUserSession();
     initApp();
     loadLayout();
