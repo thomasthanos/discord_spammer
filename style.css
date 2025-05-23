@@ -1954,3 +1954,70 @@ input[type="color"]#embed-color:focus {
     opacity: 1;
     color: #ff2c2c;
 }
+.profile-item {
+    padding: 12px 10px 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    transition: background 0.16s;
+}
+.profile-item:hover {
+    background: rgba(88, 101, 242, 0.10);
+}
+
+.profile-info {
+    font-size: 15px;
+    color: var(--text-color, #fff);
+    margin-bottom: 2px;
+}
+
+.profile-name {
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.profile-date {
+    font-size: 12px;
+    color: #b9bbbe;
+}
+
+.profile-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 2px;
+}
+
+.profile-actions .btn-icon-small {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 3px;
+    border-radius: 6px;
+    transition: background 0.18s, color 0.2s, box-shadow 0.18s;
+    font-size: 17px;
+    color: #b9bbbe;
+    outline: none;
+    box-shadow: none;
+}
+
+.profile-actions .btn-icon-small:focus,
+.profile-actions .btn-icon-small:hover {
+    background: rgba(88,101,242,0.13);
+    color: var(--primary-color, #5865F2);
+    box-shadow: 0 1px 4px 0 rgba(88,101,242,0.10);
+}
+
+.profile-actions .btn-icon-small i.fa-trash {
+    color: #ff6565;
+    transition: color 0.18s;
+}
+.profile-actions .btn-icon-small:hover i.fa-trash {
+    color: #ff3333;
+}
+.profile-actions .btn-icon-small {
+    cursor: pointer;
+}
