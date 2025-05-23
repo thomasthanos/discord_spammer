@@ -1613,7 +1613,7 @@ elements.saveProfileBtn.addEventListener('click', async () => {
 
     // Check how many profiles the user already has
     const { count } = await supabase
-        .from('user_profiles')
+        .from('user_jsons')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
@@ -1643,7 +1643,7 @@ elements.saveProfileBtn.addEventListener('click', async () => {
     };
 
     const { error } = await supabase
-        .from('user_profiles')
+        .from('user_jsons')
         .insert({
             user_id: user.id,
             name: profileName,
@@ -1672,7 +1672,7 @@ elements.manageProfilesBtn.addEventListener('click', async () => {
     }
 
     const { data: profiles, error } = await supabase
-        .from('user_profiles')
+        .from('user_jsons')
         .select('*')
         .eq('user_id', user.id)
         .order('last_updated', { ascending: false });
@@ -1802,7 +1802,7 @@ async function deleteProfile(profileId) {
     }
     
     const { error } = await supabase
-        .from('user_profiles')
+        .from('user_jsons')
         .delete()
         .eq('id', profileId);
     
@@ -1814,7 +1814,7 @@ async function deleteProfile(profileId) {
         // Refresh the profiles list
         const { data: { user } } = await supabase.auth.getUser();
         const { data: profiles } = await supabase
-            .from('user_profiles')
+            .from('user_jsons')
             .select('*')
             .eq('user_id', user.id)
             .order('last_updated', { ascending: false });
