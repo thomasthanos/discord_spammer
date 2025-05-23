@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const elements = {
+        webhookUrl: getElement('webhook-url'),
+        messageContent: getElement('message-content'),
         webhookUrl: document.getElementById('webhook-url'),
         messageContent: document.getElementById('message-content'),
         intervalValue: document.getElementById('interval-value'),
@@ -51,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
         messageAttachmentsPreview: document.getElementById('message-attachments-preview'),
         embedImageUrl: document.getElementById('embed-image-url'),
         embedThumbnailUrl: document.getElementById('embed-thumbnail-url'),
-        fileSizeLimit: document.getElementById('file-size-limit'),
         saveProfileBtn: document.getElementById('save-profile-btn'),
         manageProfilesBtn: document.getElementById('manage-profiles-btn'),
         profilesModal: document.getElementById('profiles-modal'),
@@ -62,7 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function isValidImageUrl(url) {
         return /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i.test(url);
     }
-
+    function getElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`Element with ID ${id} not found`);
+        return el;
+    }
     // Variables
     let intervalId = null;
     let isSending = false;
@@ -104,14 +109,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load saved settings
         [
             'webhookUrl', 'messageContent', 'username', 'avatarUrl', 'randomMessages',
-            'embedImageUrl', 'embedThumbnailUrl', 'fileSizeLimit'
+            'embedImageUrl', 'embedThumbnailUrl'
         ].forEach(key => {
             const value = localStorage.getItem(key);
             if (value) {
                 if (key === 'randomMessages' && value === 'true') {
                     elements[key].checked = true;
-                } else if (key === 'fileSizeLimit') {
-                    elements.fileSizeLimit.value = value || '8'; // Default to 8 MB
                 } else {
                     elements[key].value = value;
                 }
@@ -142,29 +145,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initialize preview
         if (elements.messageContent.value) updatePreview();
         if (elements.avatarUrl.value) elements.previewAvatar.src = elements.avatarUrl.value;
-
-        document.querySelector('.selected-option').onclick = function() {
-            let opts = document.querySelector('.options-list');
-            opts.style.display = (opts.style.display === 'block' ? 'none' : 'block');
-        };
-
-        document.querySelectorAll('.option').forEach(opt => {
-            opt.onclick = function() {
-                let value = this.dataset.value;
-                let text = this.innerText.trim();
-                let icon = this.querySelector('.option-icon').src;
-                document.getElementById('file-size-limit').value = value;
-                document.getElementById('selected-level-text').textContent = text;
-                document.getElementById('selected-level-icon').src = icon;
-                document.querySelector('.options-list').style.display = 'none';
-            };
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!document.getElementById('file-size-custom-select').contains(e.target)) {
-                document.querySelector('.options-list').style.display = 'none';
-            }
-        });
 
         // Setup event listeners
         setupEventListeners();
@@ -236,11 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.embedThumbnailUrl.addEventListener('input', () => {
             localStorage.setItem('embedThumbnailUrl', elements.embedThumbnailUrl.value);
             updatePreview();
-        });
-
-        // File size limit dropdown
-        elements.fileSizeLimit.addEventListener('change', (e) => {
-            localStorage.setItem('fileSizeLimit', e.target.value);
         });
 
         // Interval controls
@@ -327,10 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateMessageLimitPlaceholder();
     }
 
+    // In the handleFileUploads function, update the maxFileSizeMB check:
     function handleFileUploads() {
         elements.messageAttachments.addEventListener('change', (e) => {
             let newFiles = Array.from(e.target.files);
-            const maxFileSizeMB = parseInt(elements.fileSizeLimit.value) || 8;
+            const maxFileSizeMB = 10; // Discord's actual limit is 8MB
             const maxAttachments = 10;
 
             // Keep only valid files
@@ -339,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
                 if (file.size > maxFileSizeMB * 1024 * 1024) {
                     addLog('error', `Attachment '${file.name}' is too large (${fileSizeMB} MB > ${maxFileSizeMB} MB limit)`);
-                    showToast(`Το αρχείο '${file.name}' είναι πολύ μεγάλο (${fileSizeMB} MB / όριο ${maxFileSizeMB} MB)`, 'error');
+                    showToast(`File '${file.name}' is too large (${fileSizeMB} MB / limit ${maxFileSizeMB} MB)`, 'error');
                 } else {
                     validFiles.push(file);
                     addLog('success', `Attachment '${file.name}' uploaded (${fileSizeMB} MB)`);
@@ -766,62 +742,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return messages.length ? messages[Math.floor(Math.random() * messages.length)] : elements.messageContent.value;
     }
 
-// Save to history χωρίς duplicates
-function saveToHistory(url) {
-    if (!url) return;
-    let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
-    // Φίλτρο: κρατά μόνο το πρώτο κάθε μοναδικού url (δηλ. αν υπάρχει, το αφαιρεί)
-    history = history.filter(item => item.url !== url);
-    history.unshift({ url, lastUsed: new Date().toISOString() });
-    if (history.length > 10) history = history.slice(0, 10);
-    localStorage.setItem('webhookHistory', JSON.stringify(history));
-}
+    function showHistoryModal() {
+        elements.historyList.innerHTML = '';
+        let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
 
-// Εμφάνιση του modal με καθαρό, μοναδικό history
-function showHistoryModal() {
-    elements.historyList.innerHTML = '';
-    let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
-
-    // Καθάρισε duplicates αν υπάρχουν (κρατάει το πιο πρόσφατο)
-    const seen = new Set();
-    history = history.filter(item => {
-        if (seen.has(item.url)) return false;
-        seen.add(item.url);
-        return true;
-    });
-    // Κράτα μόνο τα 10 πιο πρόσφατα
-    if (history.length > 10) history = history.slice(0, 10);
-    // Ανανέωσε το localStorage
-    localStorage.setItem('webhookHistory', JSON.stringify(history));
-
-    if (history.length === 0) {
-        elements.historyList.innerHTML = '<p>No history yet</p>';
-        return;
-    }
-
-    history.forEach(item => {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
-        const url = item.url;
-        const idx = url.indexOf('/api/');
-        const prettyUrl = idx !== -1 ? url.substring(idx + 5) : url;
-
-        historyItem.innerHTML = `<span>${prettyUrl}</span><i class="fas fa-arrow-right"></i>`;
-        historyItem.title = url;
-
-        historyItem.addEventListener('click', () => {
-            elements.webhookUrl.value = item.url;
-            localStorage.setItem('webhookUrl', item.url);
-            checkWebhookPrivacy(item.url);
-            elements.historyModal.classList.add('hidden');
-            showToast('Webhook URL loaded from history', 'success');
+        // Καθάρισε duplicates αν υπάρχουν (κρατάει το πιο πρόσφατο)
+        const seen = new Set();
+        history = history.filter(item => {
+            if (seen.has(item.url)) return false;
+            seen.add(item.url);
+            return true;
         });
-        elements.historyList.appendChild(historyItem);
-    });
+        // Κράτα μόνο τα 10 πιο πρόσφατα
+        if (history.length > 10) history = history.slice(0, 10);
+        // Ανανέωσε το localStorage
+        localStorage.setItem('webhookHistory', JSON.stringify(history));
 
-    elements.historyModal.classList.remove('hidden');
-}
+        if (history.length === 0) {
+            elements.historyList.innerHTML = '<p>No history yet</p>';
+            return;
+        }
 
+        history.forEach(item => {
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
+            const url = item.url;
+            const idx = url.indexOf('/api/');
+            const prettyUrl = idx !== -1 ? url.substring(idx + 5) : url;
+
+            historyItem.innerHTML = `<span>${prettyUrl}</span><i class="fas fa-arrow-right"></i>`;
+            historyItem.title = url;
+
+            historyItem.addEventListener('click', () => {
+                elements.webhookUrl.value = item.url;
+                localStorage.setItem('webhookUrl', item.url);
+                checkWebhookPrivacy(item.url);
+                elements.historyModal.classList.add('hidden');
+                showToast('Webhook URL loaded from history', 'success');
+            });
+            elements.historyList.appendChild(historyItem);
+        });
+
+        elements.historyModal.classList.remove('hidden');
+    }
 
     function showMessageSuggestions() {
         const suggestions = [
@@ -936,8 +899,6 @@ function showHistoryModal() {
         if (history.length > 10) history = history.slice(0, 10);
         localStorage.setItem('webhookHistory', JSON.stringify(history));
     }
-
-
 
     async function startSending() {
         const webhookUrl = elements.webhookUrl.value.trim();
@@ -1123,35 +1084,25 @@ function showHistoryModal() {
 
                 xhr.onload = () => {
                     progressToast.remove();
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        const responseTime = Date.now() - startTime;
-                        stats.total++;
-                        stats.success++;
-                        stats.responseTimes.push(responseTime);
-                        if (stats.responseTimes.length > 10) stats.responseTimes.shift();
-                        updateStats();
-                        saveStats();
-                        addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
-                        playSound('success');
-                    } else {
-                        let errorMessage = `HTTP error! Status: ${xhr.status}`;
-                        if (xhr.status === 400) {
-                            errorMessage = 'Invalid request. Check file format, number of attachments (max 10), or webhook URL.';
-                        } else if (xhr.status === 401) {
-                            errorMessage = 'Unauthorized. Invalid webhook URL or token.';
-                        } else if (xhr.status === 404) {
-                            errorMessage = 'Webhook not found. Check the URL.';
-                        } else if (xhr.status === 413) {
-                            errorMessage = `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB).`;
-                            showToast(
-                                `Το αρχείο είναι πολύ μεγάλο! Μέγιστο επιτρεπτό μέγεθος για Discord: ${elements.fileSizeLimit.value || 8} MB`,
-                                'error'
-                            );
-                            addLog('error', `File size too large for Discord (max ${elements.fileSizeLimit.value || 8} MB)`);
-                        } else if (xhr.status === 429) {
-                            errorMessage = 'Rate limit exceeded. Please try again later.';
+                    try {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            // Success case
+                        } else {
+                            let errorMessage = `HTTP error! Status: ${xhr.status}`;
+                            // Add specific error messages
+                            const errorMap = {
+                                400: 'Invalid request. Check file format or webhook URL.',
+                                401: 'Unauthorized. Invalid webhook URL or token.',
+                                404: 'Webhook not found. Check the URL.',
+                                413: 'File size too large for Discord (max 8 MB).',
+                                429: 'Rate limit exceeded. Please try again later.'
+                            };
+                            errorMessage = errorMap[xhr.status] || errorMessage;
+                            throw new Error(errorMessage);
                         }
-                        throw new Error(errorMessage);
+                    } catch (error) {
+                        addLog('error', `${isScheduled ? '[Scheduled] ' : ''}Failed to send message: ${error.message}`);
+                        playSound('error');
                     }
                 };
 
@@ -1234,7 +1185,6 @@ function showHistoryModal() {
             elements.embedThumbnailUrl.value = '';
             elements.messageAttachments.value = '';
             elements.messageAttachmentsPreview.innerHTML = '';
-            elements.fileSizeLimit.value = '8'; // Reset to Level 1 default
             attachments = [];
             
             // Reset embeds
@@ -1265,7 +1215,6 @@ function showHistoryModal() {
             localStorage.removeItem('layout');
             localStorage.removeItem('embedImageUrl');
             localStorage.removeItem('embedThumbnailUrl');
-            localStorage.removeItem('fileSizeLimit');
             localStorage.removeItem('logs');
             
             // Update UI
@@ -1307,8 +1256,7 @@ function showHistoryModal() {
                 },
                 messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
                 enableSounds: elements.enableSounds.checked,
-                embeds: embeds,
-                fileSizeLimit: elements.fileSizeLimit.value
+                embeds: embeds
             },
             statistics: {
                 totalMessages: stats.total,
@@ -1399,7 +1347,6 @@ function showHistoryModal() {
                 }
                 
                 elements.messageLimit.value = jsonData.settings.messageLimit === 'Unlimited' ? '' : jsonData.settings.messageLimit || '';
-                elements.fileSizeLimit.value = jsonData.settings.fileSizeLimit || '8';
                 
                 updatePreview();
             }
@@ -1432,7 +1379,6 @@ function showHistoryModal() {
             localStorage.setItem('stats', JSON.stringify(stats));
             localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
             localStorage.setItem('embeds', JSON.stringify(embeds));
-            localStorage.setItem('fileSizeLimit', elements.fileSizeLimit.value);
             localStorage.setItem('logs', JSON.stringify(jsonData.logs || []));
             
             loadLayout();
@@ -1462,7 +1408,6 @@ function showHistoryModal() {
     const loginBtn = document.getElementById('login-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const userInfo = document.getElementById('user-info');
-    const fetchJsonBtn = document.getElementById('fetch-json-btn');
     const exportCloudBtn = document.getElementById('export-json-cloud');
     const importCloudBtn = document.getElementById('import-json-cloud');
 
@@ -1482,16 +1427,16 @@ function showHistoryModal() {
         playSound('notification');
     });
 
-
+    // Replace the checkUserSession function with this:
     async function checkUserSession() {
         try {
             const { data: { user }, error } = await supabase.auth.getUser();
+            if (!userInfo) return; // Exit if element doesn't exist
+            
             if (error) {
                 if (error.message === 'Auth session missing!') {
-                    // Μην κάνεις καν log, είναι normal αν δεν είναι logged in
                     userInfo.textContent = 'Not logged in';
                 } else {
-                    // Log μόνο πραγματικά errors
                     console.error('Error checking user session:', error.message);
                     addLog('error', `Error checking user session: ${error.message}`);
                 }
@@ -1499,12 +1444,11 @@ function showHistoryModal() {
             }
             userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
         } catch (e) {
+            if (userInfo) userInfo.textContent = 'Session error';
             console.error('Unexpected error in checkUserSession:', e.message);
             addLog('error', `Unexpected error checking session: ${e.message}`);
         }
     }
-
-
 
     // === Export JSON to Supabase Cloud ===
     exportCloudBtn.addEventListener('click', async () => {
@@ -1533,8 +1477,7 @@ function showHistoryModal() {
                 },
                 messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
                 enableSounds: elements.enableSounds.checked,
-                embeds: embeds,
-                fileSizeLimit: elements.fileSizeLimit.value
+                embeds: embeds
             },
             statistics: {
                 totalMessages: stats.total,
@@ -1638,352 +1581,349 @@ function showHistoryModal() {
         checkUserSession();
     }
 
+    // === Profile Management ===
+    const MAX_PROFILES = 10;
 
-// === Profile Management ===
-const MAX_PROFILES = 10;
+    // Save current configuration as a profile
+    elements.saveProfileBtn.addEventListener('click', async () => {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            alert('❌ You must be logged in to save profiles!');
+            addLog('error', 'Profile save failed: User not logged in');
+            return;
+        }
 
-// Save current configuration as a profile
-elements.saveProfileBtn.addEventListener('click', async () => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-        alert('❌ You must be logged in to save profiles!');
-        addLog('error', 'Profile save failed: User not logged in');
-        return;
-    }
-
-    // Check how many profiles the user already has
-    const { count } = await supabase
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-    if (count >= MAX_PROFILES) {
-        alert(`❌ You've reached the maximum of ${MAX_PROFILES} saved profiles. Please delete one first.`);
-        addLog('error', `Profile save failed: Maximum of ${MAX_PROFILES} profiles reached`);
-        return;
-    }
-
-    const profileName = prompt('Enter a name for this profile:');
-    if (!profileName) return;
-
-    const profileData = {
-        webhookUrl: elements.webhookUrl.value,
-        messageContent: elements.messageContent.value,
-        username: elements.username.value,
-        avatarUrl: elements.avatarUrl.value,
-        randomMessages: elements.randomMessages.checked,
-        interval: {
-            value: elements.intervalValue.value,
-            unit: elements.intervalUnit.value
-        },
-        messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
-        enableSounds: elements.enableSounds.checked,
-        embeds: embeds,
-        fileSizeLimit: elements.fileSizeLimit.value
-    };
-
-    const { error } = await supabase
-        .from('user_profiles')
-        .insert({
-            user_id: user.id,
-            name: profileName,
-            data: profileData
-            // last_updated will be automatically set by the default value
-        });
-
-    if (error) {
-        console.error('Profile save error:', error.message);
-        alert('❌ Failed to save profile.');
-        addLog('error', `Profile save failed: ${error.message}`);
-    } else {
-        alert('✅ Profile saved successfully!');
-        addLog('success', `Profile "${profileName}" saved to cloud`);
-        playSound('success');
-    }
-});
-
-// Update the manageProfilesBtn event listener to handle null cases
-elements.manageProfilesBtn.addEventListener('click', async () => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-        alert('❌ You must be logged in to manage profiles!');
-        addLog('error', 'Profile management failed: User not logged in');
-        return;
-    }
-
-    try {
-        const { data: profiles, error } = await supabase
+        const { count } = await supabase
             .from('user_profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('last_updated', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Ensure we always pass an array to renderProfilesList
-        renderProfilesList(profiles || []);
-        elements.profilesModal.classList.remove('hidden');
-    } catch (error) {
-        console.error('Profile fetch error:', error.message);
-        alert('❌ Failed to load profiles.');
-        addLog('error', `Profile load failed: ${error.message}`);
-        // Still open modal but show empty state
-        renderProfilesList([]);
-        elements.profilesModal.classList.remove('hidden');
-    }
-});
-function renderProfilesList(profiles) {
-    const profilesList = document.getElementById('profiles-list');
-    const noProfilesMsg = document.getElementById('no-profiles-message');
-    
-    profilesList.innerHTML = '';
-    
-    // Handle null/undefined or empty array cases
-    if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
-        noProfilesMsg.style.display = 'block';
-        return;
-    }
-    
-    noProfilesMsg.style.display = 'none';
-    
-    profiles.forEach(profile => {
-        const profileItem = document.createElement('div');
-        profileItem.className = 'profile-item';
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id);
 
-        const date = new Date(profile.last_updated || profile.created_at || new Date());
-        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        if (count >= MAX_PROFILES) {
+            alert(`❌ You've reached the maximum of ${MAX_PROFILES} saved profiles. Please delete one first.`);
+            addLog('error', `Profile save failed: Maximum of ${MAX_PROFILES} profiles reached`);
+            return;
+        }
 
-        profileItem.innerHTML = `
-            <div class="profile-info">
-                <div class="profile-name">${profile.name || 'Unnamed Profile'}</div>
-                <div class="profile-date">${formattedDate}</div>
-            </div>
-            <div class="profile-actions">
-                <button class="btn-icon-small load-profile" title="Load Profile">
-                    <i class="fas fa-download"></i>
-                </button>
-                <button class="btn-icon-small delete-profile" title="Delete Profile">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
+        const profileName = prompt('Enter a name for this profile:');
+        if (!profileName) return;
 
-        // Listeners
-        profileItem.querySelector('.load-profile').addEventListener('click', () => loadProfile(profile));
-        profileItem.querySelector('.delete-profile').addEventListener('click', () => deleteProfile(profile.id));
-        profilesList.appendChild(profileItem);
+        const profileData = {
+            webhookUrl: elements.webhookUrl.value,
+            messageContent: elements.messageContent.value,
+            username: elements.username.value,
+            avatarUrl: elements.avatarUrl.value,
+            randomMessages: elements.randomMessages.checked,
+            interval: {
+                value: elements.intervalValue.value,
+                unit: elements.intervalUnit.value
+            },
+            messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
+            enableSounds: elements.enableSounds.checked,
+            embeds: embeds
+        };
+
+        const { error } = await supabase
+            .from('user_profiles')
+            .insert({
+                user_id: user.id,
+                name: profileName,
+                data: profileData
+                // last_updated will be automatically set by the default value
+            });
+
+        if (error) {
+            console.error('Profile save error:', error.message);
+            alert('❌ Failed to save profile.');
+            addLog('error', `Profile save failed: ${error.message}`);
+        } else {
+            alert('✅ Profile saved successfully!');
+            addLog('success', `Profile "${profileName}" saved to cloud`);
+            playSound('success');
+        }
     });
 
-}
+    // Update the manageProfilesBtn event listener to handle null cases
+    elements.manageProfilesBtn.addEventListener('click', async () => {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            alert('❌ You must be logged in to manage profiles!');
+            addLog('error', 'Profile management failed: User not logged in');
+            return;
+        }
 
-async function loadProfile(profile) {
-    if (!confirm(`Load profile "${profile.name}"? This will overwrite your current settings.`)) {
-        return;
-    }
-    
-    try {
-        // Stop any active sending
-        stopSending();
+        try {
+            const { data: profiles, error } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('last_updated', { ascending: false });
+            
+            if (error) throw error;
+            
+            // Ensure we always pass an array to renderProfilesList
+            renderProfilesList(profiles || []);
+            elements.profilesModal.classList.remove('hidden');
+        } catch (error) {
+            console.error('Profile fetch error:', error.message);
+            alert('❌ Failed to load profiles.');
+            addLog('error', `Profile load failed: ${error.message}`);
+            // Still open modal but show empty state
+            renderProfilesList([]);
+            elements.profilesModal.classList.remove('hidden');
+        }
+    });
+
+    function renderProfilesList(profiles) {
+        const profilesList = document.getElementById('profiles-list');
+        const noProfilesMsg = document.getElementById('no-profiles-message');
         
-        // Load profile data
-        const profileData = profile.data;
+        profilesList.innerHTML = '';
         
-        // Update UI elements
-        elements.webhookUrl.value = profileData.webhookUrl || '';
-        elements.messageContent.value = profileData.messageContent || '';
-        elements.username.value = profileData.username || '';
-        elements.avatarUrl.value = profileData.avatarUrl || '';
-        elements.randomMessages.checked = profileData.randomMessages || false;
-        elements.enableSounds.checked = profileData.enableSounds !== false;
-        
-        // Update interval settings
-        if (profileData.interval) {
-            elements.intervalValue.value = profileData.interval.value || '10';
-            elements.intervalUnit.value = profileData.interval.unit || 'seconds';
+        // Handle null/undefined or empty array cases
+        if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
+            noProfilesMsg.style.display = 'block';
+            return;
         }
         
-        elements.messageLimit.value = profileData.messageLimit === 'Unlimited' ? '' : profileData.messageLimit || '';
-        elements.fileSizeLimit.value = profileData.fileSizeLimit || '8';
+        noProfilesMsg.style.display = 'none';
         
-        // Update embeds
-        if (profileData.embeds && Array.isArray(profileData.embeds)) {
-            embeds = profileData.embeds;
-            embedCount = embeds.length;
-            renderEmbeds();
-        } else {
-            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
-            embedCount = 1;
-            renderEmbeds();
+        profiles.forEach(profile => {
+            const profileItem = document.createElement('div');
+            profileItem.className = 'profile-item';
+
+            const date = new Date(profile.last_updated || profile.created_at || new Date());
+            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+            profileItem.innerHTML = `
+                <div class="profile-info">
+                    <div class="profile-name">${profile.name || 'Unnamed Profile'}</div>
+                    <div class="profile-date">${formattedDate}</div>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn-icon-small load-profile" title="Load Profile">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn-icon-small delete-profile" title="Delete Profile">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            // Listeners
+            profileItem.querySelector('.load-profile').addEventListener('click', () => loadProfile(profile));
+            profileItem.querySelector('.delete-profile').addEventListener('click', () => deleteProfile(profile.id));
+            profilesList.appendChild(profileItem);
+        });
+    }
+
+    async function loadProfile(profile) {
+        if (!confirm(`Load profile "${profile.name}"? This will overwrite your current settings.`)) {
+            return;
         }
         
-        // Update preview
-        updatePreview();
-        
-        // Save to localStorage
-        localStorage.setItem('webhookUrl', elements.webhookUrl.value);
-        localStorage.setItem('messageContent', elements.messageContent.value);
-        localStorage.setItem('username', elements.username.value);
-        localStorage.setItem('avatarUrl', elements.avatarUrl.value);
-        localStorage.setItem('randomMessages', elements.randomMessages.checked);
-        localStorage.setItem('enableSounds', elements.enableSounds.checked);
-        localStorage.setItem('embeds', JSON.stringify(embeds));
-        localStorage.setItem('fileSizeLimit', elements.fileSizeLimit.value);
-        
-        // Close modal
-        elements.profilesModal.classList.add('hidden');
-        
-        addLog('success', `Profile "${profile.name}" loaded successfully`);
-        playSound('success');
-        showToast(`Profile "${profile.name}" loaded`, 'success');
-    } catch (error) {
-        addLog('error', `Failed to load profile: ${error.message}`);
-        playSound('error');
+        try {
+            // Stop any active sending
+            stopSending();
+            
+            // Load profile data
+            const profileData = profile.data;
+            
+            // Update UI elements
+            elements.webhookUrl.value = profileData.webhookUrl || '';
+            elements.messageContent.value = profileData.messageContent || '';
+            elements.username.value = profileData.username || '';
+            elements.avatarUrl.value = profileData.avatarUrl || '';
+            elements.randomMessages.checked = profileData.randomMessages || false;
+            elements.enableSounds.checked = profileData.enableSounds !== false;
+            
+            // Update interval settings
+            if (profileData.interval) {
+                elements.intervalValue.value = profileData.interval.value || '10';
+                elements.intervalUnit.value = profileData.interval.unit || 'seconds';
+            }
+            
+            elements.messageLimit.value = profileData.messageLimit === 'Unlimited' ? '' : profileData.messageLimit || '';
+            
+            // Update embeds
+            if (profileData.embeds && Array.isArray(profileData.embeds)) {
+                embeds = profileData.embeds;
+                embedCount = embeds.length;
+                renderEmbeds();
+            } else {
+                embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+                embedCount = 1;
+                renderEmbeds();
+            }
+            
+            // Update preview
+            updatePreview();
+            
+            // Save to localStorage
+            localStorage.setItem('webhookUrl', elements.webhookUrl.value);
+            localStorage.setItem('messageContent', elements.messageContent.value);
+            localStorage.setItem('username', elements.username.value);
+            localStorage.setItem('avatarUrl', elements.avatarUrl.value);
+            localStorage.setItem('randomMessages', elements.randomMessages.checked);
+            localStorage.setItem('enableSounds', elements.enableSounds.checked);
+            localStorage.setItem('embeds', JSON.stringify(embeds));
+            
+            // Close modal
+            elements.profilesModal.classList.add('hidden');
+            
+            addLog('success', `Profile "${profile.name}" loaded successfully`);
+            playSound('success');
+            showToast(`Profile "${profile.name}" loaded`, 'success');
+        } catch (error) {
+            addLog('error', `Failed to load profile: ${error.message}`);
+            playSound('error');
+        }
     }
-}
 
-async function deleteProfile(profileId) {
-    if (!confirm('Are you sure you want to delete this profile? This cannot be undone.')) {
-        return;
-    }
-    
-    const { error } = await supabase
-        .from('user_profiles')
-        .delete()
-        .eq('id', profileId);
-    
-    if (error) {
-        console.error('Profile delete error:', error.message);
-        alert('❌ Failed to delete profile.');
-        addLog('error', `Profile delete failed: ${error.message}`);
-        return;
-    }
-    
-    // Refresh the profiles list
-    try {
-        const { data: { user } } = await supabase.auth.getUser();
-        const { data: profiles, error: fetchError } = await supabase
+    async function deleteProfile(profileId) {
+        if (!confirm('Are you sure you want to delete this profile? This cannot be undone.')) {
+            return;
+        }
+        
+        const { error } = await supabase
             .from('user_profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('last_updated', { ascending: false });
+            .delete()
+            .eq('id', profileId);
         
-        if (fetchError) throw fetchError;
+        if (error) {
+            console.error('Profile delete error:', error.message);
+            alert('❌ Failed to delete profile.');
+            addLog('error', `Profile delete failed: ${error.message}`);
+            return;
+        }
         
-        // Make sure profiles is an array even if empty
-        renderProfilesList(profiles || []);
-        addLog('warning', 'Profile deleted successfully');
+        // Refresh the profiles list
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data: profiles, error: fetchError } = await supabase
+                .from('user_profiles')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('last_updated', { ascending: false });
+            
+            if (fetchError) throw fetchError;
+            
+            // Make sure profiles is an array even if empty
+            renderProfilesList(profiles || []);
+            addLog('warning', 'Profile deleted successfully');
+            playSound('notification');
+        } catch (e) {
+            console.error('Error refreshing profiles:', e.message);
+            addLog('error', `Error refreshing profiles: ${e.message}`);
+        }
+    }
+
+    // === User Authentication ===
+    const userAuthMenu = document.getElementById('user-auth-menu');
+    const avatarMenuBtn = document.getElementById('avatar-menu-btn');
+    const userAvatar = document.getElementById('user-avatar');
+    const userUsername = document.getElementById('user-username');
+
+    // Toggle dropdown menu
+    if (avatarMenuBtn) {
+      avatarMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dropdown = avatarMenuBtn.nextElementSibling;
+        if (dropdown) {
+          dropdown.classList.toggle('show');
+        }
+      });
+    }
+
+    // Close dropdown when clicking elsewhere
+    document.addEventListener('click', () => {
+      const dropdowns = document.querySelectorAll('.dropdown-content');
+      dropdowns.forEach(dropdown => {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+        }
+      });
+    });
+
+    // 1. Login handler
+    if (loginBtn) {
+      loginBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
+        if (error) {
+          console.error('Login error:', error.message);
+          addLog('error', `Login failed: ${error.message}`);
+        }
+      });
+    }
+
+    // 2. Logout handler
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await supabase.auth.signOut();
+        updateAuthUI(null);
+        addLog('success', 'Logged out successfully');
         playSound('notification');
-    } catch (e) {
-        console.error('Error refreshing profiles:', e.message);
-        addLog('error', `Error refreshing profiles: ${e.message}`);
+      });
     }
-}
-// Στο init:
-// === User Authentication ===
-const userAuthMenu = document.getElementById('user-auth-menu');
-const avatarMenuBtn = document.getElementById('avatar-menu-btn');
-const userAvatar = document.getElementById('user-avatar');
-const userUsername = document.getElementById('user-username');
-
-
-// Toggle dropdown menu
-if (avatarMenuBtn) {
-  avatarMenuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const dropdown = avatarMenuBtn.nextElementSibling;
-    if (dropdown) {
-      dropdown.classList.toggle('show');
-    }
-  });
-}
-
-// Close dropdown when clicking elsewhere
-document.addEventListener('click', () => {
-  const dropdowns = document.querySelectorAll('.dropdown-content');
-  dropdowns.forEach(dropdown => {
-    if (dropdown.classList.contains('show')) {
-      dropdown.classList.remove('show');
-    }
-  });
-});
-
-// 1. Login handler
-if (loginBtn) {
-  loginBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
-    if (error) {
-      console.error('Login error:', error.message);
-      addLog('error', `Login failed: ${error.message}`);
-    }
-  });
-}
-
-// 2. Logout handler
-if (logoutBtn) {
-  logoutBtn.addEventListener('click', async (e) => {
-    e.stopPropagation();
-    await supabase.auth.signOut();
-    updateAuthUI(null);
-    addLog('success', 'Logged out successfully');
-    playSound('notification');
-  });
-}
-
 // 3. Update UI based on auth state
-function updateAuthUI(user) {
-  if (!userAvatar || !userUsername || !loginBtn || !logoutBtn) return;
+    function updateAuthUI(user) {
+        if (!userAvatar || !userUsername || !loginBtn || !logoutBtn) return;
 
-  if (user) {
-    // User is logged in
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'block';
-    
-    // Update avatar and username
-    const avatarUrl = user.user_metadata?.avatar_url || 
-      (user.user_metadata?.avatar ? 
-        `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png` : 
-        'https://cdn.discordapp.com/embed/avatars/0.png');
-    
-    userAvatar.src = avatarUrl;
-    userUsername.textContent = user.user_metadata?.full_name || user.email || 'Discord User';
-    
-    // Add slight border color change for logged-in state
-    userAvatar.style.borderColor = 'var(--accent-color)';
-  } else {
-    // Guest user
-    loginBtn.style.display = 'block';
-    logoutBtn.style.display = 'none';
-    userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-    userUsername.textContent = 'Guest User';
-    userAvatar.style.borderColor = 'var(--text-secondary)';
-  }
-}
+        if (user) {
+            // User is logged in
+            loginBtn.style.display = 'none';
+            logoutBtn.style.display = 'block';
+            
+            // Update avatar
+            const avatarUrl = user.user_metadata?.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
+            userAvatar.src = avatarUrl;
+            userAvatar.style.display = 'block';
+            
+            // Update username
+            const username = user.user_metadata?.name || user.email || user.id;
+            userUsername.textContent = username;
+            userUsername.style.display = 'block';
+            
+            // Update user info in header
+            if (userInfo) {
+                userInfo.textContent = `Logged in as ${username}`;
+            }
+        } else {
+            // User is not logged in
+            loginBtn.style.display = 'block';
+            logoutBtn.style.display = 'none';
+            
+            // Reset avatar and username
+            userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+            userAvatar.style.display = 'none';
+            userUsername.textContent = '';
+            userUsername.style.display = 'none';
+            
+            // Update user info in header
+            if (userInfo) {
+                userInfo.textContent = 'Not logged in';
+            }
+        }
+    }
 
-// 4. Check user session on page load and set up auth state listener
-async function checkUserSession() {
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    updateAuthUI(user);
-  } catch (error) {
-    console.error('Session check error:', error.message);
-    updateAuthUI(null);
-  }
-}
+    // Replace the initAuth function with this:
+    async function initAuth() {
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error && error.message !== 'Auth session missing!') {
+                console.error('Error checking user session:', error.message);
+                addLog('error', `Session check failed: ${error.message}`);
+            }
+            updateAuthUI(user);
+        } catch (e) {
+            console.error('Unexpected error in initAuth:', e.message);
+            addLog('error', `Auth initialization error: ${e.message}`);
+        }
+    }
 
-// Listen for auth state changes
-supabase.auth.onAuthStateChange((event, session) => {
-  updateAuthUI(session?.user);
-  if (event === 'SIGNED_IN') {
-    addLog('success', 'Successfully logged in');
-    playSound('success');
-  }
-});
-
-// Initialize auth system
-checkUserSession();
-
+    // Initialize app
+    initAuth();
     initApp();
     loadLayout();
 });
