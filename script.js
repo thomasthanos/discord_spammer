@@ -1594,6 +1594,126 @@ document.addEventListener('DOMContentLoaded', () => {
         checkUserSession();
     }
 
+
+// ========== CLOUD PROFILES MODAL ==========
+
+// Άνοιγμα modal και φόρτωση profiles από Supabase
+window.importJsonFromCloud = async function() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        showToast('Πρέπει να είσαι συνδεδεμένος!', 'error');
+        return;
+    }
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+    const listDiv = document.getElementById('profiles-list');
+    listDiv.innerHTML = '';
+
+    if (!profiles.length) {
+        listDiv.innerHTML = "<div style='color:#aaa; text-align:center; margin:20px;'>Δεν έχεις αποθηκεύσει προφίλ ακόμα.</div>";
+    } else {
+        profiles.forEach(profile => {
+            const row = document.createElement('div');
+            row.className = 'profile-row';
+            row.style = 'display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #36393f;';
+            row.innerHTML = `
+                <span style="flex:1;color:#fff;">${profile.name}</span>
+                <span style="color:#b5bac1;font-size:12px;margin-left:10px;">${new Date(profile.created_at).toLocaleString()}</span>
+                <span>
+                  <button class="btn-small" onclick="window.loadProfileFromCloud('${profile.id}')">Load</button>
+                  <button class="btn-small" style="background:#ed4245;" onclick="window.deleteProfileFromCloud('${profile.id}')"><i class="fas fa-trash"></i></button>
+                </span>
+            `;
+            listDiv.appendChild(row);
+        });
+    }
+    document.getElementById('profiles-modal').classList.remove('hidden');
+};
+
+// Κλείσιμο modal
+window.closeProfilesModal = function() {
+    document.getElementById('profiles-modal').classList.add('hidden');
+};
+
+// Νέο save στο cloud (ή overwrite)
+window.exportJsonToCloud = async function() {
+    const name = prompt("Όνομα για το save (π.χ. TEST, MAIN, XPRESS):");
+    if (!name) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        showToast('Πρέπει να είσαι συνδεδεμένος!', 'error');
+        return;
+    }
+    // Φέρε τα profiles
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .eq('user_id', user.id);
+
+    if (profiles.length >= 10 && !profiles.find(p => p.name === name)) {
+        showToast('Έχεις ήδη 10 προφίλ. Σβήσε κάποιο πρώτα!', 'error');
+        return;
+    }
+    // Τα settings προς αποθήκευση
+    const jsonData = getExportedSettingsAsJson ? getExportedSettingsAsJson() : {};
+    // Αν υπάρχει ήδη με ίδιο όνομα, κάνε update
+    const existing = profiles.find(p => p.name === name);
+    if (existing) {
+        await supabase
+            .from('profiles')
+            .update({ data: jsonData, created_at: new Date().toISOString() })
+            .eq('id', existing.id);
+        showToast('Το προφίλ ανανεώθηκε!', 'success');
+    } else {
+        await supabase
+            .from('profiles')
+            .insert([{ user_id: user.id, name, data: jsonData }]);
+        showToast('Το προφίλ αποθηκεύτηκε!', 'success');
+    }
+    window.importJsonFromCloud(); // Αυτόματα refresh το modal!
+};
+
+// Load από cloud profile
+window.loadProfileFromCloud = async function(id) {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+    if (!data) return showToast('Σφάλμα στο load!', 'error');
+    if (typeof loadSettingsFromJson === 'function') {
+        loadSettingsFromJson(data.data);
+        showToast(`Φορτώθηκε το: ${data.name}`, 'success');
+        window.closeProfilesModal();
+    }
+};
+
+// Delete cloud profile
+window.deleteProfileFromCloud = async function(id) {
+    if (!confirm('Σίγουρα διαγραφή;')) return;
+    await supabase.from('profiles').delete().eq('id', id);
+    window.importJsonFromCloud(); // refresh λίστα
+};
+
+// ========== ΣΥΝΔΕΣΗ ΚΟΥΜΠΙΩΝ ==========
+
+// Συνδέεις τα cloud κουμπιά με το modal (ΠΑΝΤΑ μια φορά, όχι διπλό!)
+document.getElementById('export-json-cloud').onclick = window.exportJsonToCloud;
+document.getElementById('import-json-cloud').onclick = window.importJsonFromCloud;
+document.getElementById('add-profile-btn').onclick = window.exportJsonToCloud;
+
+// Κλείσιμο με ESC
+window.addEventListener('keydown', e => {
+    if (e.key === 'Escape') window.closeProfilesModal();
+});
+
+
+
     checkUserSession();
     initApp();
     loadLayout();
