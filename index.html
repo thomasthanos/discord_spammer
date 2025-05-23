@@ -60,7 +60,24 @@
 </div>
 <div>
 </div>
+<div class="config-panel card">
+  <h3>📦 Config Manager</h3>
+  
+  <div class="form-group">
+    <label for="config-name">Save As:</label>
+    <input id="config-name" type="text" placeholder="e.g. Marketing Bot" />
+    <button id="save-config-btn" class="btn">💾 Save</button>
+  </div>
 
+  <div class="form-group">
+    <label for="config-selector">Your Saved Configs:</label>
+    <select id="config-selector">
+      <option value="">-- Select a config --</option>
+    </select>
+    <button id="load-config-btn" class="btn">📥 Load</button>
+    <button id="delete-config-btn" class="btn danger">🗑 Delete</button>
+  </div>
+</div>
 
         <main class="app-content">
             <div class="settings-column card" data-card="settings">
@@ -367,6 +384,7 @@
             </div>
         </div>
     </div>
+
 
 
 

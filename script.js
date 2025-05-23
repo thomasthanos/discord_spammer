@@ -1594,6 +1594,167 @@ document.addEventListener('DOMContentLoaded', () => {
         checkUserSession();
     }
 
+    function createFullExport() {
+        return {
+            metadata: {
+                app: "Webhook Sender PRO",
+                version: "3.0",
+                exportDate: new Date().toISOString()
+            },
+            settings: {
+                webhookUrl: elements.webhookUrl.value,
+                messageContent: elements.messageContent.value,
+                username: elements.username.value,
+                avatarUrl: elements.avatarUrl.value,
+                randomMessages: elements.randomMessages.checked,
+                interval: {
+                    value: elements.intervalValue.value,
+                    unit: elements.intervalUnit.value
+                },
+                messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
+                enableSounds: elements.enableSounds.checked,
+                embeds: embeds,
+                fileSizeLimit: elements.fileSizeLimit.value
+            },
+            statistics: stats,
+            logs: Array.from(elements.logContainer.querySelectorAll('.log-entry')).map(log => ({
+                time: log.querySelector('.log-time').textContent,
+                message: log.querySelector('.log-message').textContent,
+                type: log.classList.contains('log-success') ? 'success' : 
+                    log.classList.contains('log-error') ? 'error' : 'warning'
+            }))
+        };
+    }
+
+// === CONFIG MANAGER ===
+const configNameInput = document.getElementById('config-name');
+const saveConfigBtn = document.getElementById('save-config-btn');
+const loadConfigBtn = document.getElementById('load-config-btn');
+const deleteConfigBtn = document.getElementById('delete-config-btn');
+const configSelector = document.getElementById('config-selector');
+
+async function refreshConfigList() {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return;
+
+    const { data, error } = await supabase
+        .from('user_configs')
+        .select('name')
+        .eq('user_id', user.id);
+
+    configSelector.innerHTML = `<option value="">-- Select a config --</option>`;
+    if (data && data.length) {
+        data.forEach(cfg => {
+            const opt = document.createElement('option');
+            opt.value = cfg.name;
+            opt.textContent = cfg.name;
+            configSelector.appendChild(opt);
+        });
+    }
+}
+
+saveConfigBtn.addEventListener('click', async () => {
+    const configName = configNameInput.value.trim();
+    if (!configName) return alert('❗ Please enter a config name');
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return alert('❌ You must be logged in!');
+
+    const exportData = {
+        webhookUrl: elements.webhookUrl.value,
+        messageContent: elements.messageContent.value,
+        username: elements.username.value,
+        avatarUrl: elements.avatarUrl.value,
+        randomMessages: elements.randomMessages.checked,
+        interval: {
+            value: elements.intervalValue.value,
+            unit: elements.intervalUnit.value
+        },
+        messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
+        enableSounds: elements.enableSounds.checked,
+        embeds: embeds,
+        fileSizeLimit: elements.fileSizeLimit.value
+    };
+
+    const { error } = await supabase
+        .from('user_configs')
+        .upsert({ user_id: user.id, name: configName, data: exportData }, { onConflict: ['user_id', 'name'] });
+
+    if (error) {
+        alert('❌ Failed to save config');
+        addLog('error', `Save failed: ${error.message}`);
+    } else {
+        alert('✅ Config saved!');
+        addLog('success', `Saved config "${configName}"`);
+        refreshConfigList();
+    }
+});
+
+loadConfigBtn.addEventListener('click', async () => {
+    const selectedName = configSelector.value;
+    if (!selectedName) return;
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return alert('❌ You must be logged in!');
+
+    const { data, error } = await supabase
+        .from('user_configs')
+        .select('data')
+        .eq('user_id', user.id)
+        .eq('name', selectedName)
+        .single();
+
+    if (error || !data?.data) {
+        alert('❌ Failed to load config');
+        addLog('error', `Load failed: ${error?.message || 'No data'}`);
+        return;
+    }
+
+    importJsonData({ settings: data.data });
+    alert(`✅ Loaded "${selectedName}"`);
+    addLog('success', `Loaded config "${selectedName}"`);
+});
+
+
+deleteConfigBtn.addEventListener('click', async () => {
+    const selectedName = configSelector.value;
+    if (!selectedName) return;
+
+    const confirmDelete = confirm(`Are you sure you want to delete "${selectedName}"?`);
+    if (!confirmDelete) return;
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return alert('❌ You must be logged in!');
+
+    const { error } = await supabase
+        .from('user_configs')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('name', selectedName);
+
+    if (error) {
+        alert('❌ Failed to delete config');
+        addLog('error', `Delete failed: ${error.message}`);
+    } else {
+        alert(`🗑 Config "${selectedName}" deleted`);
+        addLog('success', `Deleted config "${selectedName}"`);
+        refreshConfigList();
+    }
+});
+
+// Load saved configs on login
+document.addEventListener('DOMContentLoaded', refreshConfigList);
+
+
+
+
+
+
+
+
+
+
+
     checkUserSession();
     initApp();
     loadLayout();
