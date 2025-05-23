@@ -1841,69 +1841,111 @@ async function deleteProfile(profileId) {
     }
 }
 // Στο init:
+// === User Authentication ===
 const userAuthMenu = document.getElementById('user-auth-menu');
 const avatarMenuBtn = document.getElementById('avatar-menu-btn');
 const userAvatar = document.getElementById('user-avatar');
 const userUsername = document.getElementById('user-username');
 
-// Προαιρετικό: κρύβεις τα παλιά auth κουμπιά/section αν υπάρχουν
-const oldAuthSection = document.getElementById('auth-section');
-if (oldAuthSection) oldAuthSection.style.display = "none";
 
-// 1. Login handler
-loginBtn.addEventListener('click', async () => {
-  const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
-  // Redirect handled by Supabase/Discord
-});
-
-// 2. Logout handler
-logoutBtn.addEventListener('click', async () => {
-  await supabase.auth.signOut();
-  updateAuthUI(null);
-});
-
-// 3. Check user session on page load
-checkUserSession();
-
-// 4. Supabase session change (live update)
-supabase.auth.onAuthStateChange((event, session) => {
-  updateAuthUI(session?.user);
-});
-
-// === Core functions ===
-async function checkUserSession() {
-  const { data: { user } } = await supabase.auth.getUser();
-    console.log('Current user:', user);  // <--- Also safe here!
-
-  updateAuthUI(user);
+// Toggle dropdown menu
+if (avatarMenuBtn) {
+  avatarMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const dropdown = avatarMenuBtn.nextElementSibling;
+    if (dropdown) {
+      dropdown.classList.toggle('show');
+    }
+  });
 }
 
+// Close dropdown when clicking elsewhere
+document.addEventListener('click', () => {
+  const dropdowns = document.querySelectorAll('.dropdown-content');
+  dropdowns.forEach(dropdown => {
+    if (dropdown.classList.contains('show')) {
+      dropdown.classList.remove('show');
+    }
+  });
+});
+
+// 1. Login handler
+if (loginBtn) {
+  loginBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
+    if (error) {
+      console.error('Login error:', error.message);
+      addLog('error', `Login failed: ${error.message}`);
+    }
+  });
+}
+
+// 2. Logout handler
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    await supabase.auth.signOut();
+    updateAuthUI(null);
+    addLog('success', 'Logged out successfully');
+    playSound('notification');
+  });
+}
+
+// 3. Update UI based on auth state
 function updateAuthUI(user) {
-      console.log('Current user:', user);  // <--- Safe here!
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const userAvatar = document.getElementById('user-avatar');
-  const userUsername = document.getElementById('user-username');
+  if (!userAvatar || !userUsername || !loginBtn || !logoutBtn) return;
 
   if (user) {
     // User is logged in
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'block';
-    userAvatar.src = user.user_metadata?.avatar_url 
-      || `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png`;
-    userUsername.textContent = user.user_metadata?.full_name || 'Discord User';
+    
+    // Update avatar and username
+    const avatarUrl = user.user_metadata?.avatar_url || 
+      (user.user_metadata?.avatar ? 
+        `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png` : 
+        'https://cdn.discordapp.com/embed/avatars/0.png');
+    
+    userAvatar.src = avatarUrl;
+    userUsername.textContent = user.user_metadata?.full_name || user.email || 'Discord User';
+    
+    // Add slight border color change for logged-in state
+    userAvatar.style.borderColor = 'var(--accent-color)';
   } else {
     // Guest user
     loginBtn.style.display = 'block';
     logoutBtn.style.display = 'none';
     userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
     userUsername.textContent = 'Guest User';
+    userAvatar.style.borderColor = 'var(--text-secondary)';
   }
 }
 
-// Dropdown ανοίγει με hover/click (εξαρτάται πώς το έχεις, εδώ με hover είναι το default)
+// 4. Check user session on page load and set up auth state listener
+async function checkUserSession() {
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) throw error;
+    updateAuthUI(user);
+  } catch (error) {
+    console.error('Session check error:', error.message);
+    updateAuthUI(null);
+  }
+}
 
-    checkUserSession();
+// Listen for auth state changes
+supabase.auth.onAuthStateChange((event, session) => {
+  updateAuthUI(session?.user);
+  if (event === 'SIGNED_IN') {
+    addLog('success', 'Successfully logged in');
+    playSound('success');
+  }
+});
+
+// Initialize auth system
+checkUserSession();
+
     initApp();
     loadLayout();
 });

@@ -1945,3 +1945,18 @@ input[type="color"]#embed-color:focus {
 .user-logged-in #login-btn {
   display: none;
 }
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--card-color);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 1000;
+}
+.dropdown-content.show {
+  display: block;
+}
+.dropdown-btn {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+}
