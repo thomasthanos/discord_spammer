@@ -1447,25 +1447,14 @@ document.addEventListener('DOMContentLoaded', () => {
         playSound('notification');
     });
 
-    // === Check user session on load ===
-    async function checkUserSession() {
-        try {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                if (error.name === 'AuthSessionMissingError') {
-                    userInfo.textContent = 'Not logged in';
-                } else {
-                    console.error('Error checking user session:', error.message);
-                    addLog('error', `Error checking user session: ${error.message}`);
-                }
-                return;
-            }
-            userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
-        } catch (e) {
-            console.error('Unexpected error in checkUserSession:', e.message);
-            addLog('error', `Unexpected error checking session: ${e.message}`);
-        }
-    }
+async function checkUserSession() {
+  const { data: { user } } = await supabase.auth.getUser();
+  updateAuthUI(user);
+}
+checkUserSession();
+supabase.auth.onAuthStateChange((event, session) => {
+  updateAuthUI(session?.user);
+});
 
     // === Export JSON to Supabase Cloud ===
     exportCloudBtn.addEventListener('click', async () => {
@@ -1839,11 +1828,12 @@ async function deleteProfile(profileId) {
         addLog('error', `Error refreshing profiles: ${e.message}`);
     }
 }
-// Στο init:
 const userAuthMenu = document.getElementById('user-auth-menu');
 const avatarMenuBtn = document.getElementById('avatar-menu-btn');
 const userAvatar = document.getElementById('user-avatar');
 const userUsername = document.getElementById('user-username');
+const authBtnText = document.getElementById('auth-btn-text');
+
 
 // Προαιρετικό: κρύβεις τα παλιά auth κουμπιά/section αν υπάρχουν
 const oldAuthSection = document.getElementById('auth-section');
@@ -1877,21 +1867,29 @@ async function checkUserSession() {
 
 function updateAuthUI(user) {
   if (user && user.user_metadata) {
-    loginBtn.style.display = "none";
-    userAuthMenu.style.display = "inline-block";
-    // Αλλαγή Avatar
+    // Logged in user
     let avatarUrl = user.user_metadata.avatar_url;
     if (!avatarUrl && user.user_metadata.avatar) {
-      // Fallback αν το avatar_url δεν υπάρχει
       avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png`;
     }
     userAvatar.src = avatarUrl || "https://cdn.discordapp.com/embed/avatars/0.png";
     userUsername.textContent = user.user_metadata.full_name || user.user_metadata.username || "Discord User";
+    authBtnText.textContent = "Logout";
+    logoutBtn.onclick = async () => {
+      await supabase.auth.signOut();
+      updateAuthUI(null);
+    };
   } else {
-    loginBtn.style.display = "inline-block";
-    userAuthMenu.style.display = "none";
-    userAvatar.src = "";
-    userUsername.textContent = "";
+    // Guest mode
+    userAvatar.src = "https://cdn.discordapp.com/embed/avatars/0.png";
+    userUsername.textContent = "Guest";
+    authBtnText.textContent = "Login with Discord";
+    logoutBtn.onclick = async () => {
+      // Login mode για guest!
+      authBtnText.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Συνδέεσαι...`;
+      await supabase.auth.signInWithOAuth({ provider: 'discord' });
+      // Redirect handled
+    };
   }
 }
 

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord Webhook Sender PRO</title>
@@ -10,402 +10,458 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-    const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co';  // το URL σου
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA';  // το anon key σου
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co'; // το URL σου
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA'; // το anon key σου
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     </script>
-
-</head>
-<body>
+  </head>
+  <body>
     <div class="app-container">
-        <header class="app-header">
-            <div class="logo">
-                <i class="fas fa-robot"></i>
-                <h1>Webhook Sender PRO</h1>
+      <header class="app-header">
+        <div class="logo">
+          <i class="fas fa-robot"></i>
+          <h1>Webhook Sender PRO</h1>
+        </div>
+        <div class="header-controls">
+          <div class="theme-carousel">
+            <div class="theme-preview active" data-theme="dark" title="Dark Theme">
+              <i class="fas fa-moon"></i>
             </div>
-            <div class="header-controls">
-                <div class="theme-carousel">
-                    <div class="theme-preview active" data-theme="dark" title="Dark Theme">
-                        <i class="fas fa-moon"></i>
-                    </div>
-                    <div class="theme-preview" data-theme="light" title="Light Theme">
-                        <i class="fas fa-sun"></i>
-                    </div>
-                    <div class="theme-preview" data-theme="neon" title="Neon Theme">
-                        <i class="fas fa-lightbulb"></i>
-                    </div>
-                    <div class="theme-preview" data-theme="terminal" title="Terminal Theme">
-                        <i class="fas fa-terminal"></i>
-                    </div>
-                </div>
-                <div class="dropdown">
-                    <button id="export-menu-btn" class="btn-icon"><i class="fas fa-file-export"></i></button>
-                    <div class="dropdown-content">
-                        <button id="export-json-menu"><i class="fas fa-file-code"></i> Export JSON</button>
-                        <button id="export-screenshot-menu"><i class="fas fa-camera"></i> Screenshot</button>
-                        <button id="import-json-menu"><i class="fas fa-file-import"></i> Import JSON</button>
-                        
-                        <button id="export-json-cloud"><i class="fas fa-cloud-upload-alt"></i> Export JSON (Personal Cloud)</button>
-                        <button id="import-json-cloud"><i class="fas fa-cloud-download-alt"></i> Import JSON (Personal Cloud)</button>
-
-                        <!-- In the dropdown menu where other export/import buttons are -->
-                        <button id="save-profile-btn"><i class="fas fa-save"></i> Save Profile</button>
-                        <button id="manage-profiles-btn"><i class="fas fa-folder-open"></i> Manage Profiles</button>
-
-                    </div>
-                </div>
-                <!-- Μέσα στο .header-controls -->
-<div id="user-auth-menu" class="dropdown" style="margin-left:10px; display:none;">
+            <div class="theme-preview" data-theme="light" title="Light Theme">
+              <i class="fas fa-sun"></i>
+            </div>
+            <div class="theme-preview" data-theme="neon" title="Neon Theme">
+              <i class="fas fa-lightbulb"></i>
+            </div>
+            <div class="theme-preview" data-theme="terminal" title="Terminal Theme">
+              <i class="fas fa-terminal"></i>
+            </div>
+          </div>
+          <div class="dropdown">
+            <button id="export-menu-btn" class="btn-icon">
+              <i class="fas fa-file-export"></i>
+            </button>
+            <div class="dropdown-content">
+              <button id="export-json-menu">
+                <i class="fas fa-file-code"></i> Export JSON </button>
+              <button id="export-screenshot-menu">
+                <i class="fas fa-camera"></i> Screenshot </button>
+              <button id="import-json-menu">
+                <i class="fas fa-file-import"></i> Import JSON </button>
+              <button id="export-json-cloud">
+                <i class="fas fa-cloud-upload-alt"></i> Export JSON (Personal Cloud) </button>
+              <button id="import-json-cloud">
+                <i class="fas fa-cloud-download-alt"></i> Import JSON (Personal Cloud) </button>
+              <!-- In the dropdown menu where other export/import buttons are -->
+              <button id="save-profile-btn">
+                <i class="fas fa-save"></i> Save Profile </button>
+              <button id="manage-profiles-btn">
+                <i class="fas fa-folder-open"></i> Manage Profiles </button>
+            </div>
+          </div>
+          <!-- Μέσα στο .header-controls -->
+<!-- Avatar dropdown, always visible! -->
+<div id="user-auth-menu" class="dropdown" style="margin-left:10px;">
   <button class="btn-icon" id="avatar-menu-btn" style="padding:0;">
-    <img id="user-avatar" src="" alt="avatar" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">
+    <img id="user-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="avatar" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">
   </button>
   <div class="dropdown-content" style="right:0; min-width:180px; padding:0;">
-    <div id="user-username" style="padding:12px 18px 7px 18px; color:var(--primary-color); font-weight:600; font-size:16px;"></div>
+    <div id="user-username" style="padding:12px 18px 7px 18px; color:var(--primary-color); font-weight:600; font-size:16px;">Guest</div>
     <button id="logout-btn" style="width:90%; margin:10px 5%; display:flex; align-items:center; gap:10px; justify-content:left; background:rgba(0,0,0,0.12); border:none; border-radius:8px; padding:11px 18px; cursor:pointer;">
-      <i class="fab fa-discord" style="font-size:17px;"></i> Logout
+      <i class="fab fa-discord" style="font-size:17px;"></i>
+      <span id="auth-btn-text">Login with Discord</span>
     </button>
   </div>
 </div>
-<button id="login-btn" class="btn-primary" style="margin-left:10px;">Login with Discord</button>
 
-            </div>
-        </header>
-<!-- Add this with the other modals -->
-<div id="profiles-modal" class="modal hidden">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Your Saved Profiles</h3>
-            <button class="close-modal"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body">
+      </header>
+      <!-- Add this with the other modals -->
+      <div id="profiles-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Your Saved Profiles</h3>
+            <button class="close-modal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
             <div id="profiles-list" class="profile-items"></div>
             <div id="no-profiles-message" class="empty-state">No saved profiles yet</div>
+          </div>
         </div>
-    </div>
-</div>
-<div>
-</div>
-
-
-        <main class="app-content">
-            <div class="settings-column card" data-card="settings">
-                <div class="card-header">
-                    <h2><i class="fas fa-cog"></i> Settings</h2>
+      </div>
+      <div></div>
+      <main class="app-content">
+        <div class="settings-column card" data-card="settings">
+          <div class="card-header">
+            <h2>
+              <i class="fas fa-cog"></i> Settings
+            </h2>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label for="webhook-url">Discord Webhook URL</label>
+              <div class="input-with-actions">
+                <input type="password" id="webhook-url" placeholder="https://discord.com/api/webhooks/...">
+                <button id="toggle-visibility" class="btn-icon-small">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button id="history-btn" class="btn-icon-small">
+                  <i class="fas fa-history"></i>
+                </button>
+              </div>
+              <div class="form-row form-row-custom-padding">
+                <div class="form-group half-width">
+                  <label for="username">Custom Username</label>
+                  <input type="text" id="username" placeholder="Webhook Sender">
                 </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="webhook-url">Discord Webhook URL</label>
-                        <div class="input-with-actions">
-                            <input type="password" id="webhook-url" placeholder="https://discord.com/api/webhooks/...">
-                            <button id="toggle-visibility" class="btn-icon-small"><i class="fas fa-eye"></i></button>
-                            <button id="history-btn" class="btn-icon-small"><i class="fas fa-history"></i></button>
-                        </div>
-                        <div class="form-row form-row-custom-padding">
-    <div class="form-group half-width">
-        <label for="username">Custom Username</label>
-        <input type="text" id="username" placeholder="Webhook Sender">
-    </div>
-    <div class="form-group half-width">
-        <label for="avatar-url">Avatar URL</label>
-        <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
-    </div>
-</div>
-
+                <div class="form-group half-width">
+                  <label for="avatar-url">Avatar URL</label>
+                  <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="message-content">Message Content</label>
+              <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
+            </div>
+            <div class="message-tools">
+              <button id="suggest-message" class="btn-small">
+                <i class="fas fa-lightbulb"></i> Suggest </button>
+              <button id="format-help" class="btn-small">
+                <i class="fas fa-question-circle"></i> Format Help </button>
+            </div>
+            <!-- Μέσα στο settings-column card, μετά το message-content textarea -->
+            <div class="form-row">
+              <div class="form-group half-width">
+                <label for="message-attachments">
+                  <i class="fas fa-paperclip"></i> Message Attachments </label>
+                <label for="message-attachments" class="custom-file-upload">
+                  <i class="fas fa-cloud-upload-alt"></i>
+                  <span>Click to upload files</span>
+                  <div class="file-info">Supports images and videos</div>
+                </label>
+                <input type="file" id="message-attachments" multiple accept="image/*, video/*">
+                <div id="message-attachments-preview" class="attachments-preview"></div>
+              </div>
+              <div class="form-group half-width file-size-group">
+                <label for="file-size-limit" class="file-size-label">
+                  <i class="fas fa-weight"></i> Max File Size </label>
+                <div class="custom-file-select" id="file-size-custom-select">
+                  <div class="selected-option">
+                    <div class="center-content">
+                      <img src="images/nitro_lvl1.png" id="selected-level-icon" class="option-icon">
+                      <span id="selected-level-text" class="centered-text">8 MB Default</span>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="message-content">Message Content</label>
-                        <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
+                    <i class="fas fa-chevron-down"></i>
+                  </div>
+                  <div class="options-list" style="display: none;">
+                    <div class="option" data-value="8">
+                      <img src="images/nitro_lvl1.png" class="option-icon"> 8 MB Default
                     </div>
-                    <div class="message-tools">
-                        <button id="suggest-message" class="btn-small"><i class="fas fa-lightbulb"></i> Suggest</button>
-                        <button id="format-help" class="btn-small"><i class="fas fa-question-circle"></i> Format Help</button>
+                    <div class="option" data-value="50">
+                      <img src="images/nitro_lvl2.png" class="option-icon"> 50 MB (Level 2 server)
                     </div>
-
-<!-- Μέσα στο settings-column card, μετά το message-content textarea -->
-<div class="form-row">
-    <div class="form-group half-width">
-        <label for="message-attachments"><i class="fas fa-paperclip"></i> Message Attachments</label>
-        <label for="message-attachments" class="custom-file-upload">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <span>Click to upload files</span>
-            <div class="file-info">Supports images and videos</div>
-        </label>
-        <input type="file" id="message-attachments" multiple accept="image/*, video/*">
-        <div id="message-attachments-preview" class="attachments-preview"></div>
-    </div>
-<div class="form-group half-width file-size-group">
-  <label for="file-size-limit" class="file-size-label">
-    <i class="fas fa-weight"></i> Max File Size
-  </label>
-  <div class="custom-file-select" id="file-size-custom-select">
-    <div class="selected-option">
-      <div class="center-content">
-        <img src="images/nitro_lvl1.png" id="selected-level-icon" class="option-icon">
-        <span id="selected-level-text" class="centered-text">8 MB Default</span>
-      </div>
-      <i class="fas fa-chevron-down"></i>
-    </div>
-    <div class="options-list" style="display: none;">
-      <div class="option" data-value="8">
-        <img src="images/nitro_lvl1.png" class="option-icon"> 8 MB Default
-      </div>
-      <div class="option" data-value="50">
-        <img src="images/nitro_lvl2.png" class="option-icon"> 50 MB (Level 2 server)
-      </div>
-      <div class="option" data-value="100">
-        <img src="images/nitro_lvl3.png" class="option-icon"> 100 MB (Level 3 server)
-      </div>
-    </div>
-    <input type="hidden" name="file-size-limit" id="file-size-limit" value="8">
-  </div>
-</div>
-
-
-
-</div>
-
-
-
-<!-- Inside the "Settings" card, replace the existing embed section -->
-<div class="embed-section">
-    <button id="embed-toggle-btn" class="embed-toggle-btn"><i class="fas fa-chevron-down"></i> Embed Options</button>
-    <div id="embed-content" class="embed-content">
-        <div id="embed-list">
-            <!-- Initial embed fields -->
-            <div class="embed-item" data-embed-index="0">
-                <div class="form-row embed-row">
-                    <div class="form-group">
-                        <label for="embed-title-0"><i class="fas fa-heading"></i> Embed Title</label>
+                    <div class="option" data-value="100">
+                      <img src="images/nitro_lvl3.png" class="option-icon"> 100 MB (Level 3 server)
+                    </div>
+                  </div>
+                  <input type="hidden" name="file-size-limit" id="file-size-limit" value="8">
+                </div>
+              </div>
+            </div>
+            <!-- Inside the "Settings" card, replace the existing embed section -->
+            <div class="embed-section">
+              <button id="embed-toggle-btn" class="embed-toggle-btn">
+                <i class="fas fa-chevron-down"></i> Embed Options </button>
+              <div id="embed-content" class="embed-content">
+                <div id="embed-list">
+                  <!-- Initial embed fields -->
+                  <div class="embed-item" data-embed-index="0">
+                    <div class="form-row embed-row">
+                      <div class="form-group">
+                        <label for="embed-title-0">
+                          <i class="fas fa-heading"></i> Embed Title </label>
                         <input type="text" id="embed-title-0" placeholder="Enter embed title">
-                    </div>
-                    <div class="form-group">
-                        <label for="embed-color-0"><i class="fas fa-palette"></i> Embed Color</label>
+                      </div>
+                      <div class="form-group">
+                        <label for="embed-color-0">
+                          <i class="fas fa-palette"></i> Embed Color </label>
                         <input type="color" id="embed-color-0" value="#5865F2">
+                      </div>
+                      <button class="btn-icon delete-embed-btn hidden" data-embed-index="0" title="Delete Embed">
+                        <i class="fas fa-trash"></i>
+                      </button>
                     </div>
-                    <button class="btn-icon delete-embed-btn hidden" data-embed-index="0" title="Delete Embed"><i class="fas fa-trash"></i></button>
-                </div>
-                <div class="form-group">
-                    <label for="embed-description-0"><i class="fas fa-align-left"></i> Embed Description</label>
-                    <textarea id="embed-description-0" rows="3" placeholder="Enter embed description"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="embed-footer-0"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
-                    <input type="text" id="embed-footer-0" placeholder="Enter footer text">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group half-width">
-                        <label for="embed-image-url"><i class="fas fa-image"></i> Embed Image URL</label>
-                        <input type="url" id="embed-image-url" placeholder="https://example.com/image.png">
-                    </div>
-                    <div class="form-group half-width">
-                        <label for="embed-thumbnail-url"><i class="fas fa-image"></i> Embed Thumbnail URL</label>
-                        <input type="url" id="embed-thumbnail-url" placeholder="https://example.com/thumbnail.png">
-                    </div>
-                </div>
-
-
-            </div>
-        </div>
-        <button id="add-embed-btn" class="btn-small"><i class="fas fa-plus"></i> Add Another Embed</button>
-    </div>
-</div>
-                    
                     <div class="form-group">
-                        <label><i class="fas fa-hourglass-half"></i> Send Interval & Limit</label>
-                        <div class="interval-limit-group">
-                            <div class="input-group">
-                                <label for="interval-value"><i class="fas fa-clock"></i> Every</label>
-                                <div class="input-with-buttons">
-                                    <button class="interval-btn minus" data-action="decrement"><i class="fas fa-minus"></i></button>
-                                    <div class="input-wrapper">
-                                        <input type="number" id="interval-value" value="10" min="1" style="display: none;">
-                                        <span id="interval-display" class="interval-display">10 s</span>
-                                    </div>
-                                    <button class="interval-btn plus" data-action="increment"><i class="fas fa-plus"></i></button>
-                                </div>
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="interval-unit"><i class="fas fa-stopwatch"></i> Time Unit</label>
-                                <div class="custom-select">
-                                    <select id="interval-unit">
-                                        <option value="seconds">Seconds</option>
-                                        <option value="minutes">Minutes</option>
-                                        <option value="hours">Hours</option>
-                                    </select>
-                                    <div class="select-arrow"><i class="fas fa-chevron-down"></i></div>
-                                </div>
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="message-limit"><i class="fas fa-envelope"></i> Max Messages</label>
-                                <div class="input-with-buttons">
-                                    <button class="interval-btn minus" data-action="decrement"><i class="fas fa-minus"></i></button>
-                                    <input type="number" id="message-limit" min="0" value="1" placeholder="∞">
-                                    <button class="interval-btn plus" data-action="increment"><i class="fas fa-plus"></i></button>
-                                </div>
-                            </div>
-                        </div>
+                      <label for="embed-description-0">
+                        <i class="fas fa-align-left"></i> Embed Description </label>
+                      <textarea id="embed-description-0" rows="3" placeholder="Enter embed description"></textarea>
                     </div>
+                    <div class="form-group">
+                      <label for="embed-footer-0">
+                        <i class="fas fa-shoe-prints"></i> Embed Footer </label>
+                      <input type="text" id="embed-footer-0" placeholder="Enter footer text">
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group half-width">
+                        <label for="embed-image-url">
+                          <i class="fas fa-image"></i> Embed Image URL </label>
+                        <input type="url" id="embed-image-url" placeholder="https://example.com/image.png">
+                      </div>
+                      <div class="form-group half-width">
+                        <label for="embed-thumbnail-url">
+                          <i class="fas fa-image"></i> Embed Thumbnail URL </label>
+                        <input type="url" id="embed-thumbnail-url" placeholder="https://example.com/thumbnail.png">
+                      </div>
+                    </div>
+                  </div>
                 </div>
+                <button id="add-embed-btn" class="btn-small">
+                  <i class="fas fa-plus"></i> Add Another Embed </button>
+              </div>
             </div>
-
-            <div class="preview-column">
-                <div class="card preview-card" data-card="preview">
-                    <div class="card-header">
-                        <h2><i class="fas fa-eye"></i> Live Preview</h2>
+            <div class="form-group">
+              <label>
+                <i class="fas fa-hourglass-half"></i> Send Interval & Limit </label>
+              <div class="interval-limit-group">
+                <div class="input-group">
+                  <label for="interval-value">
+                    <i class="fas fa-clock"></i> Every </label>
+                  <div class="input-with-buttons">
+                    <button class="interval-btn minus" data-action="decrement">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                    <div class="input-wrapper">
+                      <input type="number" id="interval-value" value="10" min="1" style="display: none;">
+                      <span id="interval-display" class="interval-display">10 s</span>
                     </div>
-                    <div class="card-body">
-                        <div class="discord-message">
-                            <div class="discord-avatar">
-                                <img id="preview-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
-                            </div>
-                            <div class="discord-content">
-                                <div class="discord-username" id="preview-username">Webhook Sender</div>
-                                <div class="discord-text" id="preview-text">Your message will appear here...</div>
-                            </div>
-                        </div>
-                    </div>
+                    <button class="interval-btn plus" data-action="increment">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
                 </div>
-                
-                <div class="card stats-card" data-card="stats">
-                    <div class="card-header">
-                        <h2><i class="fas fa-chart-bar"></i> Statistics</h2>
+                <div class="input-group">
+                  <label for="interval-unit">
+                    <i class="fas fa-stopwatch"></i> Time Unit </label>
+                  <div class="custom-select">
+                    <select id="interval-unit">
+                      <option value="seconds">Seconds</option>
+                      <option value="minutes">Minutes</option>
+                      <option value="hours">Hours</option>
+                    </select>
+                    <div class="select-arrow">
+                      <i class="fas fa-chevron-down"></i>
                     </div>
-                    <div class="card-body">
-                        <div class="stats-grid">
-                            <div class="stat-item">
-                                <div class="stat-value" id="stat-total">0</div>
-                                <div class="stat-label">Total</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-value" id="stat-success">0</div>
-                                <div class="stat-label">Success</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-value" id="stat-failed">0</div>
-                                <div class="stat-label">Failed</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-value" id="stat-avg-time">0ms</div>
-                                <div class="stat-label">Avg. Response</div>
-                            </div>
-                        </div>
-                        <div class="stats-reset">
-                            <button id="reset-stats" class="btn-small"><i class="fas fa-trash"></i> Reset Session</button>
-                        </div>
-                    </div>
+                  </div>
                 </div>
-                
-                <div class="card controls-card" data-card="controls">
-                    <div class="card-header">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <h2><i class="fas fa-play"></i> Controls</h2>
-                            <div class="status-indicator">
-                                <div class="status-dot"></div>
-                                <span id="status-text">Ready</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="button-group">
-                            <button id="start-btn" class="btn-primary"><i class="fas fa-play"></i> Start Sending</button>
-                            <button id="stop-btn" class="btn-secondary" disabled><i class="fas fa-stop"></i> Stop</button>
-                            <button id="test-btn" class="btn-tertiary"><i class="fas fa-paper-plane"></i> Test Now</button>
-                        </div>
-                        <div class="checkbox-group">
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="random-messages">
-                                <span class="checkmark"></span>
-                                Send random messages (one per line)
-                            </label>
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="enable-sounds" checked>
-                                <span class="checkmark"></span>
-                                Enable sounds
-                            </label>
-                        </div>
-                    </div>
+                <div class="input-group">
+                  <label for="message-limit">
+                    <i class="fas fa-envelope"></i> Max Messages </label>
+                  <div class="input-with-buttons">
+                    <button class="interval-btn minus" data-action="decrement">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                    <input type="number" id="message-limit" min="0" value="1" placeholder="∞">
+                    <button class="interval-btn plus" data-action="increment">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
                 </div>
+              </div>
             </div>
-
-            <div class="card logs-card" data-card="logs">
-                <div class="card-header">
-                    <h2><i class="fas fa-list"></i> Activity Log</h2>
-                    <div class="card-actions">
-                        <button id="clear-logs" class="btn-small"><i class="fas fa-trash-alt"></i> Clear Logs</button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div id="log-container"></div>
-                </div>
+          </div>
+        </div>
+        <div class="preview-column">
+          <div class="card preview-card" data-card="preview">
+            <div class="card-header">
+              <h2>
+                <i class="fas fa-eye"></i> Live Preview
+              </h2>
             </div>
-        </main>
-
-        <footer class="app-footer">
-            © 2023 Webhook Sender PRO | v3.0 Enhanced Edition
-        </footer>
+            <div class="card-body">
+              <div class="discord-message">
+                <div class="discord-avatar">
+                  <img id="preview-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="Avatar">
+                </div>
+                <div class="discord-content">
+                  <div class="discord-username" id="preview-username">Webhook Sender</div>
+                  <div class="discord-text" id="preview-text">Your message will appear here...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card stats-card" data-card="stats">
+            <div class="card-header">
+              <h2>
+                <i class="fas fa-chart-bar"></i> Statistics
+              </h2>
+            </div>
+            <div class="card-body">
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-value" id="stat-total">0</div>
+                  <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value" id="stat-success">0</div>
+                  <div class="stat-label">Success</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value" id="stat-failed">0</div>
+                  <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value" id="stat-avg-time">0ms</div>
+                  <div class="stat-label">Avg. Response</div>
+                </div>
+              </div>
+              <div class="stats-reset">
+                <button id="reset-stats" class="btn-small">
+                  <i class="fas fa-trash"></i> Reset Session </button>
+              </div>
+            </div>
+          </div>
+          <div class="card controls-card" data-card="controls">
+            <div class="card-header">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>
+                  <i class="fas fa-play"></i> Controls
+                </h2>
+                <div class="status-indicator">
+                  <div class="status-dot"></div>
+                  <span id="status-text">Ready</span>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="button-group">
+                <button id="start-btn" class="btn-primary">
+                  <i class="fas fa-play"></i> Start Sending </button>
+                <button id="stop-btn" class="btn-secondary" disabled>
+                  <i class="fas fa-stop"></i> Stop </button>
+                <button id="test-btn" class="btn-tertiary">
+                  <i class="fas fa-paper-plane"></i> Test Now </button>
+              </div>
+              <div class="checkbox-group">
+                <label class="checkbox-container">
+                  <input type="checkbox" id="random-messages">
+                  <span class="checkmark"></span> Send random messages (one per line) </label>
+                <label class="checkbox-container">
+                  <input type="checkbox" id="enable-sounds" checked>
+                  <span class="checkmark"></span> Enable sounds </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card logs-card" data-card="logs">
+          <div class="card-header">
+            <h2>
+              <i class="fas fa-list"></i> Activity Log
+            </h2>
+            <div class="card-actions">
+              <button id="clear-logs" class="btn-small">
+                <i class="fas fa-trash-alt"></i> Clear Logs </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="log-container"></div>
+          </div>
+        </div>
+      </main>
+      <footer class="app-footer"> © 2023 Webhook Sender PRO | v3.0 Enhanced Edition </footer>
     </div>
-
     <!-- Modals -->
     <div id="history-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Webhook History</h3>
-                <button class="close-modal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div id="history-list" class="history-items"></div>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Webhook History</h3>
+          <button class="close-modal">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
+        <div class="modal-body">
+          <div id="history-list" class="history-items"></div>
+        </div>
+      </div>
     </div>
-
     <div id="suggestions-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Message Suggestions</h3>
-                <button class="close-modal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="suggestions-list"></div>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Message Suggestions</h3>
+          <button class="close-modal">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
+        <div class="modal-body">
+          <div class="suggestions-list"></div>
+        </div>
+      </div>
     </div>
-
     <div id="format-help-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Formatting Help</h3>
-                <button class="close-modal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <table class="format-table">
-                    <tr><th>Format</th><th>Syntax</th><th>Preview</th></tr>
-                    <tr><td>Bold</td><td>**text**</td><td><strong>text</strong></td></tr>
-                    <tr><td>Italic</td><td>*text*</td><td><em>text</em></td></tr>
-                    <tr><td>Strikethrough</td><td>~~text~~</td><td><s>text</s></td></tr>
-                    <tr><td>Code</td><td>`text`</td><td><code>text</code></td></tr>
-                    <tr><td>Mention User</td><td><@123456789></td><td><span class="discord-mention">@user</span></td></tr>
-                </table>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Formatting Help</h3>
+          <button class="close-modal">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
+        <div class="modal-body">
+          <table class="format-table">
+            <tr>
+              <th>Format</th>
+              <th>Syntax</th>
+              <th>Preview</th>
+            </tr>
+            <tr>
+              <td>Bold</td>
+              <td>**text**</td>
+              <td>
+                <strong>text</strong>
+              </td>
+            </tr>
+            <tr>
+              <td>Italic</td>
+              <td>*text*</td>
+              <td>
+                <em>text</em>
+              </td>
+            </tr>
+            <tr>
+              <td>Strikethrough</td>
+              <td>~~text~~</td>
+              <td>
+                <s>text</s>
+              </td>
+            </tr>
+            <tr>
+              <td>Code</td>
+              <td>`text`</td>
+              <td>
+                <code>text</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Mention User</td>
+              <td>
+                <@123456789>
+              </td>
+              <td>
+                <span class="discord-mention">@user</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
     </div>
-
-
-
     <!-- Toast Container -->
     <div id="toast-container"></div>
-
     <!-- Audio Elements -->
     <audio id="success-sound" src="https://raw.githubusercontent.com/thomasthanos/discord_spammer/fa49abbd642e55fb162e6088caca5c81bcbf2bcb/sounds/success.mp3"></audio>
     <audio id="error-sound" src="https://raw.githubusercontent.com/thomasthanos/discord_spammer/fa49abbd642e55fb162e6088caca5c81bcbf2bcb/sounds/error.mp3"></audio>
     <audio id="notification-sound" src="https://raw.githubusercontent.com/thomasthanos/discord_spammer/fa49abbd642e55fb162e6088caca5c81bcbf2bcb/sounds/notification.mp3"></audio>
-
     <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-</body>
+  </body>
 </html>
