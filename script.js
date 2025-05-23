@@ -1448,24 +1448,98 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === Check user session on load ===
-    async function checkUserSession() {
+// Update the checkUserSession function
+async function checkUserSession() {
+    try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+            if (error.name === 'AuthSessionMissingError') {
+                document.getElementById('user-dropdown').classList.add('hidden');
+            } else {
+                console.error('Error checking user session:', error.message);
+                addLog('error', `Error checking user session: ${error.message}`);
+            }
+            return;
+        }
+        
+        if (user) {
+            updateUserDisplay(user);
+        } else {
+            document.getElementById('user-dropdown').classList.add('hidden');
+        }
+    } catch (e) {
+        console.error('Unexpected error in checkUserSession:', e.message);
+        addLog('error', `Unexpected error checking session: ${e.message}`);
+    }
+}
+
+// Add this function to update the user display
+function updateUserDisplay(user) {
+    const userDropdown = document.getElementById('user-dropdown');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    
+    // Set user avatar (Discord provides this in the user_metadata)
+    const avatarUrl = user.user_metadata?.avatar_url || 
+                     `https://cdn.discordapp.com/embed/avatars/${parseInt(user.id) % 5}.png`;
+    
+    userAvatar.src = avatarUrl;
+    
+    // Set username (Discord provides this in the user_metadata)
+    const name = user.user_metadata?.full_name || 
+                user.user_metadata?.name || 
+                user.email || 
+                'Discord User';
+    
+    userName.textContent = name;
+    userDropdown.classList.remove('hidden');
+}
+
+// Update the login/logout handlers
+loginBtn.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+            redirectTo: window.location.href
+        }
+    });
+    
+    if (error) {
+        console.error('Login failed:', error.message);
+        addLog('error', `Login failed: ${error.message}`);
+    }
+});
+
+logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    document.getElementById('user-dropdown').classList.add('hidden');
+    addLog('success', 'Logged out successfully');
+    playSound('notification');
+});
+
+if (code && state) {
+    (async () => {
         try {
             const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) {
-                if (error.name === 'AuthSessionMissingError') {
-                    userInfo.textContent = 'Not logged in';
-                } else {
-                    console.error('Error checking user session:', error.message);
-                    addLog('error', `Error checking user session: ${error.message}`);
-                }
-                return;
+            
+            if (error) throw error;
+            
+            if (user) {
+                updateUserDisplay(user);
+                addLog('success', 'Successfully logged in via Discord');
+                playSound('success');
             }
-            userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
+            
+            // Clean up the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
         } catch (e) {
-            console.error('Unexpected error in checkUserSession:', e.message);
-            addLog('error', `Unexpected error checking session: ${e.message}`);
+            console.error('Error handling OAuth redirect:', e.message);
+            addLog('error', `OAuth error: ${e.message}`);
         }
-    }
+    })();
+} else {
+    checkUserSession();
+}
 
     // === Export JSON to Supabase Cloud ===
     exportCloudBtn.addEventListener('click', async () => {
