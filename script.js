@@ -1433,10 +1433,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const userAvatar = document.getElementById('user-avatar');
     const userName = document.getElementById('user-name');
     const userLogoutBtn = document.getElementById('user-logout-btn');
+    const userAuthMenu = document.getElementById('user-auth-menu');
+    const avatarMenuBtn = document.getElementById('avatar-menu-btn');
+    const userUsername = document.getElementById('user-username');
+    const logoutBtn = document.getElementById('logout-btn');
 
     // === Login with Discord ===
     loginBtn.addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
+        const { data, error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
         if (error) {
             console.error('Login failed:', error.message);
             addLog('error', `Login failed: ${error.message}`);
@@ -1448,6 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userInfo.textContent = 'Not logged in';
         addLog('success', 'Logged out successfully');
         playSound('notification');
+        updateAuthUI(null);
     });
 
     // === Check user session on load ===
@@ -1536,7 +1541,10 @@ if (code && state) {
 } else {
     checkUserSession();
 }
-
+checkUserSession();
+supabase.auth.onAuthStateChange((event, session) => {
+  updateAuthUI(session?.user);
+});
     // === Export JSON to Supabase Cloud ===
     exportCloudBtn.addEventListener('click', async () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -1939,26 +1947,28 @@ function updateAuthUI(isLoggedIn, user = null) {
 
 // ==== CHECK USER SESSION ====
 async function checkUserSession() {
-    try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) {
-            updateAuthUI(false);
-            if (error.name !== 'AuthSessionMissingError') {
-                console.error('Error checking user session:', error.message);
-                addLog('error', `Error checking user session: ${error.message}`);
-            }
-            return;
-        }
-        if (user) {
-            updateAuthUI(true, user);
-        } else {
-            updateAuthUI(false);
-        }
-    } catch (e) {
-        console.error('Unexpected error in checkUserSession:', e.message);
-        addLog('error', `Unexpected error checking session: ${e.message}`);
-        updateAuthUI(false);
+  const { data: { user } } = await supabase.auth.getUser();
+  updateAuthUI(user);
+}
+
+function updateAuthUI(user) {
+  if (user && user.user_metadata) {
+    loginBtn.style.display = "none";
+    userAuthMenu.style.display = "inline-block";
+    // Αλλαγή Avatar
+    let avatarUrl = user.user_metadata.avatar_url;
+    if (!avatarUrl && user.user_metadata.avatar) {
+      // Fallback αν το avatar_url δεν υπάρχει
+      avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png`;
     }
+    userAvatar.src = avatarUrl || "https://cdn.discordapp.com/embed/avatars/0.png";
+    userUsername.textContent = user.user_metadata.full_name || user.user_metadata.username || "Discord User";
+  } else {
+    loginBtn.style.display = "inline-block";
+    userAuthMenu.style.display = "none";
+    userAvatar.src = "";
+    userUsername.textContent = "";
+  }
 }
 
 // ==== LOGIN HANDLER ====
@@ -2019,6 +2029,8 @@ document.getElementById('login-btn').addEventListener('click', async () => {
     }
 });
 
+const oldAuthSection = document.getElementById('auth-section');
+if (oldAuthSection) oldAuthSection.style.display = "none";
 
     checkUserSession();
     initApp();
