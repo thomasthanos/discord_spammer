@@ -1532,14 +1532,18 @@ function updateMessageLimitPlaceholder() {
             alert('❌ Invalid cloud data.');
         }
     });
-  supabase.auth.getSessionFromUrl({ storeSession: true }).then(({ data, error }) => {
+
+    supabase.auth.exchangeCodeForSession().then(({ data, error }) => {
     if (error) {
-      console.error('Error restoring session from URL:', error.message);
+        console.error('Error exchanging code:', error.message);
     } else {
-      console.log('Session restored from OAuth redirect:', data);
-      window.location.hash = '';
+        console.log('OAuth session established:', data);
+        window.location.hash = '';
+        checkUserSession(); // ξανατρέχει τον έλεγχο χρήστη
     }
-  });
+    });
+
+
     checkUserSession();
     initApp();
     loadLayout();
