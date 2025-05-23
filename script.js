@@ -72,16 +72,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let attachments = [];
 
     // Moved to outer scope
-function updateMessageLimitPlaceholder() {
-    console.log('updateMessageLimitPlaceholder defined');
-    const value = elements.messageLimit.value;
-    if (value === '0' || value === '') {
-        elements.messageLimit.value = ''; // Clear the input to show the placeholder
-        elements.messageLimit.placeholder = '∞';
-    } else {
-        elements.messageLimit.placeholder = 'Unlimited';
+    function updateMessageLimitPlaceholder() {
+        console.log('updateMessageLimitPlaceholder defined');
+        const value = elements.messageLimit.value;
+        if (value === '0' || value === '') {
+            elements.messageLimit.value = ''; // Clear the input to show the placeholder
+            elements.messageLimit.placeholder = '∞';
+        } else {
+            elements.messageLimit.placeholder = 'Unlimited';
+        }
     }
-}
 
     // Initialize app
     function initApp() {
@@ -1076,7 +1076,7 @@ function updateMessageLimitPlaceholder() {
 
                 xhr.upload.onprogress = (event) => {
                     if (event.lengthComputable) {
-                        const percentComplete = Math.round((event. loaded / event.total) * 100);
+                        const percentComplete = Math.round((event.loaded / event.total) * 100);
                         progressToast.querySelector('.progress-bar-fill').style.width = `${percentComplete}%`;
                     }
                 };
@@ -1429,31 +1429,47 @@ function updateMessageLimitPlaceholder() {
     // === Login with Discord ===
     loginBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
-        if (error) console.error('Login failed:', error.message);
+        if (error) {
+            console.error('Login failed:', error.message);
+            addLog('error', `Login failed: ${error.message}`);
+        }
     });
 
     logoutBtn.addEventListener('click', async () => {
         await supabase.auth.signOut();
-        location.reload();
+        userInfo.textContent = 'Not logged in';
+        addLog('success', 'Logged out successfully');
+        playSound('notification');
     });
 
     // === Check user session on load ===
     async function checkUserSession() {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        console.log("User:", user, "Error:", error);
-
-        if (user) {
-            userInfo.textContent = `Logged in as ${user.email || user.id}`;
-        } else {
-            userInfo.textContent = 'Not logged in';
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error) {
+                if (error.name === 'AuthSessionMissingError') {
+                    userInfo.textContent = 'Not logged in';
+                } else {
+                    console.error('Error checking user session:', error.message);
+                    addLog('error', `Error checking user session: ${error.message}`);
+                }
+                return;
+            }
+            userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
+        } catch (e) {
+            console.error('Unexpected error in checkUserSession:', e.message);
+            addLog('error', `Unexpected error checking session: ${e.message}`);
         }
     }
-    checkUserSession();
 
     // === Export JSON to Supabase Cloud ===
     exportCloudBtn.addEventListener('click', async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return alert('❌ You must be logged in!');
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            alert('❌ You must be logged in!');
+            addLog('error', 'Export failed: User not logged in');
+            return;
+        }
 
         const exportData = {
             metadata: {
@@ -1499,6 +1515,7 @@ function updateMessageLimitPlaceholder() {
         if (error) {
             console.error('Upload error:', error.message);
             alert('❌ Upload failed.');
+            addLog('error', `Upload failed: ${error.message}`);
         } else {
             localStorage.setItem('logs', JSON.stringify(exportData.logs));
             alert('✅ Logs saved to cloud!');
@@ -1509,8 +1526,12 @@ function updateMessageLimitPlaceholder() {
 
     // === Import JSON from Supabase Cloud ===
     importCloudBtn.addEventListener('click', async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return alert('❌ You must be logged in!');
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
+            alert('❌ You must be logged in!');
+            addLog('error', 'Import failed: User not logged in');
+            return;
+        }
 
         const { data, error } = await supabase
             .from('user_jsons')
@@ -1521,33 +1542,57 @@ function updateMessageLimitPlaceholder() {
         if (error || !data?.data) {
             console.error('Fetch error:', error?.message);
             alert('❌ Failed to load data.');
+            addLog('error', `Failed to load data: ${error?.message || 'No data found'}`);
             return;
         }
 
         try {
             importJsonData(data.data);
             alert('✅ Logs imported from cloud!');
+            addLog('success', 'Imported application data from cloud');
         } catch (e) {
             console.error('Invalid JSON:', e);
             alert('❌ Invalid cloud data.');
+            addLog('error', `Invalid cloud data: ${e.message}`);
         }
     });
 
-if (window.location.href.includes('code=') && window.location.href.includes('state=')) {
-  supabase.auth.exchangeCodeForSession().then(({ data, error }) => {
-    if (error) {
-      console.error('Error exchanging code:', error.message);
+    // === Handle OAuth redirect ===
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+
+    if (code && state) {
+        (async () => {
+            try {
+                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError) {
+                    console.error('Error checking session:', sessionError.message);
+                    addLog('error', `Session check failed: ${sessionError.message}`);
+                    return;
+                }
+
+                if (!sessionData.session) {
+                    const { data, error } = await supabase.auth.exchangeCodeForSession({ code });
+                    if (error) {
+                        console.error('Error exchanging code:', error.message);
+                        addLog('error', `OAuth exchange failed: ${error.message}`);
+                        return;
+                    }
+                    console.log('OAuth session established:', data);
+                    userInfo.textContent = `Logged in as ${data.user.email || data.user.id}`;
+                    addLog('success', 'Successfully logged in via OAuth');
+                    playSound('success');
+                }
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (e) {
+                console.error('Unexpected error in OAuth handling:', e.message);
+                addLog('error', `OAuth error: ${e.message}`);
+            }
+        })();
     } else {
-      console.log('OAuth session established:', data);
-      window.location.hash = '';
-      checkUserSession();
+        checkUserSession();
     }
-  });
-} else {
-  checkUserSession();
-}
-
-
 
     checkUserSession();
     initApp();
