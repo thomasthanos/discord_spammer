@@ -1328,8 +1328,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const exportData = createFullExport();
         const { error } = await supabase
-            .from('user_jsons')
-            .upsert({ user_id: user.id, data: exportData }, { onConflict: 'user_id' });
+        .from('user_jsons')
+        .upsert({ user_id: user.id, name: configName, data: exportData }, { onConflict: ['user_id', 'name'] });
+
 
         if (error) {
             console.error('Upload error:', error);
@@ -1357,10 +1358,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const { data, error } = await supabase
-            .from('user_jsons')
-            .select('data')
-            .eq('user_id', user.id)
-            .single();
+        .from('user_jsons')
+        .select('data')
+        .eq('user_id', user.id)
+        .eq('name', selectedName)
+        .single();
+
 
         if (error || !data?.data) {
             console.error('Fetch error:', error);
@@ -1416,10 +1419,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) return;
 
-        const { data, error } = await supabase
-            .from('user_configs')
-            .select('name')
-            .eq('user_id', user.id);
+    const { data, error } = await supabase
+    .from('user_jsons')
+    .select('name')
+    .eq('user_id', user.id)
+    .neq('name', null); // μόνο αυτά που έχουν όνομα (configs)
+
 
         elements.configSelector.innerHTML = `<option value="">-- No configs available --</option>`;
         if (data && data.length) {
@@ -1472,8 +1477,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const { error } = await supabase
-            .from('user_configs')
-            .upsert({ user_id: user.id, name: configName, data: exportData }, { onConflict: ['user_id', 'name'] });
+        .from('user_jsons')
+        .upsert({ user_id: user.id, name: configName, data: exportData }, { onConflict: ['user_id', 'name'] });
+
 
         if (error) {
             alert('❌ Failed to save config');
@@ -1501,11 +1507,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const { data, error } = await supabase
-            .from('user_configs')
-            .select('data')
-            .eq('user_id', user.id)
-            .eq('name', selectedName)
-            .single();
+        .from('user_jsons')
+        .select('data')
+        .eq('user_id', user.id)
+        .eq('name', selectedName)
+        .single();
+
 
         if (error || !data?.data) {
             alert('❌ Failed to load config');
@@ -1535,10 +1542,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const { error } = await supabase
-            .from('user_configs')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('name', selectedName);
+        .from('user_jsons')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('name', selectedName);
+
 
         if (error) {
             alert('❌ Failed to delete config');
