@@ -72,15 +72,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let attachments = [];
 
     // Moved to outer scope
-    function updateMessageLimitPlaceholder() {
-        const value = elements.messageLimit.value;
-        if (value === '0' || value === '') {
-            elements.messageLimit.value = ''; // Clear the input to show the placeholder
-            elements.messageLimit.placeholder = '∞';
-        } else {
-            elements.messageLimit.placeholder = 'Unlimited';
-        }
+function updateMessageLimitPlaceholder() {
+    console.log('updateMessageLimitPlaceholder defined');
+    const value = elements.messageLimit.value;
+    if (value === '0' || value === '') {
+        elements.messageLimit.value = ''; // Clear the input to show the placeholder
+        elements.messageLimit.placeholder = '∞';
+    } else {
+        elements.messageLimit.placeholder = 'Unlimited';
     }
+}
 
     // Initialize app
     function initApp() {
@@ -1175,7 +1176,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetStatistics() {
+        console.log('resetStatistics called');
         if (confirm('Are you sure you want to reset ALL settings and data? This cannot be undone!')) {
+            console.log('Calling updateMessageLimitPlaceholder');
             stopSending();
             
             // Reset input fields
