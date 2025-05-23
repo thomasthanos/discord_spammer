@@ -1872,38 +1872,31 @@ supabase.auth.onAuthStateChange((event, session) => {
 // === Core functions ===
 async function checkUserSession() {
   const { data: { user } } = await supabase.auth.getUser();
+    console.log('Current user:', user);  // <--- Also safe here!
+
   updateAuthUI(user);
 }
 
 function updateAuthUI(user) {
-  const userAuthMenu = document.getElementById('user-auth-menu');
+      console.log('Current user:', user);  // <--- Safe here!
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
   const userAvatar = document.getElementById('user-avatar');
   const userUsername = document.getElementById('user-username');
-  const loginBtn = document.querySelector('#user-auth-menu #login-btn');
-  const logoutBtn = document.querySelector('#user-auth-menu #logout-btn');
 
-  if (user && user.user_metadata) {
+  if (user) {
     // User is logged in
-    userAuthMenu.classList.add('user-logged-in');
-    
-    // Set avatar
-    let avatarUrl = user.user_metadata.avatar_url || 
-                   (user.user_metadata.avatar ? 
-                    `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png` : 
-                    'https://cdn.discordapp.com/embed/avatars/0.png');
-    userAvatar.src = avatarUrl;
-    
-    // Set username
-    userUsername.textContent = user.user_metadata.full_name || 
-                              user.user_metadata.username || 
-                              'Discord User';
-    userUsername.style.color = 'var(--primary-color)';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'block';
+    userAvatar.src = user.user_metadata?.avatar_url 
+      || `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png`;
+    userUsername.textContent = user.user_metadata?.full_name || 'Discord User';
   } else {
     // Guest user
-    userAuthMenu.classList.remove('user-logged-in');
+    loginBtn.style.display = 'block';
+    logoutBtn.style.display = 'none';
     userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
     userUsername.textContent = 'Guest User';
-    userUsername.style.color = 'var(--text-secondary)';
   }
 }
 
