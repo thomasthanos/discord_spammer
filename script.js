@@ -1453,20 +1453,23 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const { data: { user }, error } = await supabase.auth.getUser();
             if (error) {
-                if (error.name === 'AuthSessionMissingError') {
-                    if (userInfo) userInfo.textContent = 'Not logged in';
+                if (error.message === 'Auth session missing!') {
+                    // Μην κάνεις καν log, είναι normal αν δεν είναι logged in
+                    userInfo.textContent = 'Not logged in';
                 } else {
+                    // Log μόνο πραγματικά errors
                     console.error('Error checking user session:', error.message);
                     addLog('error', `Error checking user session: ${error.message}`);
                 }
                 return;
             }
-            if (userInfo) userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
+            userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
         } catch (e) {
             console.error('Unexpected error in checkUserSession:', e.message);
             addLog('error', `Unexpected error checking session: ${e.message}`);
         }
     }
+
 
 
     // === Export JSON to Supabase Cloud ===
