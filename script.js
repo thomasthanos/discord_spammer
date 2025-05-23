@@ -1599,6 +1599,7 @@ document.addEventListener('DOMContentLoaded', () => {
         checkUserSession();
     }
 
+
 // === Profile Management ===
 const MAX_PROFILES = 10;
 
@@ -1613,7 +1614,7 @@ elements.saveProfileBtn.addEventListener('click', async () => {
 
     // Check how many profiles the user already has
     const { count } = await supabase
-        .from('user_jsons')
+        .from('user_profiles')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id);
 
@@ -1643,12 +1644,12 @@ elements.saveProfileBtn.addEventListener('click', async () => {
     };
 
     const { error } = await supabase
-        .from('user_jsons')
+        .from('user_profiles')
         .insert({
             user_id: user.id,
             name: profileName,
-            data: profileData,
-            last_updated: new Date().toISOString()
+            data: profileData
+            // last_updated will be automatically set by the default value
         });
 
     if (error) {
@@ -1672,7 +1673,7 @@ elements.manageProfilesBtn.addEventListener('click', async () => {
     }
 
     const { data: profiles, error } = await supabase
-        .from('user_jsons')
+        .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .order('last_updated', { ascending: false });
