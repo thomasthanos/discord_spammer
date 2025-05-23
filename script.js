@@ -1749,31 +1749,31 @@ function renderProfilesList(profiles) {
     profiles.forEach(profile => {
         const profileItem = document.createElement('div');
         profileItem.className = 'profile-item';
-        
+
         const date = new Date(profile.last_updated || profile.created_at || new Date());
         const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-        
+
         profileItem.innerHTML = `
             <div class="profile-info">
                 <div class="profile-name">${profile.name || 'Unnamed Profile'}</div>
                 <div class="profile-date">${formattedDate}</div>
             </div>
             <div class="profile-actions">
-                <button class="btn-icon-small load-profile" data-profile-id="${profile.id}">
-                    <i class="fas fa-download" title="Load Profile"></i>
+                <button class="btn-icon-small load-profile" title="Load Profile">
+                    <i class="fas fa-download"></i>
                 </button>
-                <button class="btn-icon-small delete-profile" data-profile-id="${profile.id}">
-                    <i class="fas fa-trash" title="Delete Profile"></i>
+                <button class="btn-icon-small delete-profile" title="Delete Profile">
+                    <i class="fas fa-trash"></i>
                 </button>
             </div>
         `;
-        
-        profilesList.appendChild(profileItem);
-        
-        // Add event listeners
+
+        // Listeners
         profileItem.querySelector('.load-profile').addEventListener('click', () => loadProfile(profile));
         profileItem.querySelector('.delete-profile').addEventListener('click', () => deleteProfile(profile.id));
+        profilesList.appendChild(profileItem);
     });
+
 }
 
 async function loadProfile(profile) {
