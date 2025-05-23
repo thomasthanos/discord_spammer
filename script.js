@@ -1876,22 +1876,34 @@ async function checkUserSession() {
 }
 
 function updateAuthUI(user) {
+  const userAuthMenu = document.getElementById('user-auth-menu');
+  const userAvatar = document.getElementById('user-avatar');
+  const userUsername = document.getElementById('user-username');
+  const loginBtn = document.querySelector('#user-auth-menu #login-btn');
+  const logoutBtn = document.querySelector('#user-auth-menu #logout-btn');
+
   if (user && user.user_metadata) {
-    loginBtn.style.display = "none";
-    userAuthMenu.style.display = "inline-block";
-    // Αλλαγή Avatar
-    let avatarUrl = user.user_metadata.avatar_url;
-    if (!avatarUrl && user.user_metadata.avatar) {
-      // Fallback αν το avatar_url δεν υπάρχει
-      avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png`;
-    }
-    userAvatar.src = avatarUrl || "https://cdn.discordapp.com/embed/avatars/0.png";
-    userUsername.textContent = user.user_metadata.full_name || user.user_metadata.username || "Discord User";
+    // User is logged in
+    userAuthMenu.classList.add('user-logged-in');
+    
+    // Set avatar
+    let avatarUrl = user.user_metadata.avatar_url || 
+                   (user.user_metadata.avatar ? 
+                    `https://cdn.discordapp.com/avatars/${user.id}/${user.user_metadata.avatar}.png` : 
+                    'https://cdn.discordapp.com/embed/avatars/0.png');
+    userAvatar.src = avatarUrl;
+    
+    // Set username
+    userUsername.textContent = user.user_metadata.full_name || 
+                              user.user_metadata.username || 
+                              'Discord User';
+    userUsername.style.color = 'var(--primary-color)';
   } else {
-    loginBtn.style.display = "inline-block";
-    userAuthMenu.style.display = "none";
-    userAvatar.src = "";
-    userUsername.textContent = "";
+    // Guest user
+    userAuthMenu.classList.remove('user-logged-in');
+    userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+    userUsername.textContent = 'Guest User';
+    userUsername.style.color = 'var(--text-secondary)';
   }
 }
 
