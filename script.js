@@ -1442,30 +1442,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     logoutBtn.addEventListener('click', async () => {
         await supabase.auth.signOut();
-        userInfo.textContent = 'Not logged in';
+        if (userInfo) userInfo.textContent = 'Not logged in';
         addLog('success', 'Logged out successfully');
         playSound('notification');
     });
 
-    // === Check user session on load ===
+
     async function checkUserSession() {
         try {
             const { data: { user }, error } = await supabase.auth.getUser();
             if (error) {
                 if (error.name === 'AuthSessionMissingError') {
-                    userInfo.textContent = 'Not logged in';
+                    if (userInfo) userInfo.textContent = 'Not logged in';
                 } else {
                     console.error('Error checking user session:', error.message);
                     addLog('error', `Error checking user session: ${error.message}`);
                 }
                 return;
             }
-            userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
+            if (userInfo) userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
         } catch (e) {
             console.error('Unexpected error in checkUserSession:', e.message);
             addLog('error', `Unexpected error checking session: ${e.message}`);
         }
     }
+
 
     // === Export JSON to Supabase Cloud ===
     exportCloudBtn.addEventListener('click', async () => {
