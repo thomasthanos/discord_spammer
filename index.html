@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <link rel="icon" type="image/png" href="images/avatar.png">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="phone.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -65,15 +66,17 @@
             <button class="btn-icon" id="avatar-menu-btn" style="padding:0; border:none; background:none;">
               <img id="user-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="avatar" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--text-secondary);">
             </button>
-            <div class="dropdown-content" style="right:0; min-width:180px; padding:10px;">
-              <div id="user-username" style="padding:8px 12px; color:var(--text-secondary); font-size:14px; text-align:center;"> Guest User </div>
-              <div style="display:flex; flex-direction:column; gap:6px;">
-                <button id="login-btn" class="dropdown-btn">
-                  <i class="fab fa-discord"></i> Login with Discord </button>
-                <button id="logout-btn" class="dropdown-btn" style="display:none;">
-                  <i class="fas fa-sign-out-alt"></i> Logout </button>
-              </div>
+            <div class="dropdown-content">
+            <div id="user-username">Guest User</div>
+            <div class="dropdown-buttons">
+              <button id="login-btn" class="dropdown-btn">
+                <i class="fab fa-discord"></i> Login with Discord
+              </button>
+              <button id="logout-btn" class="dropdown-btn" style="display:none;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </button>
             </div>
+          </div>
           </div>
         </div>
       </header>

@@ -1,0 +1,750 @@
+/* Tablet Specific (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .app-container {
+    padding: 15px;
+    max-width: 1000px;
+    gap: 15px; /* Consistent gap */
+  }
+
+  .app-header {
+    flex-direction: row; /* Keep header layout consistent */
+    justify-content: space-between;
+    padding: 12px 15px;
+  }
+
+  .header-controls {
+    gap: 10px;
+  }
+
+  .theme-preview {
+    width: 32px;
+    height: 32px;
+  }
+
+  .app-content {
+    grid-template-columns: 1fr 1fr; /* More balanced columns */
+    gap: 15px;
+  }
+
+  .preview-column {
+    display: flex; /* Switch to flex for smoother transition */
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .card {
+    padding: 20px; /* Smooth padding transition */
+    width: 100%; /* Ensure cards scale properly */
+  }
+
+  .logs-card {
+    grid-column: span 2;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two columns side by side */
+    gap: 10px;
+  }
+
+  .form-row.embed-row {
+    gap: 10px;
+  }
+
+  .embed-content.expanded {
+    max-height: 400px;
+  }
+
+  .button-group {
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .dropdown {
+    position: relative; /* Ensure positioning context */
+  }
+
+  .dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 100%; /* Position below the parent */
+    right: 0; /* Align to the right of the parent */
+    min-width: 200px;
+    max-width: 90vw; /* Prevent overflow on smaller screens */
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+  }
+
+  #user-auth-menu .dropdown-content {
+    right: 0; /* Align specifically for user-auth-menu */
+    min-width: 180px; /* Match style.css */
+  }
+
+  .dropdown:hover .dropdown-content,
+  .dropdown:focus-within .dropdown-content {
+    display: flex; /* Show on hover or focus (tap/click) */
+  }
+}
+
+/* Mobile Specific (up to 768px) */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 10px;
+    max-width: 100%;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .header-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .theme-preview {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .btn-icon-small {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .logo {
+    margin-bottom: 8px;
+  }
+
+  .app-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .preview-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: none; /* Remove max-width for better scaling */
+    padding: 15px;
+    margin: 0;
+  }
+
+  .logs-card {
+    grid-column: 1;
+  }
+
+  .button-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+
+  .interval-limit-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two columns side by side */
+    gap: 8px;
+  }
+
+  .dropdown {
+    position: relative; /* Ensure positioning context */
+  }
+
+  .dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 100%; /* Position below the parent */
+    right: 0; /* Align to the right of the parent */
+    left: auto;
+    min-width: 160px;
+    max-width: 90vw; /* Prevent overflow on smaller screens */
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+  }
+
+  #user-auth-menu .dropdown-content {
+    right: 0; /* Align specifically for user-auth-menu */
+    min-width: 180px; /* Match style.css */
+  }
+
+  .dropdown:focus-within .dropdown-content {
+    display: flex; /* Show on focus (tap/click) */
+  }
+
+  .form-row.embed-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .form-row.embed-row .form-group {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .form-row.embed-row input[type="color"]#embed-color {
+    width: 44px;
+    height: 44px;
+  }
+
+  .embed-content.expanded {
+    max-height: 350px;
+    margin-bottom: 10px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .form-group label {
+    font-size: 15px;
+  }
+
+  .form-group input:not([type="color"]),
+  .form-group textarea,
+  .form-group select {
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  #log-container {
+    max-height: 250px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .form-row .half-width {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .embed-row {
+    flex-direction: column;
+  }
+
+  .attachments-preview {
+    flex-direction: column;
+  }
+
+  .attachment-preview-item {
+    max-width: 100%;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-height: 85vh;
+  }
+
+  .history-item {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .profile-item {
+    padding: 10px 12px;
+  }
+
+  .profile-name {
+    max-width: 60vw;
+  }
+
+  .form-group.half-width.file-size-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .file-size-label {
+    min-width: 0;
+    padding-right: 0;
+    line-height: 1.2;
+  }
+}
+
+/* Very Small Screens (up to 480px) */
+@media (max-width: 480px) {
+  .app-header {
+    padding: 8px;
+  }
+
+  .logo h1 {
+    font-size: 1.4rem;
+  }
+
+  .theme-preview {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .btn-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .form-group label {
+    font-size: 14px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two columns side by side */
+    gap: 8px;
+  }
+
+  .log-entry {
+    font-size: 13px;
+    padding: 6px 0;
+  }
+
+  .log-time {
+    font-size: 10px;
+  }
+
+  .dropdown {
+    position: relative; /* Ensure positioning context */
+  }
+
+  .dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 100%; /* Position below the parent */
+    right: 0; /* Align to the right of the parent */
+    left: auto;
+    min-width: 150px;
+    max-width: 90vw; /* Prevent overflow on smaller screens */
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+  }
+
+  #user-auth-menu .dropdown-content {
+    right: 0; /* Align specifically for user-auth-menu */
+    min-width: 180px; /* Match style.css */
+  }
+
+  .dropdown:focus-within .dropdown-content {
+    display: flex; /* Show on focus (tap/click) */
+  }
+
+  .custom-file-upload {
+    padding: 12px 8px;
+  }
+
+  .custom-file-upload i {
+    font-size: 18px;
+  }
+
+  .custom-file-upload .file-info {
+    font-size: 12px;
+  }
+}
+
+/* Extra Small Screens (up to 380px) */
+@media (max-width: 380px) {
+  .app-container {
+    padding: 8px; /* Further reduce padding */
+    max-width: 100%;
+    gap: 10px; /* Reduce gap between elements */
+  }
+
+  .app-header {
+    padding: 6px; /* Reduce padding even more */
+    gap: 8px;
+  }
+
+  .logo h1 {
+    font-size: 1.2rem; /* Further reduce logo size */
+  }
+
+  .theme-preview {
+    width: 32px; /* Smaller theme preview */
+    height: 32px;
+    font-size: 10px;
+  }
+
+  .btn-icon {
+    width: 32px; /* Smaller icon buttons */
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .btn-icon-small {
+    width: 28px; /* Even smaller for small icons */
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .header-controls {
+    gap: 6px; /* Reduce gap between controls */
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr; /* Switch to single column to avoid cramping */
+    gap: 6px;
+  }
+
+  .card {
+    padding: 12px; /* Reduce padding in cards */
+    margin-bottom: 10px;
+  }
+
+  .form-group {
+    margin-bottom: 10px; /* Reduce spacing between form groups */
+  }
+
+  .form-group label {
+    font-size: 13px; /* Slightly smaller labels */
+  }
+
+  .form-group input:not([type="color"]),
+  .form-group textarea,
+  .form-group select {
+    font-size: 14px; /* Slightly smaller input text */
+    padding: 10px; /* Reduce padding */
+  }
+
+  .form-row {
+    gap: 8px; /* Reduce gap in form rows */
+  }
+
+  .form-row.embed-row input[type="color"]#embed-color {
+    width: 40px; /* Smaller color picker */
+    height: 40px;
+  }
+
+  .embed-content.expanded {
+    max-height: 300px; /* Reduce max height for embeds */
+  }
+
+  #log-container {
+    max-height: 200px; /* Reduce log container height */
+  }
+
+  .log-entry {
+    font-size: 12px; /* Smaller log text */
+    padding: 5px 0;
+  }
+
+  .log-time {
+    font-size: 9px; /* Smaller log timestamp */
+  }
+
+  .dropdown {
+    position: relative;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: auto;
+    min-width: 120px; /* Reduce min-width to fit smaller screens */
+    max-width: 95vw; /* Tighter constraint to prevent overflow */
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 8px; /* Reduce padding */
+    flex-direction: column;
+    gap: 6px; /* Reduce gap between items */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+  }
+
+  #user-auth-menu .dropdown-content {
+    right: 0;
+    min-width: 140px; /* Slightly smaller for user-auth-menu */
+    max-width: 95vw;
+  }
+
+  .dropdown-content button {
+    font-size: 13px; /* Smaller text in dropdown buttons */
+    padding: 8px 12px; /* Reduce padding */
+  }
+
+  .dropdown:focus-within .dropdown-content {
+    display: flex;
+  }
+
+  .modal-content {
+    width: 98%; /* Slightly wider to use more space */
+    max-height: 80vh; /* Reduce max height */
+    padding: 10px; /* Reduce padding */
+  }
+
+  .modal-header {
+    padding: 10px 15px; /* Reduce padding */
+  }
+
+  .modal-body {
+    padding: 15px; /* Reduce padding */
+  }
+
+  .custom-file-upload {
+    padding: 10px 6px; /* Reduce padding */
+  }
+
+  .custom-file-upload i {
+    font-size: 16px; /* Smaller icon */
+  }
+
+  .custom-file-upload .file-info {
+    font-size: 11px; /* Smaller file info text */
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary {
+    padding: 10px 15px; /* Reduce button padding */
+    font-size: 14px; /* Smaller button text */
+  }
+
+  .button-group {
+    gap: 6px; /* Reduce gap between buttons */
+  }
+
+  .attachment-preview-item {
+    max-width: 90%; /* Reduce max-width to fit smaller screens */
+  }
+}
+
+/* Orientation Specific */
+@media (max-width: 768px) and (orientation: landscape) {
+  .app-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .logs-card {
+    grid-column: span 2;
+  }
+
+  .form-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .form-row .half-width {
+    min-width: calc(50% - 8px);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr); /* Two columns side by side */
+    gap: 8px;
+  }
+
+  .dropdown {
+    position: relative; /* Ensure positioning context */
+  }
+
+  .dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 100%; /* Position below the parent */
+    right: 0; /* Align to the right of the parent */
+    left: auto;
+    min-width: 160px;
+    max-width: 90vw; /* Prevent overflow on smaller screens */
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+  }
+
+  #user-auth-menu .dropdown-content {
+    right: 0; /* Align specifically for user-auth-menu */
+    min-width: 180px; /* Match style.css */
+  }
+
+  .dropdown:focus-within .dropdown-content {
+    display: flex; /* Show on focus (tap/click) */
+  }
+}
+
+/* Accessibility and Animation Optimizations (up to 1024px) */
+@media (max-width: 1024px) {
+  .app-container {
+    padding: 10px;
+    gap: 15px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .header-controls {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .theme-carousel {
+    order: 1;
+    margin-right: auto;
+  }
+
+  .dropdown {
+    order: 2;
+    position: relative; /* Ensure positioning context */
+  }
+
+  #user-auth-menu {
+    order: 3;
+  }
+
+  .logo {
+    margin-bottom: 5px;
+  }
+
+  .card {
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group input:not([type="color"]),
+  .form-group textarea,
+  .form-group select {
+    padding: 12px;
+    font-size: 15px;
+  }
+
+  .form-group input:not([type="color"]):focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary {
+    padding: 12px 15px;
+    font-size: 15px;
+  }
+
+  .discord-message {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .discord-avatar {
+    width: 36px;
+    height: 36px;
+    margin-right: 0;
+    margin-bottom: 5px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  input[type="url"],
+  textarea {
+    font-size: 16px;
+  }
+
+  .discord-username,
+  .discord-text {
+    word-break: break-word;
+  }
+
+  .dropdown-content {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 100%; /* Position below the parent */
+    right: 0; /* Align to the right of the parent */
+    min-width: 200px;
+    max-width: 90vw; /* Prevent overflow on smaller screens */
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+  }
+
+  #user-auth-menu .dropdown-content {
+    right: 0; /* Align specifically for user-auth-menu */
+    min-width: 180px; /* Match style.css */
+  }
+
+  .dropdown:hover .dropdown-content,
+  .dropdown:focus-within .dropdown-content {
+    display: flex; /* Show on hover or focus (tap/click) */
+  }
+
+  * {
+    transition-duration: 0.2s;
+    animation-duration: 0.3s;
+  }
+
+  [data-theme="blur"] body {
+    background-attachment: scroll;
+  }
+
+  [data-theme="blur"] .card {
+    backdrop-filter: blur(5px);
+  }
+}
