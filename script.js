@@ -1867,45 +1867,45 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 // 3. Update UI based on auth state
-    function updateAuthUI(user) {
-        if (!userAvatar || !userUsername || !loginBtn || !logoutBtn) return;
+function updateAuthUI(user) {
+    const userAvatar = document.getElementById('user-avatar');
+    const userUsername = document.getElementById('user-username');
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    
+    if (!userAvatar || !userUsername || !loginBtn || !logoutBtn) return;
 
-        if (user) {
-            // User is logged in
-            loginBtn.style.display = 'none';
-            logoutBtn.style.display = 'block';
-            
-            // Update avatar
-            const avatarUrl = user.user_metadata?.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
-            userAvatar.src = avatarUrl;
-            userAvatar.style.display = 'block';
-            
-            // Update username
-            const username = user.user_metadata?.name || user.email || user.id;
-            userUsername.textContent = username;
-            userUsername.style.display = 'block';
-            
-            // Update user info in header
-            if (userInfo) {
-                userInfo.textContent = `Logged in as ${username}`;
-            }
-        } else {
-            // User is not logged in
-            loginBtn.style.display = 'block';
-            logoutBtn.style.display = 'none';
-            
-            // Reset avatar and username
-            userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-            userAvatar.style.display = 'none';
-            userUsername.textContent = '';
-            userUsername.style.display = 'none';
-            
-            // Update user info in header
-            if (userInfo) {
-                userInfo.textContent = 'Not logged in';
-            }
-        }
+    if (user) {
+        // User is logged in
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'block';
+        
+        // Update avatar
+        const avatarUrl = user.user_metadata?.avatar_url || 
+                         'https://cdn.discordapp.com/embed/avatars/0.png';
+        userAvatar.src = avatarUrl;
+        userAvatar.style.display = 'block';
+        userAvatar.style.visibility = 'visible';
+        
+        // Update username
+        const username = user.user_metadata?.name || user.email || user.id;
+        userUsername.textContent = username;
+        userUsername.style.display = 'block';
+    } else {
+        // User is not logged in
+        loginBtn.style.display = 'block';
+        logoutBtn.style.display = 'none';
+        
+        // Set default avatar
+        userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+        userAvatar.style.display = 'block';
+        userAvatar.style.visibility = 'visible';
+        
+        // Set default username
+        userUsername.textContent = 'Guest User';
+        userUsername.style.display = 'block';
     }
+}
 
     // Replace the initAuth function with this:
     async function initAuth() {

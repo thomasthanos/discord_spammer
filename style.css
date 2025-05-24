@@ -1875,21 +1875,22 @@ input[type="color"]#embed-color:focus {
 }
 
 #user-auth-menu .dropdown-content {
-  display: none;
-  position: absolute;
-  right: 0;
-  background: var(--card-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  min-width: 180px;
   padding: 10px;
-  z-index: 1000;
-  animation: fadeIn 0.2s ease-out;
 }
 
 #user-auth-menu:hover .dropdown-content {
   display: block;
 }
-
+#user-username {
+  padding: 8px 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 #user-auth-menu .dropdown-btn {
   display: flex;
   align-items: center;
@@ -1915,8 +1916,13 @@ input[type="color"]#embed-color:focus {
 }
 
 #user-avatar {
-  transition: all 0.3s ease;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
   border: 2px solid var(--text-secondary);
+  transition: var(--transition);
+  display: block; /* Ensure it's always displayed */
 }
 
 #user-avatar:hover {
