@@ -1879,11 +1879,6 @@ input[type="color"]#embed-color:focus {
   color: #ff3333;
 }
 
-.advanced-collapsible {
-  max-height: 1000px;
-  overflow: hidden;
-  transition: max-height 0.3s;
-}
 .advanced-collapsible.collapsed-adv {
   display: none !important;
 }
