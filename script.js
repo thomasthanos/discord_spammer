@@ -1567,7 +1567,54 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         })();
     }
+// Function to toggle button content based on screen size
+// Remove this function from script.js
+const updateButtonIcons = () => {
+    const isMobileOrTablet = window.innerWidth <= 1024;
+    const clearLogsBtn = elements.clearLogs;
+    const screenshotBtn = elements.exportScreenshotMenu;
 
+    if (isMobileOrTablet) {
+        // Set buttons to icon-only mode
+        clearLogsBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        screenshotBtn.innerHTML = '<i class="fas fa-camera"></i>';
+        clearLogsBtn.style.padding = '0';
+        screenshotBtn.style.padding = '0';
+        clearLogsBtn.style.width = '40px';
+        screenshotBtn.style.width = '40px';
+        clearLogsBtn.style.height = '40px';
+        screenshotBtn.style.height = '40px';
+        clearLogsBtn.style.fontSize = '20px';
+        screenshotBtn.style.fontSize = '20px';
+        clearLogsBtn.style.display = 'flex';
+        screenshotBtn.style.display = 'flex';
+        clearLogsBtn.style.alignItems = 'center';
+        screenshotBtn.style.alignItems = 'center';
+        clearLogsBtn.style.justifyContent = 'center';
+        screenshotBtn.style.justifyContent = 'center';
+    } else {
+        // Restore default text mode
+        clearLogsBtn.innerHTML = '<i class="fas fa-trash"></i> Clear Logs';
+        screenshotBtn.innerHTML = '<i class="fas fa-camera"></i> Screenshot';
+        clearLogsBtn.style.padding = '10px 15px';
+        screenshotBtn.style.padding = '10px 15px';
+        clearLogsBtn.style.width = '';
+        screenshotBtn.style.width = '';
+        clearLogsBtn.style.height = '';
+        screenshotBtn.style.height = '';
+        clearLogsBtn.style.fontSize = '';
+        screenshotBtn.style.fontSize = '';
+        clearLogsBtn.style.display = '';
+        screenshotBtn.style.display = '';
+        clearLogsBtn.style.alignItems = '';
+        screenshotBtn.style.alignItems = '';
+        clearLogsBtn.style.justifyContent = '';
+        screenshotBtn.style.justifyContent = '';
+    }
+};
+
+// Add resize event listener to update button icons dynamically
+window.addEventListener('resize', debounce(updateButtonIcons, 200));
     // Initialize
     const initApp = () => {
         const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -1611,6 +1658,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupIntervalCollapse();
         updateMessageLimitPlaceholder();
         updateIntervalDisplay();
+            updateButtonIcons(); // Initialize button icons
     };
 
     const initAuth = async () => {
