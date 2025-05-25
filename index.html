@@ -46,15 +46,10 @@
             <div class="dropdown-content">
               <button id="export-json-menu">
                 <i class="fas fa-file-code"></i> Export JSON </button>
-              <button id="export-screenshot-menu">
-                <i class="fas fa-camera"></i> Screenshot </button>
+
               <button id="import-json-menu">
                 <i class="fas fa-file-import"></i> Import JSON </button>
               <button id="export-json-cloud">
-                <i class="fas fa-cloud-upload-alt"></i> Export JSON (Personal Cloud) </button>
-              <button id="import-json-cloud">
-                <i class="fas fa-cloud-download-alt"></i> Import JSON (Personal Cloud) </button>
-              <button id="save-profile-btn">
                 <i class="fas fa-save"></i> Save Profile </button>
               <button id="manage-profiles-btn">
                 <i class="fas fa-folder-open"></i> Manage Profiles </button>
@@ -364,20 +359,28 @@
             </div>
           </div>
         </div>
-        <div class="card logs-card" data-card="logs">
-          <div class="card-header">
-            <h2>
-              <i class="fas fa-list"></i> Activity Log
-            </h2>
-            <div class="card-actions">
-              <button id="clear-logs" class="btn-small">
-                <i class="fas fa-trash-alt"></i> Clear Logs </button>
-            </div>
-          </div>
-          <div class="card-body">
-            <div id="log-container"></div>
+
+    <div class="card logs-card" data-card="logs">
+      <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h2>
+            <i class="fas fa-list"></i> Activity Log
+          </h2>
+          <div class="button-group">
+            <button id="clear-logs" class="btn-small">
+              <i class="fas fa-trash-alt"></i> Clear Logs
+            </button>
+            <button id="export-screenshot-menu" class="btn-small">
+              <i class="fas fa-camera"></i> Screenshot
+            </button>
           </div>
         </div>
+      </div>
+      <div class="card-body">
+        <div id="log-container"></div>
+      </div>
+    </div>
+
       </main>
       <footer class="app-footer"> © 2023 Webhook Sender PRO | v3.0 Enhanced Edition </footer>
     </div>
