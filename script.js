@@ -159,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
         exportScreenshotMenu: getElement('export-screenshot-menu'),
         importJsonMenu: getElement('import-json-menu'),
         exportJsonCloud: getElement('export-json-cloud'),
-        importJsonCloud: getElement('import-json-cloud'),
         suggestMessage: getElement('suggest-message'),
         formatHelp: getElement('format-help'),
         suggestionsModal: getElement('suggestions-modal'),
@@ -174,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageAttachmentsPreview: getElement('message-attachments-preview'),
         embedImageUrl: getElement('embed-image-url'),
         embedThumbnailUrl: getElement('embed-thumbnail-url'),
-        saveProfileBtn: getElement('save-profile-btn'),
+
         manageProfilesBtn: getElement('manage-profiles-btn'),
         profilesModal: getElement('profiles-modal'),
         profilesList: getElement('profiles-list'),
