@@ -1889,3 +1889,52 @@ input[type="color"]#embed-color:focus {
   padding: 0;
   transition: max-height 0.3s, padding 0.3s;
 }
+/* Custom Modal Input */
+#custom-prompt-input {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--text-secondary);
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-color);
+  font-size: 16px;
+  transition: var(--transition);
+}
+
+#custom-prompt-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+}
+
+/* Modal Message Text */
+#custom-prompt-message,
+#custom-confirm-message,
+#custom-alert-message {
+  margin-bottom: 20px;
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Button Group in Modals */
+.modal .button-group {
+  justify-content: flex-end;
+}
+
+/* Ensure buttons are evenly spaced */
+.modal .button-group button {
+  min-width: 100px;
+}
+
+/* Theme-specific adjustments */
+[data-theme="terminal"] #custom-prompt-input {
+  font-family: "Courier New", monospace;
+}
+
+[data-theme="blur"] #custom-prompt-modal .modal-content,
+[data-theme="blur"] #custom-confirm-modal .modal-content,
+[data-theme="blur"] #custom-alert-modal .modal-content {
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+}

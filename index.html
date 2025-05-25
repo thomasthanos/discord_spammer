@@ -12,8 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-      const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co'; // το URL σου
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA'; // το anon key σου
+      const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co';
+      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     </script>
   </head>
@@ -54,33 +54,30 @@
                 <i class="fas fa-cloud-upload-alt"></i> Export JSON (Personal Cloud) </button>
               <button id="import-json-cloud">
                 <i class="fas fa-cloud-download-alt"></i> Import JSON (Personal Cloud) </button>
-              <!-- In the dropdown menu where other export/import buttons are -->
               <button id="save-profile-btn">
                 <i class="fas fa-save"></i> Save Profile </button>
               <button id="manage-profiles-btn">
                 <i class="fas fa-folder-open"></i> Manage Profiles </button>
             </div>
           </div>
-          <!-- Μέσα στο .header-controls -->
           <div id="user-auth-menu" class="dropdown">
             <button class="btn-icon" id="avatar-menu-btn" style="padding:0; border:none; background:none;">
               <img id="user-avatar" src="https://cdn.discordapp.com/embed/avatars/0.png" alt="avatar" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--text-secondary);">
             </button>
             <div class="dropdown-content">
-            <div id="user-username">Guest User</div>
-            <div class="dropdown-buttons">
-              <button id="login-btn" class="dropdown-btn">
-                <i class="fab fa-discord"></i> Login with Discord
-              </button>
-              <button id="logout-btn" class="dropdown-btn" style="display:none;">
-                <i class="fas fa-sign-out-alt"></i> Logout
-              </button>
+              <div id="user-username">Guest User</div>
+              <div class="dropdown-buttons">
+                <button id="login-btn" class="dropdown-btn">
+                  <i class="fab fa-discord"></i> Login with Discord
+                </button>
+                <button id="logout-btn" class="dropdown-btn" style="display:none;">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+              </div>
             </div>
-          </div>
           </div>
         </div>
       </header>
-      <!-- Add this with the other modals -->
       <div id="profiles-modal" class="modal hidden">
         <div class="modal-content">
           <div class="modal-header">
@@ -95,7 +92,6 @@
           </div>
         </div>
       </div>
-      <div></div>
       <main class="app-content">
         <div class="settings-column card" data-card="settings">
           <div class="card-header">
@@ -118,121 +114,105 @@
               <div id="webhook-warning" class="hidden" style="color: var(--warning-color); margin-top: 8px; font-size: 14px;">
                 <i class="fas fa-exclamation-triangle"></i> Warning: This appears to be a public webhook URL
               </div>
-
-  <!-- Collapse Button -->
-  <button id="advanced-toggle-btn" class="embed-toggle-btn" style="width:100%;text-align:left; margin-bottom: -10px;">
-    <i class="fas fa-chevron-down"></i>
-    Message Options
-  </button>
-
-  <!-- Custom Username & Avatar -->
-  <div class="form-row form-row-custom-padding advanced-collapsible">
-    <div class="form-group half-width">
-      <label for="username">Custom Username</label>
-      <input type="text" id="username" placeholder="Webhook Sender">
-    </div>
-    <div class="form-group half-width">
-      <label for="avatar-url">Avatar URL</label>
-      <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
-    </div>
-  </div>
-
-  <!-- Message Content -->
-  <div class="form-group advanced-collapsible">
-    <label for="message-content">Message Content</label>
-    <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
-  </div>
-
-  <!-- Message Tools -->
-  <div class="message-tools advanced-collapsible">
-    <button id="suggest-message" class="btn-small">
-      <i class="fas fa-lightbulb"></i> Suggest 
-    </button>
-    <button id="format-help" class="btn-small">
-      <i class="fas fa-question-circle"></i> Format Help 
-    </button>
-  </div>
-
-  <!-- Message Attachments -->
-  <div class="form-row advanced-collapsible">
-    <div class="form-group half-width">
-      <label for="message-attachments">
-        <i class="fas fa-paperclip"></i> Message Attachments 
-      </label>
-      <label for="message-attachments" class="custom-file-upload">
-        <i class="fas fa-cloud-upload-alt"></i>
-        <span>Click to upload files</span>
-        <div class="file-info">Supports images and videos</div>
-      </label>
-      <input type="file" id="message-attachments" multiple accept="image/*, video/*">
-      <div id="message-attachments-preview" class="attachments-preview"></div>
-    </div>
-  </div>
-</div>
-
-            
-            <!-- Inside the "Settings" card, replace the existing embed section -->
-<div class="embed-section">
-  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-    <button id="embed-toggle-btn" class="embed-toggle-btn" style="flex:1; text-align:left;">
-      <i id="embed-toggle-icon" class="fas fa-chevron-right"></i> Embed Options
-    </button>
-    <div style="display: flex; gap: 4px;">
-      <button id="add-embed-btn" class="btn-small" title="Add Embed">
-        <i class="fas fa-plus"></i>
-      </button>
-      <button id="delete-embed-btn" class="btn-small" title="Delete Embed" style="display:none;">
-        <i class="fas fa-trash"></i>
-      </button>
-    </div>
-  </div>
-  <div id="embed-content" class="embed-content">
-    <div id="embed-list">
-      <!-- Initial embed fields -->
-      <div class="embed-item" data-embed-index="0">
-        <div class="form-row embed-row">
-          <div class="form-group">
-            <label for="embed-title-0">
-              <i class="fas fa-heading"></i> Embed Title </label>
-            <input type="text" id="embed-title-0" placeholder="Enter embed title">
-          </div>
-          <div class="form-group">
-            <label for="embed-color-0">
-              <i class="fas fa-palette"></i> Embed Color </label>
-            <input type="color" id="embed-color-0" value="#5865F2">
-          </div>
-          <button class="btn-icon delete-embed-btn hidden" data-embed-index="0" title="Delete Embed">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-        <div class="form-group">
-          <label for="embed-description-0">
-            <i class="fas fa-align-left"></i> Embed Description </label>
-          <textarea id="embed-description-0" rows="3" placeholder="Enter embed description"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="embed-footer-0">
-            <i class="fas fa-shoe-prints"></i> Embed Footer </label>
-          <input type="text" id="embed-footer-0" placeholder="Enter footer text">
-        </div>
-        <div class="form-row">
-          <div class="form-group half-width">
-            <label for="embed-image-url">
-              <i class="fas fa-image"></i> Embed Image URL </label>
-            <input type="url" id="embed-image-url" placeholder="https://example.com/image.png">
-          </div>
-          <div class="form-group half-width">
-            <label for="embed-thumbnail-url">
-              <i class="fas fa-image"></i> Embed Thumbnail URL </label>
-            <input type="url" id="embed-thumbnail-url" placeholder="https://example.com/thumbnail.png">
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-            
+              <button id="advanced-toggle-btn" class="embed-toggle-btn" style="width:100%;text-align:left; margin-bottom: -10px;">
+                <i class="fas fa-chevron-down"></i>
+                Message Options
+              </button>
+              <div class="form-row form-row-custom-padding advanced-collapsible">
+                <div class="form-group half-width">
+                  <label for="username">Custom Username</label>
+                  <input type="text" id="username" placeholder="Webhook Sender">
+                </div>
+                <div class="form-group half-width">
+                  <label for="avatar-url">Avatar URL</label>
+                  <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
+                </div>
+              </div>
+              <div class="form-group advanced-collapsible">
+                <label for="message-content">Message Content</label>
+                <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
+              </div>
+              <div class="message-tools advanced-collapsible">
+                <button id="suggest-message" class="btn-small">
+                  <i class="fas fa-lightbulb"></i> Suggest 
+                </button>
+                <button id="format-help" class="btn-small">
+                  <i class="fas fa-question-circle"></i> Format Help 
+                </button>
+              </div>
+              <div class="form-row advanced-collapsible">
+                <div class="form-group half-width">
+                  <label for="message-attachments">
+                    <i class="fas fa-paperclip"></i> Message Attachments 
+                  </label>
+                  <label for="message-attachments" class="custom-file-upload">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Click to upload files</span>
+                    <div class="file-info">Supports images and videos</div>
+                  </label>
+                  <input type="file" id="message-attachments" multiple accept="image/*, video/*">
+                  <div id="message-attachments-preview" class="attachments-preview"></div>
+                </div>
+              </div>
+            </div>
+            <div class="embed-section">
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+                <button id="embed-toggle-btn" class="embed-toggle-btn" style="flex:1; text-align:left;">
+                  <i id="embed-toggle-icon" class="fas fa-chevron-right"></i> Embed Options
+                </button>
+                <div style="display: flex; gap: 4px;">
+                  <button id="add-embed-btn" class="btn-small" title="Add Embed">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                  <button id="delete-embed-btn" class="btn-small" title="Delete Embed" style="display:none;">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+              <div id="embed-content" class="embed-content">
+                <div id="embed-list">
+                  <div class="embed-item" data-embed-index="0">
+                    <div class="form-row embed-row">
+                      <div class="form-group">
+                        <label for="embed-title-0">
+                          <i class="fas fa-heading"></i> Embed Title </label>
+                        <input type="text" id="embed-title-0" placeholder="Enter embed title">
+                      </div>
+                      <div class="form-group">
+                        <label for="embed-color-0">
+                          <i class="fas fa-palette"></i> Embed Color </label>
+                        <input type="color" id="embed-color-0" value="#5865F2">
+                      </div>
+                      <button class="btn-icon delete-embed-btn hidden" data-embed-index="0" title="Delete Embed">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                    <div class="form-group">
+                      <label for="embed-description-0">
+                        <i class="fas fa-align-left"></i> Embed Description </label>
+                      <textarea id="embed-description-0" rows="3" placeholder="Enter embed description"></textarea>
+                    </div>
+                    <div class="form-group">
+                      <label for="embed-footer-0">
+                        <i class="fas fa-shoe-prints"></i> Embed Footer </label>
+                      <input type="text" id="embed-footer-0" placeholder="Enter footer text">
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group half-width">
+                        <label for="embed-image-url">
+                          <i class="fas fa-image"></i> Embed Image URL </label>
+                        <input type="url" id="embed-image-url" placeholder="https://example.com/image.png">
+                      </div>
+                      <div class="form-group half-width">
+                        <label for="embed-thumbnail-url">
+                          <i class="fas fa-image"></i> Embed Thumbnail URL </label>
+                        <input type="url" id="embed-thumbnail-url" placeholder="https://example.com/thumbnail.png">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="preview-column">
@@ -306,98 +286,81 @@
                 <button id="test-btn" class="btn-tertiary">
                   <i class="fas fa-paper-plane"></i> Test Now </button>
               </div>
-
-
-      <div class="interval-collapse-section">
-        <!-- Collapse Toggle Button -->
-        <button id="interval-toggle-btn" class="embed-toggle-btn">
-          <i class="fas fa-chevron-right"></i>
-          Send Interval & Options
-        </button>
-
-        <!-- Collapse Content -->
-        <div id="interval-content" class="embed-content">
-          <!-- Interval & Limit Options -->
-          <div class="form-group">
-            <label>
-              <i class="fas fa-hourglass-half"></i> Send Interval & Limit
-            </label>
-            <div class="interval-limit-group">
-              <!-- Interval Every -->
-              <div class="input-group">
-                <label for="interval-value">
-                  <i class="fas fa-clock"></i> Every
-                </label>
-                <div class="input-with-buttons">
-                  <button class="interval-btn minus" data-action="decrement">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                  <div class="input-wrapper">
-                    <input type="number" id="interval-value" value="10" min="1" style="display: none;">
-                    <span id="interval-display" class="interval-display">10 s</span>
+              <div class="interval-collapse-section">
+                <button id="interval-toggle-btn" class="embed-toggle-btn">
+                  <i class="fas fa-chevron-right"></i>
+                  Send Interval & Options
+                </button>
+                <div id="interval-content" class="embed-content">
+                  <div class="form-group">
+                    <label>
+                      <i class="fas fa-hourglass-half"></i> Send Interval & Limit
+                    </label>
+                    <div class="interval-limit-group">
+                      <div class="input-group">
+                        <label for="interval-value">
+                          <i class="fas fa-clock"></i> Every
+                        </label>
+                        <div class="input-with-buttons">
+                          <button class="interval-btn minus" data-action="decrement">
+                            <i class="fas fa-minus"></i>
+                          </button>
+                          <div class="input-wrapper">
+                            <input type="number" id="interval-value" value="10" min="1" style="display: none;">
+                            <span id="interval-display" class="interval-display">10 s</span>
+                          </div>
+                          <button class="interval-btn plus" data-action="increment">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="input-group">
+                        <label for="interval-unit">
+                          <i class="fas fa-stopwatch"></i> Time Unit
+                        </label>
+                        <div class="custom-select">
+                          <select id="interval-unit">
+                            <option value="seconds">Seconds</option>
+                            <option value="minutes">Minutes</option>
+                            <option value="hours">Hours</option>
+                          </select>
+                          <div class="select-arrow">
+                            <i class="fas fa-chevron-down"></i>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="input-group">
+                        <label for="message-limit">
+                          <i class="fas fa-envelope"></i> Max Messages
+                        </label>
+                        <div class="input-with-buttons">
+                          <button class="interval-btn minus" data-action="decrement">
+                            <i class="fas fa-minus"></i>
+                          </button>
+                          <input type="number" id="message-limit" min="0" value="1" placeholder="∞">
+                          <button class="interval-btn plus" data-action="increment">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <button class="interval-btn plus" data-action="increment">
-                    <i class="fas fa-plus"></i>
-                  </button>
-                </div>
-              </div>
-              <!-- Time Unit -->
-              <div class="input-group">
-                <label for="interval-unit">
-                  <i class="fas fa-stopwatch"></i> Time Unit
-                </label>
-                <div class="custom-select">
-                  <select id="interval-unit">
-                    <option value="seconds">Seconds</option>
-                    <option value="minutes">Minutes</option>
-                    <option value="hours">Hours</option>
-                  </select>
-                  <div class="select-arrow">
-                    <i class="fas fa-chevron-down"></i>
+                  <div class="form-row checkboxes-row" style="margin-top:8px;">
+                    <label class="checkbox-container">
+                      <input type="checkbox" id="random-messages">
+                      <span class="checkmark"></span>
+                      Send random messages (one per line)
+                    </label>
                   </div>
                 </div>
-              </div>
-              <!-- Max Messages -->
-              <div class="input-group">
-                <label for="message-limit">
-                  <i class="fas fa-envelope"></i> Max Messages
-                </label>
-                <div class="input-with-buttons">
-                  <button class="interval-btn minus" data-action="decrement">
-                    <i class="fas fa-minus"></i>
-                  </button>
-                  <input type="number" id="message-limit" min="0" value="1" placeholder="∞">
-                  <button class="interval-btn plus" data-action="increment">
-                    <i class="fas fa-plus"></i>
-                  </button>
+                <div class="form-row checkboxes-row" style="margin-top:8px;">
+                  <label class="checkbox-container">
+                    <input type="checkbox" id="enable-sounds" checked>
+                    <span class="checkmark"></span>
+                    Enable sounds
+                  </label>
                 </div>
               </div>
-            </div>
-          </div>
-          <!-- Checkbox: Send random messages -->
-          <div class="form-row checkboxes-row" style="margin-top:8px;">
-            <label class="checkbox-container">
-              <input type="checkbox" id="random-messages">
-              <span class="checkmark"></span>
-              Send random messages (one per line)
-            </label>
-          </div>
-        </div>
-        <!-- Checkbox: Enable sounds (ΕΚΤΟΣ COLLAPSE, πάντα ορατό) -->
-        <div class="form-row checkboxes-row" style="margin-top:8px;">
-          <label class="checkbox-container">
-            <input type="checkbox" id="enable-sounds" checked>
-            <span class="checkmark"></span>
-            Enable sounds
-          </label>
-        </div>
-      </div>
-
-
-
-
-
-
             </div>
           </div>
         </div>
@@ -445,26 +408,74 @@
         </div>
       </div>
     </div>
-    
     <div id="format-help-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Formatting Help</h3>
-                <button class="close-modal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <table class="format-table">
-                    <tr><th>Format</th><th>Syntax</th><th>Preview</th></tr>
-                    <tr><td>Bold</td><td>**text**</td><td><strong>text</strong></td></tr>
-                    <tr><td>Italic</td><td>*text*</td><td><em>text</em></td></tr>
-                    <tr><td>Strikethrough</td><td>~~text~~</td><td><s>text</s></td></tr>
-                    <tr><td>Code</td><td>`text`</td><td><code>text</code></td></tr>
-                    <tr><td>Mention User</td><td><@123456789></td><td><span class="discord-mention">@user</span></td></tr>
-                </table>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Formatting Help</h3>
+          <button class="close-modal"><i class="fas fa-times"></i></button>
         </div>
+        <div class="modal-body">
+          <table class="format-table">
+            <tr><th>Format</th><th>Syntax</th><th>Preview</th></tr>
+            <tr><td>Bold</td><td>**text**</td><td><strong>text</strong></td></tr>
+            <tr><td>Italic</td><td>*text*</td><td><em>text</em></td></tr>
+            <tr><td>Strikethrough</td><td>~~text~~</td><td><s>text</s></td></tr>
+            <tr><td>Code</td><td>`text`</td><td><code>text</code></td></tr>
+            <tr><td>Mention User</td><td><@123456789></td><td><span class="discord-mention">@user</span></td></tr>
+          </table>
+        </div>
+      </div>
     </div>
-
+    <!-- Custom Prompt Modal -->
+    <div id="custom-prompt-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="custom-prompt-title">Prompt</h3>
+          <button class="close-modal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p id="custom-prompt-message"></p>
+          <div class="form-group">
+            <input type="text" id="custom-prompt-input" placeholder="Enter your input">
+          </div>
+          <div class="button-group">
+            <button class="btn-primary" id="custom-prompt-confirm">Confirm</button>
+            <button class="btn-secondary" id="custom-prompt-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Custom Confirm Modal -->
+    <div id="custom-confirm-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="custom-confirm-title">Confirm</h3>
+          <button class="close-modal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p id="custom-confirm-message"></p>
+          <div class="button-group">
+            <button class="btn-primary" id="custom-confirm-yes">Yes</button>
+            <button class="btn-secondary" id="custom-confirm-no">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Custom Alert Modal -->
+    <div id="custom-alert-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="custom-alert-title">Alert</h3>
+          <button class="close-modal"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+          <p id="custom-alert-message"></p>
+          <div class="button-group">
+            <button class="btn-primary" id="custom-alert-ok">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Toast Container -->
     <div id="toast-container"></div>
     <!-- Audio Elements -->

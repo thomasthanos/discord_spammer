@@ -1,4 +1,110 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Custom Modal Functions
+    const showCustomPrompt = (message, title = 'Prompt', defaultValue = '') => {
+        return new Promise((resolve) => {
+            const modal = getElement('custom-prompt-modal');
+            const input = getElement('custom-prompt-input');
+            const messageEl = getElement('custom-prompt-message');
+            const titleEl = getElement('custom-prompt-title');
+            const confirmBtn = getElement('custom-prompt-confirm');
+            const cancelBtn = getElement('custom-prompt-cancel');
+            const closeBtn = modal.querySelector('.close-modal');
+
+            messageEl.textContent = message;
+            titleEl.textContent = title;
+            input.value = defaultValue;
+            modal.classList.remove('hidden');
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                input.value = '';
+                resolve(null);
+            };
+
+            const handleConfirm = () => {
+                const value = input.value.trim();
+                modal.classList.add('hidden');
+                input.value = '';
+                resolve(value || null);
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') handleConfirm();
+                if (e.key === 'Escape') closeModal();
+            };
+
+            confirmBtn.addEventListener('click', handleConfirm, { once: true });
+            cancelBtn.addEventListener('click', closeModal, { once: true });
+            closeBtn.addEventListener('click', closeModal, { once: true });
+            input.addEventListener('keypress', handleKeyPress);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            }, { once: true });
+
+            input.focus();
+        });
+    };
+
+    const showCustomConfirm = (message, title = 'Confirm') => {
+        return new Promise((resolve) => {
+            const modal = getElement('custom-confirm-modal');
+            const messageEl = getElement('custom-confirm-message');
+            const titleEl = getElement('custom-confirm-title');
+            const yesBtn = getElement('custom-confirm-yes');
+            const noBtn = getElement('custom-confirm-no');
+            const closeBtn = modal.querySelector('.close-modal');
+
+            messageEl.textContent = message;
+            titleEl.textContent = title;
+            modal.classList.remove('hidden');
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                resolve(false);
+            };
+
+            const handleYes = () => {
+                modal.classList.add('hidden');
+                resolve(true);
+            };
+
+            yesBtn.addEventListener('click', handleYes, { once: true });
+            noBtn.addEventListener('click', closeModal, { once: true });
+            closeBtn.addEventListener('click', closeModal, { once: true });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            }, { once: true });
+        });
+    };
+
+    const showCustomAlert = (message, title = 'Alert') => {
+        return new Promise((resolve) => {
+            const modal = getElement('custom-alert-modal');
+            const messageEl = getElement('custom-alert-message');
+            const titleEl = getElement('custom-alert-title');
+            const okBtn = getElement('custom-alert-ok');
+            const closeBtn = modal.querySelector('.close-modal');
+
+            messageEl.textContent = message;
+            titleEl.textContent = title;
+            modal.classList.remove('hidden');
+
+            const closeModal = () => {
+                modal.classList.add('hidden');
+                resolve();
+            };
+
+            okBtn.addEventListener('click', closeModal, { once: true });
+            closeBtn.addEventListener('click', closeModal, { once: true });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            }, { once: true });
+        });
+    };
+
     // Utility Functions
     const getElement = (id) => {
         const el = document.getElementById(id);
@@ -252,146 +358,125 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-const setupEmbedEventListeners = () => {
-    // Προσθήκη Embed
-    elements.addEmbedBtn.addEventListener('click', () => {
-        if (embedCount >= 10) {
-            showToast('Maximum 10 embeds allowed', 'warning');
-            return;
-        }
-        embeds.push({ title: '', description: '', color: '#5865F2', footer: '', imageUrl: '', thumbnailUrl: '' });
-        embedCount++;
-        saveToLocalStorage('embeds', embeds);
-        renderEmbeds();
-        updatePreview();
-        showToast('New embed added', 'success');
-        // Άνοιξε το collapse αν προσθέσεις embed
-        elements.embedContent.classList.add('expanded');
-        elements.embedContent.style.maxHeight = '350px';
-        elements.embedToggleBtn.classList.remove('collapsed');
-        document.getElementById('embed-toggle-icon').className = 'fas fa-chevron-down';
-        updateDeleteEmbedBtn(); // Ενημέρωσε το κουμπί Delete!
-    });
-
-    // Κουμπί Collapse
-    elements.embedToggleBtn.addEventListener('click', () => {
-        const isExpanded = elements.embedContent.classList.toggle('expanded');
-        elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
-        if (isExpanded && embeds.length > 1) {
+    const setupEmbedEventListeners = () => {
+        elements.addEmbedBtn.addEventListener('click', () => {
+            if (embedCount >= 10) {
+                showToast('Maximum 10 embeds allowed', 'warning');
+                return;
+            }
+            embeds.push({ title: '', description: '', color: '#5865F2', footer: '', imageUrl: '', thumbnailUrl: '' });
+            embedCount++;
+            saveToLocalStorage('embeds', embeds);
+            renderEmbeds();
+            updatePreview();
+            showToast('New embed added', 'success');
+            elements.embedContent.classList.add('expanded');
             elements.embedContent.style.maxHeight = '350px';
-        } else if (isExpanded && embeds.length <= 1) {
-            elements.embedContent.style.maxHeight = 'none';
-        } else {
-            elements.embedContent.style.maxHeight = '0';
-        }
-        document.getElementById('embed-toggle-icon').className = isExpanded ? 'fas fa-chevron-down' : 'fas fa-chevron-right';
-    });
-};
+            elements.embedToggleBtn.classList.remove('collapsed');
+            document.getElementById('embed-toggle-icon').className = 'fas fa-chevron-down';
+            updateDeleteEmbedBtn();
+        });
 
-const deleteEmbedBtn = document.getElementById('delete-embed-btn');
+        elements.embedToggleBtn.addEventListener('click', () => {
+            const isExpanded = elements.embedContent.classList.toggle('expanded');
+            elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
+            if (isExpanded && embeds.length > 1) {
+                elements.embedContent.style.maxHeight = '350px';
+            } else if (isExpanded && embeds.length <= 1) {
+                elements.embedContent.style.maxHeight = 'none';
+            } else {
+                elements.embedContent.style.maxHeight = '0';
+            }
+            document.getElementById('embed-toggle-icon').className = isExpanded ? 'fas fa-chevron-down' : 'fas fa-chevron-right';
+        });
+    };
 
-// Εμφάνιση/Απόκρυψη κουμπιού πάνω δεξιά
-function updateDeleteEmbedBtn() {
-    deleteEmbedBtn.style.display = (embeds.length > 1) ? 'inline-flex' : 'none';
-}
+    const deleteEmbedBtn = document.getElementById('delete-embed-btn');
 
-// Event για Delete Embed (πάνω δεξιά)
-deleteEmbedBtn.addEventListener('click', () => {
-    if (embeds.length > 1) {
-        embeds.pop();
-        embedCount--;
-        saveToLocalStorage('embeds', embeds);
-        renderEmbeds();
-        updatePreview();
-        updateDeleteEmbedBtn();
-        showToast('Embed deleted', 'success');
+    function updateDeleteEmbedBtn() {
+        deleteEmbedBtn.style.display = (embeds.length > 1) ? 'inline-flex' : 'none';
     }
-});
 
-
-const renderEmbeds = () => {
-    elements.embedList.innerHTML = '';
-    embeds.forEach((embed, index) => {
-        embed.index = index;
-        const embedItem = document.createElement('div');
-        embedItem.className = 'embed-item';
-        embedItem.dataset.embedIndex = index;
-        embedItem.innerHTML = `
-            <div class="form-row embed-row">
-                <div class="form-group">
-                    <label for="embed-title-${index}"><i class="fas fa-heading"></i> Embed Title</label>
-                    <input type="text" id="embed-title-${index}" placeholder="Enter embed title" value="${embed.title || ''}">
-                </div>
-                <div class="form-group">
-                    <label for="embed-color-${index}"><i class="fas fa-palette"></i> Embed Color</label>
-                    <input type="color" id="embed-color-${index}" value="${embed.color || '#5865F2'}">
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="embed-description-${index}"><i class="fas fa-align-left"></i> Embed Description</label>
-                <textarea id="embed-description-${index}" rows="3" placeholder="Enter embed description">${embed.description || ''}</textarea>
-            </div>
-            <div class="form-group">
-                <label for="embed-footer-${index}"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
-                <input type="text" id="embed-footer-${index}" placeholder="Enter footer text" value="${embed.footer || ''}">
-            </div>
-            <div class="form-row">
-                <div class="form-group half-width">
-                    <label for="embed-image-url-${index}"><i class="fas fa-image"></i> Embed Image URL</label>
-                    <input type="url" id="embed-image-url-${index}" placeholder="https://example.com/image.png" value="${embed.imageUrl || ''}">
-                </div>
-                <div class="form-group half-width">
-                    <label for="embed-thumbnail-url-${index}"><i class="fas fa-image"></i> Embed Thumbnail URL</label>
-                    <input type="url" id="embed-thumbnail-url-${index}" placeholder="https://example.com/thumbnail.png" value="${embed.thumbnailUrl || ''}">
-                </div>
-            </div>`;
-        elements.embedList.appendChild(embedItem);
-
-        const inputs = {
-            title: embedItem.querySelector(`#embed-title-${index}`),
-            description: embedItem.querySelector(`#embed-description-${index}`),
-            color: embedItem.querySelector(`#embed-color-${index}`),
-            footer: embedItem.querySelector(`#embed-footer-${index}`),
-            imageUrl: embedItem.querySelector(`#embed-image-url-${index}`),
-            thumbnailUrl: embedItem.querySelector(`#embed-thumbnail-url-${index}`)
-        };
-
-        for (const [key, input] of Object.entries(inputs)) {
-            input.addEventListener('input', () => {
-                embeds[index][key] = input.value;
-                saveToLocalStorage('embeds', embeds);
-                updatePreview();
-            });
-        }
-
-        const deleteBtn = embedItem.querySelector('.delete-embed-btn');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => {
-                if (index > 0) {
-                    embeds.splice(index, 1);
-                    embedCount--;
-                    saveToLocalStorage('embeds', embeds);
-                    renderEmbeds();
-                    updatePreview();
-                    showToast('Embed deleted', 'success');
-                }
-            });
-        }
-    });
-
-    if (elements.embedContent.classList.contains('expanded')) {
+    deleteEmbedBtn.addEventListener('click', () => {
         if (embeds.length > 1) {
-            elements.embedContent.style.maxHeight = '350px';
-            elements.embedContent.style.overflowY = 'auto';
-        } else {
-            elements.embedContent.style.maxHeight = 'none';
-            elements.embedContent.style.overflowY = 'visible';
+            embeds.pop();
+            embedCount--;
+            saveToLocalStorage('embeds', embeds);
+            renderEmbeds();
+            updatePreview();
+            updateDeleteEmbedBtn();
+            showToast('Embed deleted', 'success');
         }
-    }
+    });
 
-    updateDeleteEmbedBtn(); // ΠΑΝΤΑ στο τέλος!
-};
+    const renderEmbeds = () => {
+        elements.embedList.innerHTML = '';
+        embeds.forEach((embed, index) => {
+            embed.index = index;
+            const embedItem = document.createElement('div');
+            embedItem.className = 'embed-item';
+            embedItem.dataset.embedIndex = index;
+            embedItem.innerHTML = `
+                <div class="form-row embed-row">
+                    <div class="form-group">
+                        <label for="embed-title-${index}"><i class="fas fa-heading"></i> Embed Title</label>
+                        <input type="text" id="embed-title-${index}" placeholder="Enter embed title" value="${embed.title || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label for="embed-color-${index}"><i class="fas fa-palette"></i> Embed Color</label>
+                        <input type="color" id="embed-color-${index}" value="${embed.color || '#5865F2'}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="embed-description-${index}"><i class="fas fa-align-left"></i> Embed Description</label>
+                    <textarea id="embed-description-${index}" rows="3" placeholder="Enter embed description">${embed.description || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="embed-footer-${index}"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
+                    <input type="text" id="embed-footer-${index}" placeholder="Enter footer text" value="${embed.footer || ''}">
+                </div>
+                <div class="form-row">
+                    <div class="form-group half-width">
+                        <label for="embed-image-url-${index}"><i class="fas fa-image"></i> Embed Image URL</label>
+                        <input type="url" id="embed-image-url-${index}" placeholder="https://example.com/image.png" value="${embed.imageUrl || ''}">
+                    </div>
+                    <div class="form-group half-width">
+                        <label for="embed-thumbnail-url-${index}"><i class="fas fa-image"></i> Embed Thumbnail URL</label>
+                        <input type="url" id="embed-thumbnail-url-${index}" placeholder="https://example.com/thumbnail.png" value="${embed.thumbnailUrl || ''}">
+                    </div>
+                </div>`;
+            elements.embedList.appendChild(embedItem);
 
+            const inputs = {
+                title: embedItem.querySelector(`#embed-title-${index}`),
+                description: embedItem.querySelector(`#embed-description-${index}`),
+                color: embedItem.querySelector(`#embed-color-${index}`),
+                footer: embedItem.querySelector(`#embed-footer-${index}`),
+                imageUrl: embedItem.querySelector(`#embed-image-url-${index}`),
+                thumbnailUrl: embedItem.querySelector(`#embed-thumbnail-url-${index}`)
+            };
+
+            for (const [key, input] of Object.entries(inputs)) {
+                input.addEventListener('input', () => {
+                    embeds[index][key] = input.value;
+                    saveToLocalStorage('embeds', embeds);
+                    updatePreview();
+                });
+            }
+        });
+
+        if (elements.embedContent.classList.contains('expanded')) {
+            if (embeds.length > 1) {
+                elements.embedContent.style.maxHeight = '350px';
+                elements.embedContent.style.overflowY = 'auto';
+            } else {
+                elements.embedContent.style.maxHeight = 'none';
+                elements.embedContent.style.overflowY = 'visible';
+            }
+        }
+
+        updateDeleteEmbedBtn();
+    };
 
     const handleFileUploads = () => {
         elements.messageAttachments.addEventListener('change', (e) => {
@@ -930,8 +1015,9 @@ const renderEmbeds = () => {
         }
     };
 
-    const resetStatistics = () => {
-        if (!confirm('Are you sure you want to reset ALL settings and data? This cannot be undone!')) return;
+    const resetStatistics = async () => {
+        const confirmed = await showCustomConfirm('Are you sure you want to reset ALL settings and data? This cannot be undone!');
+        if (!confirmed) return;
         stopSending();
 
         elements.webhookUrl.value = '';
@@ -971,8 +1057,9 @@ const renderEmbeds = () => {
         updateMessageLimitPlaceholder();
     };
 
-    const clearLogs = () => {
-        if (!confirm('Are you sure you want to clear all logs?')) return;
+    const clearLogs = async () => {
+        const confirmed = await showCustomConfirm('Are you sure you want to clear all logs?');
+        if (!confirmed) return;
         elements.logContainer.innerHTML = '';
         saveToLocalStorage('logs', []);
         addLog('warning', 'Cleared all logs');
@@ -1038,7 +1125,7 @@ const renderEmbeds = () => {
                     importJsonData(JSON.parse(event.target.result));
                 } catch (err) {
                     addLog('error', `Failed to parse JSON: ${err.message}`);
-                    playSound('error');
+                    showToast('Failed to parse JSON', 'error');
                 }
             };
             reader.readAsText(file);
@@ -1181,7 +1268,7 @@ const renderEmbeds = () => {
         if (userError || !user) {
             addLog('error', 'Export failed: User not logged in');
             showToast('You must be logged in to export to cloud', 'error');
-            alert('❌ You must be logged in!');
+            await showCustomAlert('You must be logged in!', 'Error');
             return;
         }
 
@@ -1221,12 +1308,12 @@ const renderEmbeds = () => {
         if (error) {
             addLog('error', `Upload failed: ${error.message}`);
             showToast('Cloud export failed', 'error');
-            alert('❌ Upload failed.');
+            await showCustomAlert('Upload failed.', 'Error');
         } else {
             saveToLocalStorage('logs', exportData.logs);
             addLog('success', 'Exported application data to cloud');
             showToast('Exported to cloud successfully', 'success');
-            alert('✅ Logs saved to cloud!');
+            await showCustomAlert('Logs saved to cloud!', 'Success');
             playSound('success');
         }
     };
@@ -1236,7 +1323,7 @@ const renderEmbeds = () => {
         if (userError || !user) {
             addLog('error', 'Import failed: User not logged in');
             showToast('You must be logged in to import from cloud', 'error');
-            alert('❌ You must be logged in!');
+            await showCustomAlert('You must be logged in!', 'Error');
             return;
         }
 
@@ -1249,7 +1336,7 @@ const renderEmbeds = () => {
         if (error || !data?.data) {
             addLog('error', `Failed to load data: ${error?.message || 'No data found'}`);
             showToast('No cloud data found', 'error');
-            alert('❌ Failed to load data.');
+            await showCustomAlert('Failed to load data.', 'Error');
             return;
         }
 
@@ -1257,12 +1344,12 @@ const renderEmbeds = () => {
             importJsonData(data.data);
             addLog('success', 'Imported application data from cloud');
             showToast('Imported from cloud successfully', 'success');
-            alert('✅ Logs imported from cloud!');
+            await showCustomAlert('Logs imported from cloud!', 'Success');
             playSound('success');
         } catch (e) {
             addLog('error', `Invalid cloud data: ${e.message}`);
             showToast('Invalid cloud data', 'error');
-            alert('❌ Invalid cloud data.');
+            await showCustomAlert('Invalid cloud data.', 'Error');
         }
     };
 
@@ -1271,7 +1358,7 @@ const renderEmbeds = () => {
         if (userError || !user) {
             addLog('error', 'Profile save failed: User not logged in');
             showToast('You must be logged in to save profiles', 'error');
-            alert('❌ You must be logged in to save profiles!');
+            await showCustomAlert('You must be logged in to save profiles!', 'Error');
             return;
         }
 
@@ -1283,11 +1370,11 @@ const renderEmbeds = () => {
         if (count >= 10) {
             addLog('error', `Profile save failed: Maximum of 10 profiles reached`);
             showToast('Maximum of 10 profiles reached', 'error');
-            alert('❌ You’ve reached the maximum of 10 saved profiles. Please delete one first.');
+            await showCustomAlert('You’ve reached the maximum of 10 saved profiles. Please delete one first.', 'Error');
             return;
         }
 
-        const profileName = prompt('Enter a name for this profile:');
+        const profileName = await showCustomPrompt('Enter a name for this profile:');
         if (!profileName) return;
 
         const profileData = {
@@ -1309,11 +1396,11 @@ const renderEmbeds = () => {
         if (error) {
             addLog('error', `Profile save failed: ${error.message}`);
             showToast('Failed to save profile', 'error');
-            alert('❌ Failed to save profile.');
+            await showCustomAlert('Failed to save profile.', 'Error');
         } else {
             addLog('success', `Profile "${profileName}" saved to cloud`);
             showToast(`Profile "${profileName}" saved`, 'success');
-            alert('✅ Profile saved successfully!');
+            await showCustomAlert('Profile saved successfully!', 'Success');
             playSound('success');
         }
     };
@@ -1323,7 +1410,7 @@ const renderEmbeds = () => {
         if (userError || !user) {
             addLog('error', 'Profile management failed: User not logged in');
             showToast('You must be logged in to manage profiles', 'error');
-            alert('❌ You must be logged in to manage profiles!');
+            await showCustomAlert('You must be logged in to manage profiles!', 'Error');
             return;
         }
 
@@ -1340,7 +1427,7 @@ const renderEmbeds = () => {
         } catch (error) {
             addLog('error', `Profile load failed: ${error.message}`);
             showToast('Failed to load profiles', 'error');
-            alert('❌ Failed to load profiles.');
+            await showCustomAlert('Failed to load profiles.', 'Error');
             renderProfilesList([]);
             elements.profilesModal.classList.remove('hidden');
         }
@@ -1371,7 +1458,8 @@ const renderEmbeds = () => {
     };
 
     const loadProfile = async (profile) => {
-        if (!confirm(`Load profile "${profile.name}"? This will overwrite your current settings.`)) return;
+        const confirmed = await showCustomConfirm(`Load profile "${profile.name}"? This will overwrite your current settings.`);
+        if (!confirmed) return;
         try {
             stopSending();
             const profileData = profile.data;
@@ -1415,7 +1503,8 @@ const renderEmbeds = () => {
     };
 
     const deleteProfile = async (profileId) => {
-        if (!confirm('Are you sure you want to delete this profile? This cannot be undone.')) return;
+        const confirmed = await showCustomConfirm('Are you sure you want to delete this profile? This cannot be undone.');
+        if (!confirmed) return;
         const { error } = await supabase
             .from('user_profiles')
             .delete()
@@ -1424,7 +1513,7 @@ const renderEmbeds = () => {
         if (error) {
             addLog('error', `Profile delete failed: ${error.message}`);
             showToast('Failed to delete profile', 'error');
-            alert('❌ Failed to delete profile.');
+            await showCustomAlert('Failed to delete profile.', 'Error');
             return;
         }
 
@@ -1496,17 +1585,16 @@ const renderEmbeds = () => {
         }
 
         const savedEmbeds = localStorage.getItem('embeds');
-if (savedEmbeds) {
-    embeds = JSON.parse(savedEmbeds);
-    embedCount = embeds.length;
-    renderEmbeds();
-    updateDeleteEmbedBtn();
-} else {
-    embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
-    renderEmbeds();
-    updateDeleteEmbedBtn();
-}
-
+        if (savedEmbeds) {
+            embeds = JSON.parse(savedEmbeds);
+            embedCount = embeds.length;
+            renderEmbeds();
+            updateDeleteEmbedBtn();
+        } else {
+            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+            renderEmbeds();
+            updateDeleteEmbedBtn();
+        }
 
         const savedStats = localStorage.getItem('stats');
         if (savedStats) {
