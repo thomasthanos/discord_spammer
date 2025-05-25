@@ -853,6 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playSound('notification');
     };
 
+
     const sendTestMessage = async () => {
         const webhookUrl = elements.webhookUrl.value.trim();
         const message = elements.messageContent.value.trim();
@@ -1181,7 +1182,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveToLocalStorage('logs', jsonData.logs || []);
             loadLayout();
             updateMessageLimitPlaceholder();
-            addLog('success', 'Imported settings and data from JSON');
+            addLog('success', 'Imported settings and data from Cloud');
             showToast('Imported settings successfully', 'success');
             playSound('success');
         } catch (error) {
@@ -1261,95 +1262,174 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const exportCloud = async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-            addLog('error', 'Export failed: User not logged in');
-            showToast('You must be logged in to export to cloud', 'error');
-            await showCustomAlert('You must be logged in!', 'Error');
-            return;
-        }
+const exportCloud = async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+        addLog('error', 'Export failed: User not logged in');
+        showToast('You must be logged in to export to cloud', 'error');
+        await showCustomAlert('You must be logged in!', 'Error');
+        return;
+    }
 
-        const exportData = {
-            metadata: { app: "Webhook Sender PRO", version: "3.0", exportDate: new Date().toISOString() },
-            settings: {
-                webhookUrl: elements.webhookUrl.value,
-                messageContent: elements.messageContent.value,
-                username: elements.username.value,
-                avatarUrl: elements.avatarUrl.value,
-                randomMessages: elements.randomMessages.checked,
-                interval: { value: elements.intervalValue.value, unit: elements.intervalUnit.value },
-                messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
-                enableSounds: elements.enableSounds.checked,
-                embeds
+    const profileName = await showCustomPrompt('Enter a name for this profile:', 'Save to Cloud', '');
+    if (!profileName) {
+        showToast('Export cancelled: No name given', 'warning');
+        return;
+    }
+
+    // 1. Πάρε ΟΛΑ τα embeds από το localStorage αν τα αποθηκεύεις εκεί.
+    // ή πάρε τα από το UI άμεσα αν όχι.
+    let savedEmbeds = [];
+    try {
+        savedEmbeds = JSON.parse(localStorage.getItem('embeds') || '[]');
+    } catch (e) {
+        savedEmbeds = embeds; // fallback στην τρέχουσα μεταβλητή
+    }
+
+    // 2. Αν έχεις messages και webhooks που θέλεις να σώζεις:
+    let savedMessages = [];
+    let savedWebhooks = [];
+    try {
+        savedMessages = JSON.parse(localStorage.getItem('messages') || '[]');
+        savedWebhooks = JSON.parse(localStorage.getItem('webhooks') || '[]');
+    } catch (e) {
+        // Αν δεν τα έχεις, άστα ως []
+    }
+
+    // 3. Δημιούργησε το export object με ΟΛΑ τα data
+    const exportData = {
+        metadata: { 
+            app: "Webhook Sender PRO", 
+            version: "3.0", 
+            exportDate: new Date().toISOString() 
+        },
+        settings: {
+            webhookUrl: elements.webhookUrl.value,
+            messageContent: elements.messageContent.value,
+            username: elements.username.value,
+            avatarUrl: elements.avatarUrl.value,
+            randomMessages: elements.randomMessages.checked,
+            interval: { 
+                value: elements.intervalValue.value, 
+                unit: elements.intervalUnit.value 
             },
-            statistics: {
-                totalMessages: stats.total,
-                successful: stats.success,
-                failed: stats.failed,
-                averageResponseTime: stats.responseTimes.length
-                    ? Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)
-                    : 0
-            },
-            logs: Array.from(elements.logContainer.querySelectorAll('.log-entry')).map(log => ({
-                time: log.querySelector('.log-time').textContent,
-                message: log.querySelector('.log-message').textContent,
-                type: log.classList.contains('log-success') ? 'success' :
-                      log.classList.contains('log-error') ? 'error' : 'warning'
-            }))
-        };
-
-        const { error } = await supabase
-            .from('user_jsons')
-            .upsert({ user_id: user.id, data: exportData }, { onConflict: 'user_id' });
-
-        if (error) {
-            addLog('error', `Upload failed: ${error.message}`);
-            showToast('Cloud export failed', 'error');
-            await showCustomAlert('Upload failed.', 'Error');
-        } else {
-            saveToLocalStorage('logs', exportData.logs);
-            addLog('success', 'Exported application data to cloud');
-            showToast('Exported to cloud successfully', 'success');
-            await showCustomAlert('Logs saved to cloud!', 'Success');
-            playSound('success');
-        }
+            messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
+            enableSounds: elements.enableSounds.checked,
+            embeds: savedEmbeds,
+            messages: savedMessages,     // <-- πρόσθεσε εδώ
+            webhooks: savedWebhooks      // <-- πρόσθεσε εδώ
+        },
+        statistics: {
+            totalMessages: stats.total,
+            successful: stats.success,
+            failed: stats.failed,
+            averageResponseTime: stats.responseTimes.length
+                ? Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)
+                : 0
+        },
+        logs: Array.from(elements.logContainer.querySelectorAll('.log-entry')).map(log => ({
+            time: log.querySelector('.log-time').textContent,
+            message: log.querySelector('.log-message').textContent,
+            type: log.classList.contains('log-success') ? 'success' :
+                  log.classList.contains('log-error') ? 'error' : 'warning'
+        }))
     };
 
-    const importCloud = async () => {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-            addLog('error', 'Import failed: User not logged in');
-            showToast('You must be logged in to import from cloud', 'error');
-            await showCustomAlert('You must be logged in!', 'Error');
-            return;
-        }
+    // 4. Σώσε στο Supabase
+    const { error } = await supabase
+        .from('user_profiles')
+        .insert([{
+            user_id: user.id,
+            name: profileName,
+            data: exportData,
+            last_updated: new Date().toISOString()
+        }]);
 
-        const { data, error } = await supabase
-            .from('user_jsons')
-            .select('data')
-            .eq('user_id', user.id)
-            .single();
+    if (error) {
+        addLog('error', `Upload failed: ${error.message}`);
+        showToast('Cloud export failed', 'error');
+        await showCustomAlert('Upload failed.', 'Error');
+    } else {
+        saveToLocalStorage('logs', exportData.logs);
+        addLog('success', 'Exported application data to cloud');
+        showToast('Exported to cloud successfully', 'success');
+        await showCustomAlert('Profile saved to cloud!', 'Success');
+        playSound('success');
+    }
+};
 
-        if (error || !data?.data) {
-            addLog('error', `Failed to load data: ${error?.message || 'No data found'}`);
-            showToast('No cloud data found', 'error');
-            await showCustomAlert('Failed to load data.', 'Error');
-            return;
-        }
 
-        try {
-            importJsonData(data.data);
-            addLog('success', 'Imported application data from cloud');
-            showToast('Imported from cloud successfully', 'success');
-            await showCustomAlert('Logs imported from cloud!', 'Success');
-            playSound('success');
-        } catch (e) {
-            addLog('error', `Invalid cloud data: ${e.message}`);
-            showToast('Invalid cloud data', 'error');
-            await showCustomAlert('Invalid cloud data.', 'Error');
-        }
-    };
+
+const importCloud = async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+        addLog('error', 'Import failed: User not logged in');
+        showToast('You must be logged in to import from cloud', 'error');
+        await showCustomAlert('You must be logged in!', 'Error');
+        return;
+    }
+
+    // Φέρε όλα τα προφίλ του χρήστη
+    const { data: profiles, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('last_updated', { ascending: false });
+
+    if (error || !profiles || !profiles.length) {
+        addLog('error', `Failed to load profiles: ${error?.message || 'No profiles found'}`);
+        showToast('No cloud profiles found', 'error');
+        await showCustomAlert('No cloud profiles found.', 'Error');
+        return;
+    }
+
+    // Δείξε modal με όλα τα profiles για επιλογή (χρησιμοποιείς ήδη το renderProfilesList)
+    renderProfilesListForImport(profiles);
+    elements.profilesModal.classList.remove('hidden');
+};
+
+// Βοηθητική συνάρτηση που εμφανίζει τη λίστα με κουμπί "Load" για κάθε προφίλ
+function renderProfilesListForImport(profiles) {
+    elements.profilesList.innerHTML = '';
+    elements.noProfilesMessage.style.display = (!profiles || !profiles.length) ? 'block' : 'none';
+
+    profiles.forEach(profile => {
+        const profileItem = document.createElement('div');
+        profileItem.className = 'profile-item';
+        const date = new Date(profile.last_updated || profile.created_at || new Date());
+        const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        profileItem.innerHTML = `
+            <div class="profile-info">
+                <div class="profile-name">${profile.name || 'Unnamed Profile'}</div>
+                <div class="profile-date">${formattedDate}</div>
+            </div>
+            <div class="profile-actions">
+                <button class="btn-icon-small load-profile" title="Load Profile"><i class="fas fa-download"></i></button>
+            </div>
+        `;
+        profileItem.querySelector('.load-profile').addEventListener('click', async () => {
+            try {
+                importJsonData(
+                    profile.data && profile.data.settings
+                        ? profile.data
+                        : { settings: profile.data }
+                );
+                elements.profilesModal.classList.add('hidden');
+                addLog('success', `Profile "${profile.name}" imported from cloud`);
+                showToast(`Profile "${profile.name}" imported`, 'success');
+                await showCustomAlert(`Profile "${profile.name}" imported from cloud!`, 'Success');
+                playSound('success');
+            } catch (e) {
+                addLog('error', `Invalid profile data: ${e.message}`);
+                showToast('Invalid profile data', 'error');
+                await showCustomAlert('Invalid profile data.', 'Error');
+            }
+        });
+
+        elements.profilesList.appendChild(profileItem);
+    });
+}
+
 
     const saveProfile = async () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -1460,38 +1540,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirmed) return;
         try {
             stopSending();
-            const profileData = profile.data;
-            elements.webhookUrl.value = profileData.webhookUrl || '';
-            elements.messageContent.value = profileData.messageContent || '';
-            elements.username.value = profileData.username || '';
-            elements.avatarUrl.value = profileData.avatarUrl || '';
-            elements.randomMessages.checked = profileData.randomMessages || false;
-            elements.enableSounds.checked = profileData.enableSounds !== false;
-            if (profileData.interval) {
-                elements.intervalValue.value = profileData.interval.value || '10';
-                elements.intervalUnit.value = profileData.interval.unit || 'seconds';
-            }
-            elements.messageLimit.value = profileData.messageLimit === 'Unlimited' ? '' : profileData.messageLimit || '';
-            if (profileData.embeds && Array.isArray(profileData.embeds)) {
-                embeds = profileData.embeds;
-                embedCount = embeds.length;
-                renderEmbeds();
-            } else {
-                embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
-                embedCount = 1;
-                renderEmbeds();
-            }
-            updatePreview();
-            saveToLocalStorage('webhookUrl', elements.webhookUrl.value);
-            saveToLocalStorage('messageContent', elements.messageContent.value);
-            saveToLocalStorage('username', elements.username.value);
-            saveToLocalStorage('avatarUrl', elements.avatarUrl.value);
-            saveToLocalStorage('randomMessages', elements.randomMessages.checked);
-            saveToLocalStorage('enableSounds', elements.enableSounds.checked);
-            saveToLocalStorage('embeds', embeds);
+            const data = profile.data && profile.data.settings ? profile.data : { settings: profile.data };
+            importJsonData(data);
             elements.profilesModal.classList.add('hidden');
-            addLog('success', `Profile "${profile.name}" loaded successfully`);
-            showToast(`Profile "${profile.name}" loaded`, 'success');
             playSound('success');
         } catch (error) {
             addLog('error', `Failed to load profile: ${error.message}`);
@@ -1499,6 +1550,7 @@ document.addEventListener('DOMContentLoaded', () => {
             playSound('error');
         }
     };
+
 
     const deleteProfile = async (profileId) => {
         const confirmed = await showCustomConfirm('Are you sure you want to delete this profile? This cannot be undone.');

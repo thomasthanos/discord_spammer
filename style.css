@@ -1878,7 +1878,6 @@ input[type="color"]#embed-color:focus {
 .profile-actions .btn-icon-small:hover i.fa-trash {
   color: #ff3333;
 }
-
 .advanced-collapsible.collapsed-adv {
   display: none !important;
 }
