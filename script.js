@@ -173,7 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
         messageAttachmentsPreview: getElement('message-attachments-preview'),
         embedImageUrl: getElement('embed-image-url'),
         embedThumbnailUrl: getElement('embed-thumbnail-url'),
-
         manageProfilesBtn: getElement('manage-profiles-btn'),
         profilesModal: getElement('profiles-modal'),
         profilesList: getElement('profiles-list'),
@@ -350,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
             intervalIcon.classList.add('fa-chevron-right');
             intervalToggle.addEventListener('click', () => {
                 const expanded = intervalContent.classList.toggle('expanded');
-                intervalContent.style.maxHeight = expanded ? '500px' : '0';
+                intervalContent.style.maxHeight = expanded ? '450px' : '0';
                 intervalIcon.classList.toggle('fa-chevron-right', !expanded);
                 intervalIcon.classList.toggle('fa-chevron-down', expanded);
             });
@@ -370,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updatePreview();
             showToast('New embed added', 'success');
             elements.embedContent.classList.add('expanded');
-            elements.embedContent.style.maxHeight = '350px';
+            elements.embedContent.style.maxHeight = '415px';
             elements.embedToggleBtn.classList.remove('collapsed');
             document.getElementById('embed-toggle-icon').className = 'fas fa-chevron-down';
             updateDeleteEmbedBtn();
@@ -380,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isExpanded = elements.embedContent.classList.toggle('expanded');
             elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
             if (isExpanded && embeds.length > 1) {
-                elements.embedContent.style.maxHeight = '350px';
+                elements.embedContent.style.maxHeight = '415px';
             } else if (isExpanded && embeds.length <= 1) {
                 elements.embedContent.style.maxHeight = 'none';
             } else {
@@ -466,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (elements.embedContent.classList.contains('expanded')) {
             if (embeds.length > 1) {
-                elements.embedContent.style.maxHeight = '350px';
+                elements.embedContent.style.maxHeight = '415px';
                 elements.embedContent.style.overflowY = 'auto';
             } else {
                 elements.embedContent.style.maxHeight = 'none';
