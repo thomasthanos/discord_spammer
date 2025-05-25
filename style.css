@@ -119,10 +119,14 @@ body {
 }
 
 .header-controls {
-  display: flex;
-  align-items: center;
-  gap: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* <--- αυτό τα πάει δεξιά */
+    gap: 10px;
+    flex: 1 0 auto;
+    min-width: 0;
 }
+
 
 .theme-carousel {
   display: flex;
@@ -573,7 +577,11 @@ body {
 .button-group {
   display: flex;
   gap: 15px;
-  margin-bottom: 20px;
+}
+
+[id="interval-toggle-btn"]{
+  margin-top: 13px;
+  margin-bottom: 3px;
 }
 
 .btn-primary,
