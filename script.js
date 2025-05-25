@@ -252,102 +252,146 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const setupEmbedEventListeners = () => {
-        elements.addEmbedBtn.addEventListener('click', () => {
-            if (embedCount >= 10) {
-                showToast('Maximum 10 embeds allowed', 'warning');
-                return;
-            }
-            embeds.push({ title: '', description: '', color: '#5865F2', footer: '', imageUrl: '', thumbnailUrl: '' });
-            embedCount++;
-            saveToLocalStorage('embeds', embeds);
-            renderEmbeds();
-            updatePreview();
-            showToast('New embed added', 'success');
-        });
-
-        elements.embedToggleBtn.addEventListener('click', () => {
-            const isExpanded = elements.embedContent.classList.toggle('expanded');
-            elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
-            elements.embedContent.style.maxHeight = isExpanded ? (window.innerWidth < 768 ? '300px' : embedCount > 1 ? '500px' : 'none') : '0';
-        });
-    };
-
-    const renderEmbeds = () => {
-        elements.embedList.innerHTML = '';
-        embeds.forEach((embed, index) => {
-            embed.index = index;
-            const embedItem = document.createElement('div');
-            embedItem.className = 'embed-item';
-            embedItem.dataset.embedIndex = index;
-            embedItem.innerHTML = `
-                <div class="form-row embed-row">
-                    <div class="form-group">
-                        <label for="embed-title-${index}"><i class="fas fa-heading"></i> Embed Title</label>
-                        <input type="text" id="embed-title-${index}" placeholder="Enter embed title" value="${embed.title || ''}">
-                    </div>
-                    <div class="form-group">
-                        <label for="embed-color-${index}"><i class="fas fa-palette"></i> Embed Color</label>
-                        <input type="color" id="embed-color-${index}" value="${embed.color || '#5865F2'}">
-                    </div>
-                    <button class="btn-icon delete-embed-btn ${index === 0 ? 'hidden' : ''}" data-embed-index="${index}" title="Delete Embed"><i class="fas fa-trash"></i></button>
-                </div>
-                <div class="form-group">
-                    <label for="embed-description-${index}"><i class="fas fa-align-left"></i> Embed Description</label>
-                    <textarea id="embed-description-${index}" rows="3" placeholder="Enter embed description">${embed.description || ''}</textarea>
-                </div>
-                <div class="form-group">
-                    <label for="embed-footer-${index}"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
-                    <input type="text" id="embed-footer-${index}" placeholder="Enter footer text" value="${embed.footer || ''}">
-                </div>
-                <div class="form-row">
-                    <div class="form-group half-width">
-                        <label for="embed-image-url-${index}"><i class="fas fa-image"></i> Embed Image URL</label>
-                        <input type="url" id="embed-image-url-${index}" placeholder="https://example.com/image.png" value="${embed.imageUrl || ''}">
-                    </div>
-                    <div class="form-group half-width">
-                        <label for="embed-thumbnail-url-${index}"><i class="fas fa-image"></i> Embed Thumbnail URL</label>
-                        <input type="url" id="embed-thumbnail-url-${index}" placeholder="https://example.com/thumbnail.png" value="${embed.thumbnailUrl || ''}">
-                    </div>
-                </div>`;
-            elements.embedList.appendChild(embedItem);
-
-            const inputs = {
-                title: embedItem.querySelector(`#embed-title-${index}`),
-                description: embedItem.querySelector(`#embed-description-${index}`),
-                color: embedItem.querySelector(`#embed-color-${index}`),
-                footer: embedItem.querySelector(`#embed-footer-${index}`),
-                imageUrl: embedItem.querySelector(`#embed-image-url-${index}`),
-                thumbnailUrl: embedItem.querySelector(`#embed-thumbnail-url-${index}`)
-            };
-
-            for (const [key, input] of Object.entries(inputs)) {
-                input.addEventListener('input', () => {
-                    embeds[index][key] = input.value;
-                    saveToLocalStorage('embeds', embeds);
-                    updatePreview();
-                });
-            }
-
-            const deleteBtn = embedItem.querySelector('.delete-embed-btn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', () => {
-                    if (index > 0) {
-                        embeds.splice(index, 1);
-                        embedCount--;
-                        saveToLocalStorage('embeds', embeds);
-                        renderEmbeds();
-                        updatePreview();
-                        showToast('Embed deleted', 'success');
-                    }
-                });
-            }
-        });
-
-        if (elements.embedContent.classList.contains('expanded')) {
-            elements.embedContent.style.maxHeight = window.innerWidth < 768 ? '300px' : embedCount > 1 ? '500px' : 'none';
+const setupEmbedEventListeners = () => {
+    // Προσθήκη Embed
+    elements.addEmbedBtn.addEventListener('click', () => {
+        if (embedCount >= 10) {
+            showToast('Maximum 10 embeds allowed', 'warning');
+            return;
         }
-    };
+        embeds.push({ title: '', description: '', color: '#5865F2', footer: '', imageUrl: '', thumbnailUrl: '' });
+        embedCount++;
+        saveToLocalStorage('embeds', embeds);
+        renderEmbeds();
+        updatePreview();
+        showToast('New embed added', 'success');
+        // Άνοιξε το collapse αν προσθέσεις embed
+        elements.embedContent.classList.add('expanded');
+        elements.embedContent.style.maxHeight = '350px';
+        elements.embedToggleBtn.classList.remove('collapsed');
+        document.getElementById('embed-toggle-icon').className = 'fas fa-chevron-down';
+        updateDeleteEmbedBtn(); // Ενημέρωσε το κουμπί Delete!
+    });
+
+    // Κουμπί Collapse
+    elements.embedToggleBtn.addEventListener('click', () => {
+        const isExpanded = elements.embedContent.classList.toggle('expanded');
+        elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
+        if (isExpanded && embeds.length > 1) {
+            elements.embedContent.style.maxHeight = '350px';
+        } else if (isExpanded && embeds.length <= 1) {
+            elements.embedContent.style.maxHeight = 'none';
+        } else {
+            elements.embedContent.style.maxHeight = '0';
+        }
+        document.getElementById('embed-toggle-icon').className = isExpanded ? 'fas fa-chevron-down' : 'fas fa-chevron-right';
+    });
+};
+
+const deleteEmbedBtn = document.getElementById('delete-embed-btn');
+
+// Εμφάνιση/Απόκρυψη κουμπιού πάνω δεξιά
+function updateDeleteEmbedBtn() {
+    deleteEmbedBtn.style.display = (embeds.length > 1) ? 'inline-flex' : 'none';
+}
+
+// Event για Delete Embed (πάνω δεξιά)
+deleteEmbedBtn.addEventListener('click', () => {
+    if (embeds.length > 1) {
+        embeds.pop();
+        embedCount--;
+        saveToLocalStorage('embeds', embeds);
+        renderEmbeds();
+        updatePreview();
+        updateDeleteEmbedBtn();
+        showToast('Embed deleted', 'success');
+    }
+});
+
+
+const renderEmbeds = () => {
+    elements.embedList.innerHTML = '';
+    embeds.forEach((embed, index) => {
+        embed.index = index;
+        const embedItem = document.createElement('div');
+        embedItem.className = 'embed-item';
+        embedItem.dataset.embedIndex = index;
+        embedItem.innerHTML = `
+            <div class="form-row embed-row">
+                <div class="form-group">
+                    <label for="embed-title-${index}"><i class="fas fa-heading"></i> Embed Title</label>
+                    <input type="text" id="embed-title-${index}" placeholder="Enter embed title" value="${embed.title || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="embed-color-${index}"><i class="fas fa-palette"></i> Embed Color</label>
+                    <input type="color" id="embed-color-${index}" value="${embed.color || '#5865F2'}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="embed-description-${index}"><i class="fas fa-align-left"></i> Embed Description</label>
+                <textarea id="embed-description-${index}" rows="3" placeholder="Enter embed description">${embed.description || ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="embed-footer-${index}"><i class="fas fa-shoe-prints"></i> Embed Footer</label>
+                <input type="text" id="embed-footer-${index}" placeholder="Enter footer text" value="${embed.footer || ''}">
+            </div>
+            <div class="form-row">
+                <div class="form-group half-width">
+                    <label for="embed-image-url-${index}"><i class="fas fa-image"></i> Embed Image URL</label>
+                    <input type="url" id="embed-image-url-${index}" placeholder="https://example.com/image.png" value="${embed.imageUrl || ''}">
+                </div>
+                <div class="form-group half-width">
+                    <label for="embed-thumbnail-url-${index}"><i class="fas fa-image"></i> Embed Thumbnail URL</label>
+                    <input type="url" id="embed-thumbnail-url-${index}" placeholder="https://example.com/thumbnail.png" value="${embed.thumbnailUrl || ''}">
+                </div>
+            </div>`;
+        elements.embedList.appendChild(embedItem);
+
+        const inputs = {
+            title: embedItem.querySelector(`#embed-title-${index}`),
+            description: embedItem.querySelector(`#embed-description-${index}`),
+            color: embedItem.querySelector(`#embed-color-${index}`),
+            footer: embedItem.querySelector(`#embed-footer-${index}`),
+            imageUrl: embedItem.querySelector(`#embed-image-url-${index}`),
+            thumbnailUrl: embedItem.querySelector(`#embed-thumbnail-url-${index}`)
+        };
+
+        for (const [key, input] of Object.entries(inputs)) {
+            input.addEventListener('input', () => {
+                embeds[index][key] = input.value;
+                saveToLocalStorage('embeds', embeds);
+                updatePreview();
+            });
+        }
+
+        const deleteBtn = embedItem.querySelector('.delete-embed-btn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => {
+                if (index > 0) {
+                    embeds.splice(index, 1);
+                    embedCount--;
+                    saveToLocalStorage('embeds', embeds);
+                    renderEmbeds();
+                    updatePreview();
+                    showToast('Embed deleted', 'success');
+                }
+            });
+        }
+    });
+
+    if (elements.embedContent.classList.contains('expanded')) {
+        if (embeds.length > 1) {
+            elements.embedContent.style.maxHeight = '350px';
+            elements.embedContent.style.overflowY = 'auto';
+        } else {
+            elements.embedContent.style.maxHeight = 'none';
+            elements.embedContent.style.overflowY = 'visible';
+        }
+    }
+
+    updateDeleteEmbedBtn(); // ΠΑΝΤΑ στο τέλος!
+};
+
 
     const handleFileUploads = () => {
         elements.messageAttachments.addEventListener('change', (e) => {
@@ -1452,14 +1496,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const savedEmbeds = localStorage.getItem('embeds');
-        if (savedEmbeds) {
-            embeds = JSON.parse(savedEmbeds);
-            embedCount = embeds.length;
-            renderEmbeds();
-        } else {
-            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
-            renderEmbeds();
-        }
+if (savedEmbeds) {
+    embeds = JSON.parse(savedEmbeds);
+    embedCount = embeds.length;
+    renderEmbeds();
+    updateDeleteEmbedBtn();
+} else {
+    embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+    renderEmbeds();
+    updateDeleteEmbedBtn();
+}
+
 
         const savedStats = localStorage.getItem('stats');
         if (savedStats) {

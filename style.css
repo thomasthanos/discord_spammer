@@ -1883,3 +1883,9 @@ input[type="color"]#embed-color:focus {
   margin-bottom: 18px; /* ή όσο διάστημα θέλεις */
   display: block;
 }
+#embed-content {
+  max-height: 0;
+  overflow: hidden;
+  padding: 0;
+  transition: max-height 0.3s, padding 0.3s;
+}
