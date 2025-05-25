@@ -3,25 +3,23 @@
   .app-container {
     padding: 15px;
     max-width: 1000px;
-    gap: 15px; /* Increased for better spacing */
+    gap: 15px;
   }
 
   .app-header {
     flex-direction: row;
     justify-content: space-between;
     padding: 12px 15px;
-    gap: 12px;
   }
 
   .header-controls {
     gap: 10px;
-    flex-wrap: wrap;
+    position: relative;
   }
 
   .theme-preview {
-    width: 36px; /* Larger for touch */
-    height: 36px;
-    font-size: 14px;
+    width: 32px;
+    height: 32px;
   }
 
   .app-content {
@@ -36,9 +34,8 @@
   }
 
   .card {
-    padding: 18px; /* More padding for breathing room */
+    padding: 20px;
     width: 100%;
-    box-sizing: border-box;
   }
 
   .logs-card {
@@ -50,40 +47,20 @@
     gap: 10px;
   }
 
-  .stat-item {
-    padding: 15px;
-    font-size: 15px;
-  }
-
-  .stat-value {
-    font-size: 22px; /* Larger for readability */
-  }
-
   .form-row.embed-row {
     gap: 10px;
-    flex-wrap: wrap;
   }
 
   .embed-content.expanded {
-    max-height: 500px; /* Increased for more content visibility */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    max-height: 400px;
   }
 
   .button-group {
     flex-direction: row;
     gap: 10px;
-    flex-wrap: wrap;
   }
 
-  .btn-primary,
-  .btn-secondary,
-  .btn-tertiary {
-    padding: 12px 18px; /* Larger touch target */
-    font-size: 15px;
-    min-width: 120px;
-  }
-
+  /* Improved dropdown positioning */
   .dropdown {
     position: relative;
   }
@@ -94,15 +71,15 @@
     top: 100%;
     right: 0;
     min-width: 200px;
-    max-width: 85vw;
+    max-width: 90vw;
     background: var(--card-color);
     border-radius: var(--border-radius);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     padding: 10px;
     flex-direction: column;
     gap: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 1000;
+    z-index: 1000; /* Increased z-index */
   }
 
   #user-auth-menu .dropdown-content {
@@ -110,92 +87,22 @@
     min-width: 180px;
   }
 
-  .dropdown:active .dropdown-content,
+  .dropdown:hover .dropdown-content,
   .dropdown:focus-within .dropdown-content {
     display: flex;
   }
 
+  /* Modal positioning */
+  .modal {
+    align-items: flex-start;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    overflow-y: auto;
+  }
+
   .modal-content {
-    width: 90%;
-    max-height: 85vh;
-    padding: 15px;
-  }
-
-  .suggestions-list div {
-    font-size: 15px;
-    padding: 10px;
-  }
-
-  .format-table th,
-  .format-table td {
-    font-size: 15px;
-    padding: 10px;
-  }
-
-  .checkbox-container {
-    padding-left: 30px;
-  }
-
-  .checkmark {
-    width: 20px;
-    height: 20px;
-  }
-
-  .profile-item {
-    padding: 10px 15px;
-  }
-
-  .profile-name {
-    max-width: 60vw;
-    font-size: 15px;
-  }
-
-  .profile-actions .btn-icon-small {
-    font-size: 16px;
-    width: 40px;
-    height: 40px;
-  }
-
-  .history-item {
-    font-size: 15px;
-    padding: 10px 15px;
-  }
-
-  .custom-file-upload {
-    padding: 12px;
-    font-size: 15px;
-  }
-
-  .attachment-preview-item {
-    max-width: 90%;
-    padding: 10px;
-  }
-
-  .discord-message {
-    gap: 12px;
-    padding: 15px;
-  }
-
-  .discord-avatar {
-    width: 40px;
-    height: 40px;
-  }
-
-  .discord-username {
-    font-size: 16px;
-  }
-
-  .discord-text {
-    font-size: 15px;
-  }
-
-  .embed-image img {
-    max-height: 200px; /* Larger for better visibility */
-  }
-
-  .embed-thumbnail {
-    width: 100px;
-    height: 100px;
+    position: relative;
+    margin: auto;
   }
 }
 
@@ -204,7 +111,6 @@
   .app-container {
     padding: 10px;
     max-width: 100%;
-    gap: 12px; /* More spacing */
   }
 
   .app-header {
@@ -212,6 +118,7 @@
     align-items: flex-start;
     padding: 10px;
     gap: 10px;
+    position: relative;
   }
 
   .header-controls {
@@ -219,48 +126,46 @@
     gap: 8px;
     justify-content: flex-start;
     width: 100%;
+    position: relative;
   }
 
   .theme-preview {
-    width: 44px; /* Larger for touch */
-    height: 44px;
+    width: 40px;
+    height: 40px;
     font-size: 14px;
   }
 
   .btn-icon {
-    width: 48px; /* Larger touch target */
-    height: 48px;
-    font-size: 20px;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
   }
 
   .btn-icon-small {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
   }
 
   .logo {
     margin-bottom: 8px;
   }
 
-  .logo h1 {
-    font-size: 1.6rem; /* Slightly larger for visibility */
-  }
-
   .app-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
   }
 
   .preview-column {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
   }
 
   .card {
     width: 100%;
+    max-width: none;
     padding: 15px;
     margin: 0;
   }
@@ -269,37 +174,12 @@
     grid-column: 1;
   }
 
-  .btn-primary,
-  .btn-secondary,
-  .btn-tertiary {
-    padding: 12px 20px;
-    font-size: 15px;
-    min-width: 110px; /* Ensure touch-friendly */
-  }
-
-  .interval-limit-group {
+  .button-group {
     flex-direction: column;
-    gap: 10px;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
 
-  .stat-item {
-    padding: 12px;
-    font-size: 14px;
-  }
-
-  .stat-value {
-    font-size: 20px;
-  }
-
-  .stat-label {
-    font-size: 13px;
-  }
-
+  /* Improved dropdown positioning */
   .dropdown {
     position: relative;
   }
@@ -309,28 +189,43 @@
     position: absolute;
     top: 100%;
     right: 0;
+    left: auto;
     min-width: 160px;
     max-width: 90vw;
     background: var(--card-color);
     border-radius: var(--border-radius);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     padding: 10px;
     flex-direction: column;
     gap: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 1000;
+    transform: translateX(0);
   }
 
   #user-auth-menu .dropdown-content {
     right: 0;
-    min-width: 160px;
+    min-width: 180px;
   }
 
-  .dropdown:active .dropdown-content,
   .dropdown:focus-within .dropdown-content {
     display: flex;
   }
 
+  /* Modal improvements */
+  .modal {
+    align-items: flex-start;
+    padding: 10px;
+    overflow-y: auto;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-height: 85vh;
+    margin: auto;
+  }
+
+  /* Form improvements */
   .form-row.embed-row {
     flex-direction: column;
     align-items: stretch;
@@ -342,174 +237,17 @@
     min-width: 0;
   }
 
-  .form-row.embed-row input[type="color"]#embed-color {
-    width: 50px;
-    height: 50px;
-  }
-
   .embed-content.expanded {
-    max-height: 450px;
+    max-height: 350px;
     margin-bottom: 10px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  .form-group label {
-    font-size: 15px;
-  }
-
-  .form-group input:not([type="color"]),
-  .form-group textarea,
-  .form-group select {
-    font-size: 15px;
-    padding: 12px;
-  }
-
-  #log-container {
-    max-height: 250px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .form-row {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .form-row .half-width {
-    width: 100%;
-    min-width: 100%;
-  }
-
-  .embed-row {
-    flex-direction: column;
-  }
-
-  .attachments-preview {
-    flex-direction: column;
-  }
-
-  .attachment-preview-item {
-    max-width: 100%;
-    padding: 10px;
-  }
-
-  .attachment-info {
-    font-size: 14px;
-  }
-
-  .modal-content {
-    width: 95%;
-    max-height: 80vh;
-    padding: 15px;
-  }
-
-  .modal-header {
-    padding: 12px 15px;
-  }
-
-  .modal-body {
-    padding: 15px;
-  }
-
-  .suggestions-list div {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  .format-table th,
-  .format-table td {
-    font-size: 14px;
-    padding: 8px;
-  }
-
-  .history-item {
-    padding: 10px;
-    font-size: 14px;
-  }
-
-  .profile-item {
-    padding: 10px 12px;
-  }
-
-  .profile-name {
-    max-width: 55vw;
-    font-size: 14px;
-  }
-
-  .profile-date {
-    font-size: 12px;
-  }
-
-  .profile-actions .btn-icon-small {
-    font-size: 16px;
-    width: 40px;
-    height: 40px;
-  }
-
-  .form-group.half-width.file-size-group {
-    flex-direction: column;
-    align-items: stretch;
+  /* Stats grid */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
-  }
-
-  .file-size-label {
-    min-width: 0;
-    padding-right: 0;
-    line-height: 1.3;
-  }
-
-  .custom-file-upload {
-    padding: 12px;
-    font-size: 14px;
-  }
-
-  .custom-file-upload i {
-    font-size: 22px;
-  }
-
-  .custom-file-upload .file-info {
-    font-size: 13px;
-  }
-
-  .checkbox-container {
-    padding-left: 28px;
-  }
-
-  .checkmark {
-    width: 18px;
-    height: 18px;
-  }
-
-  .discord-message {
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .discord-avatar {
-    width: 48px; /* Larger for visibility */
-    height: 48px;
-  }
-
-  .discord-username {
-    font-size: 15px;
-  }
-
-  .discord-text {
-    font-size: 14px;
-  }
-
-  .embed-image img {
-    max-height: 180px; /* Larger for mobile */
-  }
-
-  .embed-thumbnail {
-    width: 90px;
-    height: 90px;
-  }
-
-  #webhook-warning {
-    font-size: 14px;
-    margin-top: 8px;
   }
 }
 
@@ -523,268 +261,19 @@
     font-size: 1.4rem;
   }
 
-  .theme-preview {
-    width: 40px;
-    height: 40px;
-    font-size: 12px;
-  }
-
-  .btn-icon {
-    width: 44px;
-    height: 44px;
-  }
-
-  .form-group label {
-    font-size: 14px;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr; /* Single column for very small screens */
-    gap: 8px;
-  }
-
-  .stat-item {
-    padding: 10px;
-  }
-
-  .stat-value {
-    font-size: 18px;
-  }
-
-  .log-entry {
-    font-size: 13px;
-    padding: 6px 0;
-  }
-
-  .log-time {
-    font-size: 10px;
-  }
-
-  .dropdown {
-    position: relative;
-  }
-
+  /* Improved dropdown positioning */
   .dropdown-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
     min-width: 150px;
     max-width: 90vw;
-    background: var(--card-color);
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
     padding: 8px;
-    flex-direction: column;
     gap: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 1000;
   }
 
   #user-auth-menu .dropdown-content {
-    right: 0;
-    min-width: 150px;
+    min-width: 160px;
   }
 
-  .dropdown:active .dropdown-content,
-  .dropdown:focus-within .dropdown-content {
-    display: flex;
-  }
-
-  .custom-file-upload {
-    padding: 10px;
-    font-size: 13px;
-  }
-
-  .custom-file-upload i {
-    font-size: 20px;
-  }
-
-  .custom-file-upload .file-info {
-    font-size: 12px;
-  }
-
-  .modal-content {
-    width: 95%;
-    max-height: 75vh;
-  }
-
-  .suggestions-list div {
-    font-size: 13px;
-    padding: 8px;
-  }
-
-  .format-table th,
-  .format-table td {
-    font-size: 13px;
-    padding: 6px;
-  }
-
-  .history-item {
-    font-size: 13px;
-    padding: 8px;
-  }
-
-  .profile-name {
-    max-width: 50vw;
-    font-size: 13px;
-  }
-
-  .discord-message {
-    gap: 8px;
-    padding: 10px;
-  }
-
-  .discord-avatar {
-    width: 44px;
-    height: 44px;
-  }
-
-  .discord-username {
-    font-size: 14px;
-  }
-
-  .discord-text {
-    font-size: 13px;
-  }
-
-  .embed-image img {
-    max-height: 160px;
-  }
-
-  .embed-thumbnail {
-    width: 80px;
-    height: 80px;
-  }
-}
-
-/* Extra Small Screens (up to 380px) */
-@media (max-width: 380px) {
-  .app-container {
-    padding: 8px;
-    max-width: 100%;
-    gap: 10px;
-  }
-
-  .app-header {
-    padding: 6px;
-    gap: 8px;
-  }
-
-  .logo h1 {
-    font-size: 1.2rem;
-  }
-
-  .theme-preview {
-    width: 36px;
-    height: 36px;
-    font-size: 11px;
-  }
-
-  .btn-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-
-  .btn-icon-small {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-  }
-
-  .header-controls {
-    gap: 6px;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 6px;
-  }
-
-  .card {
-    padding: 12px;
-    margin-bottom: 10px;
-  }
-
-  .form-group {
-    margin-bottom: 10px;
-  }
-
-  .form-group label {
-    font-size: 13px;
-  }
-
-  .form-group input:not([type="color"]),
-  .form-group textarea,
-  .form-group select {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  .form-row {
-    gap: 8px;
-  }
-
-  .form-row.embed-row input[type="color"]#embed-color {
-    width: 44px;
-    height: 44px;
-  }
-
-  .embed-content.expanded {
-    max-height: 350px;
-  }
-
-  #log-container {
-    max-height: 200px;
-  }
-
-  .log-entry {
-    font-size: 12px;
-    padding: 5px 0;
-  }
-
-  .log-time {
-    font-size: 9px;
-  }
-
-  .dropdown {
-    position: relative;
-  }
-
-  .dropdown-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    min-width: 140px;
-    max-width: 95vw;
-    background: var(--card-color);
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    padding: 6px;
-    flex-direction: column;
-    gap: 5px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    z-index: 1000;
-  }
-
-  #user-auth-menu .dropdown-content {
-    right: 0;
-    min-width: 140px;
-    max-width: 95vw;
-  }
-
-  .dropdown-content button {
-    font-size: 13px;
-    padding: 8px 12px;
-  }
-
-  .dropdown:active .dropdown-content,
-  .dropdown:focus-within .dropdown-content {
-    display: flex;
-  }
-
+  /* Modal improvements */
   .modal-content {
     width: 98%;
     max-height: 80vh;
@@ -799,81 +288,41 @@
     padding: 15px;
   }
 
-  .custom-file-upload {
-    padding: 10px 8px;
-    font-size: 12px;
+  /* Stats grid */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+}
+
+/* Extra Small Screens (up to 380px) */
+@media (max-width: 380px) {
+  .app-container {
+    padding: 8px;
+    gap: 10px;
   }
 
-  .custom-file-upload i {
-    font-size: 18px;
-  }
-
-  .custom-file-upload .file-info {
-    font-size: 11px;
-  }
-
-  .btn-primary,
-  .btn-secondary,
-  .btn-tertiary {
-    padding: 10px 15px;
-    font-size: 14px;
-    min-width: 100px;
-  }
-
-  .button-group {
+  .app-header {
+    padding: 6px;
     gap: 8px;
   }
 
-  .attachment-preview-item {
-    max-width: 90%;
-    padding: 8px;
-  }
-
-  .suggestions-list div {
-    font-size: 12px;
+  /* Improved dropdown positioning */
+  .dropdown-content {
+    min-width: 120px;
+    max-width: 95vw;
     padding: 6px;
+    gap: 4px;
   }
 
-  .format-table th,
-  .format-table td {
-    font-size: 12px;
-    padding: 5px;
+  #user-auth-menu .dropdown-content {
+    min-width: 140px;
   }
 
-  .checkbox-container {
-    padding-left: 26px;
-  }
-
-  .checkmark {
-    width: 16px;
-    height: 16px;
-  }
-
-  .discord-message {
+  /* Stats grid single column */
+  .stats-grid {
+    grid-template-columns: 1fr;
     gap: 6px;
-    padding: 8px;
-  }
-
-  .discord-avatar {
-    width: 40px;
-    height: 40px;
-  }
-
-  .discord-username {
-    font-size: 13px;
-  }
-
-  .discord-text {
-    font-size: 12px;
-  }
-
-  .embed-image img {
-    max-height: 140px;
-  }
-
-  .embed-thumbnail {
-    width: 70px;
-    height: 70px;
   }
 }
 
@@ -889,254 +338,51 @@
     grid-column: span 2;
   }
 
-  .form-row {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .form-row .half-width {
-    min-width: calc(50% - 8px);
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
-  .dropdown {
-    position: relative;
-  }
-
+  /* Improved dropdown positioning */
   .dropdown-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
     min-width: 160px;
     max-width: 90vw;
-    background: var(--card-color);
-    border-radius: var(--border-radius);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    padding: 10px;
-    flex-direction: column;
-    gap: 8px;
-    border: 1px solid rgba(255, 255, 900, 0.1);
-    z-index: 1000;
   }
 
   #user-auth-menu .dropdown-content {
-    right: 0;
-    min-width: 160px;
-  }
-
-  .dropdown:active .dropdown-content,
-  .dropdown:focus-within .dropdown-content {
-    display: flex;
-  }
-
-  .discord-message {
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .discord-avatar {
-    width: 44px;
-    height: 44px;
-  }
-
-  .embed-image img {
-    max-height: 180px;
+    min-width: 180px;
   }
 }
 
 /* Accessibility and Animation Optimizations (up to 1024px) */
 @media (max-width: 1024px) {
-  .app-container {
-    padding: 10px;
-    gap: 15px;
-  }
-
-  .app-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-    padding: 15px;
-  }
-
-  .header-controls {
-    width: 100%;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .theme-carousel {
-    order: 1;
-    margin-right: auto;
-  }
-
-  .dropdown {
-    order: 2;
-    position: relative;
-  }
-
-  #user-auth-menu {
-    order: 3;
-  }
-
-  .logo {
-    margin-bottom: 5px;
-  }
-
-  .card {
-    padding: 15px;
-    margin-bottom: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .form-group {
-    margin-bottom: 15px;
-  }
-
-  .form-group input:not([type="color"]),
-  .form-group textarea,
-  .form-group select {
-    padding: 12px;
-    font-size: 15px;
-  }
-
-  .form-group input:not([type="color"]):focus,
-  .form-group textarea:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
-  }
-
-  .btn-primary,
-  .btn-secondary,
-  .btn-tertiary {
-    padding: 12px 15px;
-    font-size: 15px;
-  }
-
-  .discord-message {
-    flex-direction: column;
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .discord-avatar {
-    width: 36px;
-    height: 36px;
-    margin-right: 0;
-    margin-bottom: 5px;
-  }
-
-  input[type="text"],
-  input[type="password"],
-  input[type="url"],
-  textarea {
-    font-size: 16px;
-  }
-
-  .discord-username,
-  .discord-text {
-    word-break: break-word;
-  }
-
+  /* Improved dropdown positioning */
   .dropdown-content {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
     min-width: 200px;
     max-width: 90vw;
-    background: var(--card-color);
-    border-radius: var(--border-radius);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    padding: 10px;
-    flex-direction: column;
-    gap: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
     z-index: 1000;
   }
 
   #user-auth-menu .dropdown-content {
-    right: 0;
     min-width: 180px;
   }
 
-  .dropdown:active .dropdown-content,
-  .dropdown:focus-within .dropdown-content {
-    display: flex;
+  /* Modal improvements */
+  .modal {
+    align-items: flex-start;
+    padding: 15px;
+    overflow-y: auto;
   }
 
-  * {
-    transition-duration: 0.2s;
-    animation-duration: 0.3s;
+  /* Ensure dropdowns appear above modals */
+  .modal {
+    z-index: 1001;
+  }
+  .dropdown-content {
+    z-index: 1002;
   }
 
+  /* Blur theme adjustments */
   [data-theme="blur"] body {
     background-attachment: scroll;
   }
 
   [data-theme="blur"] .card {
     backdrop-filter: blur(5px);
-  }
-
-  .modal {
-    padding: 10px;
-  }
-
-  .modal-content {
-    width: 90%;
-    max-height: 80vh;
-    padding: 12px;
-  }
-
-  .suggestions-list div {
-    font-size: 14px;
-    padding: 8px;
-  }
-
-  .format-table th,
-  .format-table td {
-    font-size: 14px;
-    padding: 6px;
-  }
-
-  .checkbox-container {
-    padding-left: 28px;
-  }
-
-  .checkmark {
-    width: 18px;
-    height: 18px;
-  }
-
-  .profile-item {
-    padding: 8px 10px;
-  }
-
-  .profile-name {
-    max-width: 55vw;
-    font-size: 14px;
-  }
-
-  .profile-actions .btn-icon-small {
-    font-size: 16px;
-  }
-
-  .custom-prompt-input {
-    font-size: 15px;
-    padding: 12px;
-  }
-
-  .custom-prompt-message,
-  .custom-confirm-message,
-  .custom-alert-message {
-    font-size: 15px;
   }
 }
