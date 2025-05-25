@@ -386,3 +386,10 @@
     backdrop-filter: blur(5px);
   }
 }
+@media (max-width: 768px) {
+  /* Δείχνει μόνο για τα κουμπιά μέσα στο logs-card */
+  .logs-card .button-group {
+    flex-direction: row !important;
+    gap: 8px !important;
+  }
+}
