@@ -118,45 +118,65 @@
               <div id="webhook-warning" class="hidden" style="color: var(--warning-color); margin-top: 8px; font-size: 14px;">
                 <i class="fas fa-exclamation-triangle"></i> Warning: This appears to be a public webhook URL
               </div>
-              <div class="form-row form-row-custom-padding">
-                <div class="form-group half-width">
-                  <label for="username">Custom Username</label>
-                  <input type="text" id="username" placeholder="Webhook Sender">
-                </div>
-                <div class="form-group half-width">
-                  <label for="avatar-url">Avatar URL</label>
-                  <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
-                </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="message-content">Message Content</label>
-              <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
-            </div>
-            <div class="message-tools">
-              <button id="suggest-message" class="btn-small">
-                <i class="fas fa-lightbulb"></i> Suggest </button>
-              <button id="format-help" class="btn-small">
-                <i class="fas fa-question-circle"></i> Format Help </button>
-            </div>
-            <!-- Μέσα στο settings-column card, μετά το message-content textarea -->
-            <div class="form-row">
-              <div class="form-group half-width">
-                <label for="message-attachments">
-                  <i class="fas fa-paperclip"></i> Message Attachments </label>
-                <label for="message-attachments" class="custom-file-upload">
-                  <i class="fas fa-cloud-upload-alt"></i>
-                  <span>Click to upload files</span>
-                  <div class="file-info">Supports images and videos</div>
-                </label>
-                <input type="file" id="message-attachments" multiple accept="image/*, video/*">
-                <div id="message-attachments-preview" class="attachments-preview"></div>
-              </div>
-            </div>
+
+  <!-- Collapse Button -->
+  <button id="advanced-toggle-btn" class="embed-toggle-btn" style="width:100%;text-align:left; margin-bottom: -10px;">
+    <i class="fas fa-chevron-down"></i>
+    Message Options
+  </button>
+
+  <!-- Custom Username & Avatar -->
+  <div class="form-row form-row-custom-padding advanced-collapsible">
+    <div class="form-group half-width">
+      <label for="username">Custom Username</label>
+      <input type="text" id="username" placeholder="Webhook Sender">
+    </div>
+    <div class="form-group half-width">
+      <label for="avatar-url">Avatar URL</label>
+      <input type="url" id="avatar-url" placeholder="https://example.com/avatar.png">
+    </div>
+  </div>
+
+  <!-- Message Content -->
+  <div class="form-group advanced-collapsible">
+    <label for="message-content">Message Content</label>
+    <textarea id="message-content" rows="4" placeholder="Your message here..."></textarea>
+  </div>
+
+  <!-- Message Tools -->
+  <div class="message-tools advanced-collapsible">
+    <button id="suggest-message" class="btn-small">
+      <i class="fas fa-lightbulb"></i> Suggest 
+    </button>
+    <button id="format-help" class="btn-small">
+      <i class="fas fa-question-circle"></i> Format Help 
+    </button>
+  </div>
+
+  <!-- Message Attachments -->
+  <div class="form-row advanced-collapsible">
+    <div class="form-group half-width">
+      <label for="message-attachments">
+        <i class="fas fa-paperclip"></i> Message Attachments 
+      </label>
+      <label for="message-attachments" class="custom-file-upload">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span>Click to upload files</span>
+        <div class="file-info">Supports images and videos</div>
+      </label>
+      <input type="file" id="message-attachments" multiple accept="image/*, video/*">
+      <div id="message-attachments-preview" class="attachments-preview"></div>
+    </div>
+  </div>
+</div>
+
+            
             <!-- Inside the "Settings" card, replace the existing embed section -->
             <div class="embed-section">
-              <button id="embed-toggle-btn" class="embed-toggle-btn">
-                <i class="fas fa-chevron-down"></i> Embed Options </button>
+<button id="embed-toggle-btn" class="embed-toggle-btn">
+  <i id="embed-toggle-icon" class="fas fa-chevron-right"></i> Embed Options
+</button>
+
               <div id="embed-content" class="embed-content">
                 <div id="embed-list">
                   <!-- Initial embed fields -->
@@ -199,60 +219,14 @@
                       </div>
                     </div>
                   </div>
+
+
                 </div>
                 <button id="add-embed-btn" class="btn-small">
                   <i class="fas fa-plus"></i> Add Another Embed </button>
               </div>
             </div>
-            <div class="form-group">
-              <label>
-                <i class="fas fa-hourglass-half"></i> Send Interval & Limit </label>
-              <div class="interval-limit-group">
-                <div class="input-group">
-                  <label for="interval-value">
-                    <i class="fas fa-clock"></i> Every </label>
-                  <div class="input-with-buttons">
-                    <button class="interval-btn minus" data-action="decrement">
-                      <i class="fas fa-minus"></i>
-                    </button>
-                    <div class="input-wrapper">
-                      <input type="number" id="interval-value" value="10" min="1" style="display: none;">
-                      <span id="interval-display" class="interval-display">10 s</span>
-                    </div>
-                    <button class="interval-btn plus" data-action="increment">
-                      <i class="fas fa-plus"></i>
-                    </button>
-                  </div>
-                </div>
-                <div class="input-group">
-                  <label for="interval-unit">
-                    <i class="fas fa-stopwatch"></i> Time Unit </label>
-                  <div class="custom-select">
-                    <select id="interval-unit">
-                      <option value="seconds">Seconds</option>
-                      <option value="minutes">Minutes</option>
-                      <option value="hours">Hours</option>
-                    </select>
-                    <div class="select-arrow">
-                      <i class="fas fa-chevron-down"></i>
-                    </div>
-                  </div>
-                </div>
-                <div class="input-group">
-                  <label for="message-limit">
-                    <i class="fas fa-envelope"></i> Max Messages </label>
-                  <div class="input-with-buttons">
-                    <button class="interval-btn minus" data-action="decrement">
-                      <i class="fas fa-minus"></i>
-                    </button>
-                    <input type="number" id="message-limit" min="0" value="1" placeholder="∞">
-                    <button class="interval-btn plus" data-action="increment">
-                      <i class="fas fa-plus"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
         <div class="preview-column">
@@ -326,14 +300,98 @@
                 <button id="test-btn" class="btn-tertiary">
                   <i class="fas fa-paper-plane"></i> Test Now </button>
               </div>
-              <div class="checkbox-group">
-                <label class="checkbox-container">
-                  <input type="checkbox" id="random-messages">
-                  <span class="checkmark"></span> Send random messages (one per line) </label>
-                <label class="checkbox-container">
-                  <input type="checkbox" id="enable-sounds" checked>
-                  <span class="checkmark"></span> Enable sounds </label>
+
+
+      <div class="interval-collapse-section">
+        <!-- Collapse Toggle Button -->
+        <button id="interval-toggle-btn" class="embed-toggle-btn">
+          <i class="fas fa-chevron-right"></i>
+          Send Interval & Options
+        </button>
+
+        <!-- Collapse Content -->
+        <div id="interval-content" class="embed-content">
+          <!-- Interval & Limit Options -->
+          <div class="form-group">
+            <label>
+              <i class="fas fa-hourglass-half"></i> Send Interval & Limit
+            </label>
+            <div class="interval-limit-group">
+              <!-- Interval Every -->
+              <div class="input-group">
+                <label for="interval-value">
+                  <i class="fas fa-clock"></i> Every
+                </label>
+                <div class="input-with-buttons">
+                  <button class="interval-btn minus" data-action="decrement">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                  <div class="input-wrapper">
+                    <input type="number" id="interval-value" value="10" min="1" style="display: none;">
+                    <span id="interval-display" class="interval-display">10 s</span>
+                  </div>
+                  <button class="interval-btn plus" data-action="increment">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
               </div>
+              <!-- Time Unit -->
+              <div class="input-group">
+                <label for="interval-unit">
+                  <i class="fas fa-stopwatch"></i> Time Unit
+                </label>
+                <div class="custom-select">
+                  <select id="interval-unit">
+                    <option value="seconds">Seconds</option>
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                  </select>
+                  <div class="select-arrow">
+                    <i class="fas fa-chevron-down"></i>
+                  </div>
+                </div>
+              </div>
+              <!-- Max Messages -->
+              <div class="input-group">
+                <label for="message-limit">
+                  <i class="fas fa-envelope"></i> Max Messages
+                </label>
+                <div class="input-with-buttons">
+                  <button class="interval-btn minus" data-action="decrement">
+                    <i class="fas fa-minus"></i>
+                  </button>
+                  <input type="number" id="message-limit" min="0" value="1" placeholder="∞">
+                  <button class="interval-btn plus" data-action="increment">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Checkbox: Send random messages -->
+          <div class="form-row checkboxes-row" style="margin-top:8px;">
+            <label class="checkbox-container">
+              <input type="checkbox" id="random-messages">
+              <span class="checkmark"></span>
+              Send random messages (one per line)
+            </label>
+          </div>
+        </div>
+        <!-- Checkbox: Enable sounds (ΕΚΤΟΣ COLLAPSE, πάντα ορατό) -->
+        <div class="form-row checkboxes-row" style="margin-top:8px;">
+          <label class="checkbox-container">
+            <input type="checkbox" id="enable-sounds" checked>
+            <span class="checkmark"></span>
+            Enable sounds
+          </label>
+        </div>
+      </div>
+
+
+
+
+
+
             </div>
           </div>
         </div>

@@ -1870,3 +1870,16 @@ input[type="color"]#embed-color:focus {
 .profile-actions .btn-icon-small:hover i.fa-trash {
   color: #ff3333;
 }
+
+.advanced-collapsible {
+  max-height: 1000px;
+  overflow: hidden;
+  transition: max-height 0.3s;
+}
+.advanced-collapsible.collapsed-adv {
+  display: none !important;
+}
+#webhook-warning {
+  margin-bottom: 18px; /* ή όσο διάστημα θέλεις */
+  display: block;
+}
