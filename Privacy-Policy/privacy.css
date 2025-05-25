@@ -1,0 +1,264 @@
+:root {
+    --link-color: #7289da;
+    --link-hover: #5865f2;
+    --link-bg-hover: rgba(88,101,242,0.08);
+    --link-underline: linear-gradient(90deg, #5865f2 60%, #404eed 100%);
+}
+
+/* Βασικό layout */
+.privacy-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+    color: var(--text-color);
+}
+.privacy-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--primary-color);
+    background: linear-gradient(90deg, rgba(88,101,242,0.07), rgba(0,0,0,0));
+    border-radius: var(--border-radius);
+}
+.privacy-header h1 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg,#5865f2,#404eed 60%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.privacy-header p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+.privacy-content {
+    background: var(--card-color);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    box-shadow: var(--box-shadow);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(88,101,242,0.07);
+    transition: background 0.3s;
+}
+.section {
+    margin-bottom: 2.2rem;
+}
+.section h2 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(90deg,#5865f2,#404eed 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.section p, .section ul {
+    line-height: 1.7;
+    margin-bottom: 1rem;
+}
+.section ul {
+    padding-left: 1.5rem;
+}
+.section li {
+    margin-bottom: 0.55rem;
+}
+.highlight {
+    background: rgba(88, 101, 242, 0.12);
+    padding: 0.2rem 0.44rem;
+    border-radius: 4px;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+.update-date {
+    text-align: right;
+    font-style: italic;
+    color: var(--text-secondary);
+    margin-top: 2.6rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .privacy-container {
+        padding: 1rem;
+    }
+    .privacy-content {
+        padding: 1.1rem;
+    }
+    .privacy-header h1 {
+        font-size: 2rem;
+    }
+    .section h2 {
+        font-size: 1.12rem;
+    }
+}
+
+/* Μόνο για privacy page: cancel centering grid */
+.app-content {
+    display: block !important;
+    min-height: unset !important;
+    justify-content: unset !important;
+    align-items: unset !important;
+    height: auto !important;
+}
+
+/* Discord-style Links */
+.privacy-content a,
+.privacy-content a:visited {
+    color: var(--link-color);
+    text-decoration: none;
+    position: relative;
+    font-weight: 500;
+    transition: color 0.18s, background 0.15s;
+    border-radius: 6px;
+    padding: 0 2px;
+    outline: none;
+}
+.privacy-content a::after {
+    content: '';
+    display: block;
+    position: absolute;
+    left: 12%;
+    right: 12%;
+    bottom: -1px;
+    height: 2px;
+    background: var(--link-underline);
+    border-radius: 3px;
+    transform: scaleX(0);
+    transition: transform 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+.privacy-content a:hover, .privacy-content a:focus {
+    color: var(--link-hover);
+    background: var(--link-bg-hover);
+    box-shadow: 0 2px 12px -6px #5865f2aa;
+}
+.privacy-content a:hover::after,
+.privacy-content a:focus::after {
+    transform: scaleX(1);
+}
+.privacy-content a:active {
+    color: #404eed;
+    background: rgba(88,101,242,0.15);
+}
+.privacy-content a:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Floating Print Button */
+.print-btn-floating {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 99;
+    background: linear-gradient(90deg, #5865f2 70%, #404eed 100%);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 1.1rem;
+    padding: 14px 28px;
+    box-shadow: 0 4px 22px -6px #5865f2bb;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.22s, box-shadow 0.2s, transform 0.13s;
+}
+.print-btn-floating:hover, .print-btn-floating:focus {
+    background: linear-gradient(90deg, #404eed 40%, #5865f2 100%);
+    box-shadow: 0 8px 24px -4px #5865f2bb;
+    transform: translateY(-2px) scale(1.03);
+    color: #fff;
+}
+@media print {
+    .print-btn-floating {
+        display: none !important;
+    }
+    body {
+        background: #fff !important;
+        color: #222 !important;
+        font-size: 14px;
+    }
+    .app-header,
+    .app-footer,
+    .theme-carousel,
+    .btn-primary {
+        display: none !important;
+    }
+    .app-container {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .privacy-container {
+        max-width: 100%;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .privacy-content {
+        background: #fff !important;
+        color: #222 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 32px !important;
+        backdrop-filter: none !important;
+        border: none !important;
+    }
+    .privacy-header {
+        background: none !important;
+        border-radius: 0 !important;
+        border-bottom: 2px solid #5865f2 !important;
+        padding-bottom: 1.2rem !important;
+        margin-bottom: 2.2rem !important;
+    }
+    .privacy-header h1 {
+        background: none !important;
+        color: #5865f2 !important;
+        -webkit-background-clip: unset !important;
+        -webkit-text-fill-color: unset !important;
+        font-size: 2.2rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    .privacy-header p {
+        color: #5865f2 !important;
+        font-style: italic !important;
+    }
+    .section h2 {
+        background: none !important;
+        color: #404eed !important;
+        -webkit-background-clip: unset !important;
+        -webkit-text-fill-color: unset !important;
+        font-size: 1.15rem !important;
+        border-left: 4px solid #5865f2;
+        padding-left: 10px;
+    }
+    .highlight {
+        background: #f1f4fe !important;
+        color: #404eed !important;
+        font-weight: 600 !important;
+    }
+    .update-date {
+        color: #5865f2 !important;
+        font-style: italic !important;
+        margin-top: 3.2rem !important;
+        text-align: right !important;
+    }
+    .privacy-content a,
+    .privacy-content a:visited {
+        color: #404eed !important;
+        text-decoration: underline !important;
+        background: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+    .privacy-content a::after {
+        display: none !important;
+    }
+    ul, ol {
+        margin-left: 2.3em !important;
+    }
+    .section {
+        page-break-inside: avoid;
+    }
+}
