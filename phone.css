@@ -398,7 +398,8 @@
   }
   .header-controls {
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 12px;
+    margin-top: -10px;
     display: flex;
     justify-content: center;
     align-items: center;
