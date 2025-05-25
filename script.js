@@ -1,264 +1,444 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Utility Functions
-    const getElement = (id) => {
-        const el = document.getElementById(id);
-        if (!el) console.warn(`Element with ID ${id} not found`);
-        return el;
-    };
-
-    const debounce = (func, wait) => {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func(...args), wait);
-        };
-    };
-
+ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const elements = {
         webhookUrl: getElement('webhook-url'),
         messageContent: getElement('message-content'),
-        intervalValue: getElement('interval-value'),
-        intervalDisplay: getElement('interval-display'),
-        intervalUnit: getElement('interval-unit'),
-        messageLimit: getElement('message-limit'),
-        startBtn: getElement('start-btn'),
-        stopBtn: getElement('stop-btn'),
-        testBtn: getElement('test-btn'),
-        statusText: getElement('status-text'),
+        webhookUrl: document.getElementById('webhook-url'),
+        messageContent: document.getElementById('message-content'),
+        intervalValue: document.getElementById('interval-value'),
+        intervalDisplay: document.getElementById('interval-display'),
+        intervalUnit: document.getElementById('interval-unit'),
+        messageLimit: document.getElementById('message-limit'),
+        startBtn: document.getElementById('start-btn'),
+        stopBtn: document.getElementById('stop-btn'),
+        testBtn: document.getElementById('test-btn'),
+        statusText: document.getElementById('status-text'),
         statusDot: document.querySelector('.status-dot'),
-        logContainer: getElement('log-container'),
-        toggleVisibility: getElement('toggle-visibility'),
-        webhookWarning: getElement('webhook-warning'),
-        historyBtn: getElement('history-btn'),
-        username: getElement('username'),
-        avatarUrl: getElement('avatar-url'),
-        randomMessages: getElement('random-messages'),
-        statTotal: getElement('stat-total'),
-        statSuccess: getElement('stat-success'),
-        statFailed: getElement('stat-failed'),
-        statAvgTime: getElement('stat-avg-time'),
-        resetStats: getElement('reset-stats'),
-        enableSounds: getElement('enable-sounds'),
-        clearLogs: getElement('clear-logs'),
-        previewAvatar: getElement('preview-avatar'),
-        previewUsername: getElement('preview-username'),
-        previewText: getElement('preview-text'),
-        historyModal: getElement('history-modal'),
-        historyList: getElement('history-list'),
-        successSound: getElement('success-sound'),
-        errorSound: getElement('error-sound'),
-        notificationSound: getElement('notification-sound'),
-        exportJsonMenu: getElement('export-json-menu'),
-        exportScreenshotMenu: getElement('export-screenshot-menu'),
-        importJsonMenu: getElement('import-json-menu'),
-        suggestMessage: getElement('suggest-message'),
-        formatHelp: getElement('format-help'),
-        suggestionsModal: getElement('suggestions-modal'),
-        formatHelpModal: getElement('format-help-modal'),
-        toastContainer: getElement('toast-container'),
+        logContainer: document.getElementById('log-container'),
+        toggleVisibility: document.getElementById('toggle-visibility'),
+        webhookWarning: document.getElementById('webhook-warning'),
+        historyBtn: document.getElementById('history-btn'),
+        username: document.getElementById('username'),
+        avatarUrl: document.getElementById('avatar-url'),
+        randomMessages: document.getElementById('random-messages'),
+        statTotal: document.getElementById('stat-total'),
+        statSuccess: document.getElementById('stat-success'),
+        statFailed: document.getElementById('stat-failed'),
+        statAvgTime: document.getElementById('stat-avg-time'),
+        resetStats: document.getElementById('reset-stats'),
+        enableSounds: document.getElementById('enable-sounds'),
+        clearLogs: document.getElementById('clear-logs'),
+        previewAvatar: document.getElementById('preview-avatar'),
+        previewUsername: document.getElementById('preview-username'),
+        previewText: document.getElementById('preview-text'),
+        historyModal: document.getElementById('history-modal'),
+        historyList: document.getElementById('history-list'),
+        successSound: document.getElementById('success-sound'),
+        errorSound: document.getElementById('error-sound'),
+        notificationSound: document.getElementById('notification-sound'),
+        exportJsonMenu: document.getElementById('export-json-menu'),
+        exportScreenshotMenu: document.getElementById('export-screenshot-menu'),
+        importJsonMenu: document.getElementById('import-json-menu'),
+        suggestMessage: document.getElementById('suggest-message'),
+        formatHelp: document.getElementById('format-help'),
+        suggestionsModal: document.getElementById('suggestions-modal'),
+        formatHelpModal: document.getElementById('format-help-modal'),
+        toastContainer: document.getElementById('toast-container'),
         themeCarousel: document.querySelector('.theme-carousel'),
-        embedList: getElement('embed-list'),
-        addEmbedBtn: getElement('add-embed-btn'),
-        embedContent: getElement('embed-content'),
-        embedToggleBtn: getElement('embed-toggle-btn'),
-        messageAttachments: getElement('message-attachments'),
-        messageAttachmentsPreview: getElement('message-attachments-preview'),
-        embedImageUrl: getElement('embed-image-url'),
-        embedThumbnailUrl: getElement('embed-thumbnail-url'),
-        saveProfileBtn: getElement('save-profile-btn'),
-        manageProfilesBtn: getElement('manage-profiles-btn'),
-        profilesModal: getElement('profiles-modal'),
-        profilesList: getElement('profiles-list'),
-        noProfilesMessage: getElement('no-profiles-message'),
-        loginBtn: getElement('login-btn'),
-        logoutBtn: getElement('logout-btn'),
-        userAvatar: getElement('user-avatar'),
-        userUsername: getElement('user-username'),
-        avatarMenuBtn: getElement('avatar-menu-btn')
+        embedList: document.getElementById('embed-list'),
+        addEmbedBtn: document.getElementById('add-embed-btn'),
+        embedContent: document.getElementById('embed-content'),
+        embedToggleBtn: document.getElementById('embed-toggle-btn'),
+        messageAttachments: document.getElementById('message-attachments'),
+        messageAttachmentsPreview: document.getElementById('message-attachments-preview'),
+        embedImageUrl: document.getElementById('embed-image-url'),
+        embedThumbnailUrl: document.getElementById('embed-thumbnail-url'),
+        saveProfileBtn: document.getElementById('save-profile-btn'),
+        manageProfilesBtn: document.getElementById('manage-profiles-btn'),
+        profilesModal: document.getElementById('profiles-modal'),
+        profilesList: document.getElementById('profiles-list'),
+        noProfilesMessage: document.getElementById('no-profiles-message')
     };
 
+    function isValidImageUrl(url) {
+        return /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+    }
+    function getElement(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`Element with ID ${id} not found`);
+        return el;
+    }
     // Variables
     let intervalId = null;
     let isSending = false;
-    let stats = { total: 0, success: 0, failed: 0, responseTimes: [] };
+    let stats = { 
+        total: 0,
+        success: 0,
+        failed: 0,
+        responseTimes: [] 
+    };
     let embeds = [];
     let embedCount = 1;
     let attachments = [];
 
-    // Supabase Configuration
-    const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Utility Functions
-    const isValidImageUrl = (url) => /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)$/i.test(url);
-
-    const saveToLocalStorage = (key, value) => localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : value);
-
-    const updateMessageLimitPlaceholder = () => {
+    // Moved to outer scope
+    function updateMessageLimitPlaceholder() {
+        console.log('updateMessageLimitPlaceholder defined');
         const value = elements.messageLimit.value;
-        elements.messageLimit.placeholder = value === '' || value === '0' ? '∞' : 'Unlimited';
-        elements.statusText.textContent = value && value !== '0' ? `Ready (${value}/${value})` : 'Ready';
-    };
-
-    const updateIntervalDisplay = () => {
-        const value = elements.intervalValue.value;
-        const unit = elements.intervalUnit.value;
-        const symbolMap = { seconds: 's', minutes: 'm', hours: 'h' };
-        elements.intervalDisplay.textContent = `${value} ${symbolMap[unit] || ''}`;
-    };
-
-    const checkWebhookPrivacy = (url) => {
-        if (elements.webhookWarning) {
-            elements.webhookWarning.classList.toggle('hidden', !url.includes('discord.com/api/webhooks/') || url.includes('localhost'));
+        if (value === '0' || value === '') {
+            elements.messageLimit.value = ''; // Clear the input to show the placeholder
+            elements.messageLimit.placeholder = '∞';
+        } else {
+            elements.messageLimit.placeholder = 'Unlimited';
         }
-    };
+    }
 
-    const addLog = (type, message) => {
-        const timestamp = new Date().toLocaleTimeString();
-        const logEntry = document.createElement('div');
-        logEntry.className = `log-entry log-${type}`;
-        const iconClass = { success: 'fa-check-circle', error: 'fa-times-circle', warning: 'fa-exclamation-circle' }[type] || 'fa-info-circle';
-        logEntry.innerHTML = `<i class="fas ${iconClass}"></i><span class="log-time">${timestamp}</span><span class="log-message">${message}</span>`;
-        elements.logContainer.prepend(logEntry);
-        elements.logContainer.scrollTop = 0;
-        if (elements.logContainer.children.length > 100) {
-            elements.logContainer.removeChild(elements.logContainer.lastChild);
-        }
-    };
-
-    const playSound = (type) => {
-        if (!elements.enableSounds.checked) return;
-        const sound = { success: elements.successSound, error: elements.errorSound, notification: elements.notificationSound }[type];
-        if (sound) sound.play().catch(e => console.error('Sound error:', e));
-    };
-
-    const showToast = (message, type = 'info') => {
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.innerHTML = `<i class="fas fa-${{ success: 'check-circle', error: 'times-circle', warning: 'exclamation-circle', info: 'info-circle' }[type] || 'info-circle'}"></i><span>${message}</span>`;
-        elements.toastContainer.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }, 100);
-    };
-
-    const formatDiscordMarkdown = (text, context = 'description') => {
-        let formatted = text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/~~(.*?)~~/g, '<s>$1</s>')
-            .replace(/`(.*?)`/g, '<code>$1</code>')
-            .replace(/\n/g, '<br>');
-        if (context !== 'title') {
-            formatted = formatted
-                .replace(/<@!?(\d+)>/g, '<span class="discord-mention">@user</span>')
-                .replace(/<#(\d+)>/g, '<span class="discord-mention">#channel</span>')
-                .replace(/<@&(\d+)>/g, '<span class="discord-mention">@role</span>')
-                .replace(/<a?:(\w+):(\d+)>/g, '<img class="discord-emoji" src="https://cdn.discordapp.com/emojis/$2.png" alt="$1">');
-        }
-        return formatted;
-    };
-
-    const updatePreview = debounce(() => {
-        elements.previewText.innerHTML = elements.messageContent.value ? formatDiscordMarkdown(elements.messageContent.value) : 'Your message will appear here...';
-        elements.previewUsername.textContent = elements.username.value || 'Webhook Sender';
-        elements.previewAvatar.src = elements.avatarUrl.value || 'https://cdn.discordapp.com/embed/avatars/0.png';
-
-        document.querySelectorAll('.embed-preview, .preview-attachments').forEach(el => el.remove());
-
-        if (attachments.length) {
-            const previewContainer = document.createElement('div');
-            previewContainer.className = 'preview-attachments';
-            previewContainer.style.cssText = 'display: flex; gap: 15px; flex-wrap: wrap;';
-            attachments.forEach(file => {
-                const attachmentItem = document.createElement('div');
-                attachmentItem.className = 'attachment-preview-item';
-                if (file.type.startsWith('image/')) {
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(file);
-                    img.alt = file.name;
-                    attachmentItem.appendChild(img);
-                } else {
-                    const icon = document.createElement('i');
-                    icon.className = 'fas fa-file';
-                    attachmentItem.appendChild(icon);
-                }
-                const info = document.createElement('div');
-                info.className = 'attachment-info';
-                if (!file.type.startsWith('image/')) {
-                    info.innerHTML = `<i class="fas fa-file"></i>`;
-                }
-                info.innerHTML += `<span style="color: #4d73fa">${file.name}</span><span style="color: #b9bbbe">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>`;
-                attachmentItem.appendChild(info);
-                previewContainer.appendChild(attachmentItem);
-            });
-            document.querySelector('.discord-content')?.appendChild(previewContainer);
-        }
-
-        embeds.forEach(embed => {
-            if (embed.title.trim() || embed.description.trim() || embed.imageUrl || embed.thumbnailUrl) {
-                const embedPreview = document.createElement('div');
-                embedPreview.className = 'embed-preview';
-                embedPreview.innerHTML = `
-                    <div class="embed" style="border-left: 4px solid ${embed.color || '#5865F2'}">
-                        ${embed.title.trim() ? `<div class="embed-title">${formatDiscordMarkdown(embed.title.trim(), 'title')}</div>` : ''}
-                        ${embed.description.trim() ? `<div class="embed-description">${formatDiscordMarkdown(embed.description.trim())}</div>` : ''}
-                        ${embed.imageUrl ? `<div class="embed-image"><img src="${embed.imageUrl}" alt="Embed Image"></div>` : ''}
-                        ${embed.thumbnailUrl && isValidImageUrl(embed.thumbnailUrl) ? `<div class="embed-thumbnail"><img src="${embed.thumbnailUrl}" alt="Embed Thumbnail"></div>` : ''}
-                        ${embed.footer.trim() ? `<div class="embed-footer">${formatDiscordMarkdown(embed.footer.trim())}</div>` : ''}
-                    </div>`;
-                document.querySelector('.discord-content')?.appendChild(embedPreview);
+    // Initialize app
+    function initApp() {
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.body.setAttribute('data-theme', savedTheme);
+        
+        // Set active theme preview
+        document.querySelectorAll('.theme-preview').forEach(preview => {
+            if (preview.dataset.theme === savedTheme) {
+                preview.classList.add('active');
             }
         });
-    }, 300);
 
-    // Collapsible Sections
-    const setupAdvancedCollapse = () => {
-        const advToggle = getElement('advanced-toggle-btn');
-        const advSections = document.querySelectorAll('.advanced-collapsible');
-        if (advToggle && advSections.length) {
-            advToggle.classList.add('collapsed');
-            advSections.forEach(el => el.classList.add('collapsed-adv'));
-            advToggle.addEventListener('click', () => {
-                advToggle.classList.toggle('collapsed');
-                advSections.forEach(el => el.classList.toggle('collapsed-adv'));
-            });
+        // Load saved settings
+        [
+            'webhookUrl', 'messageContent', 'username', 'avatarUrl', 'randomMessages',
+            'embedImageUrl', 'embedThumbnailUrl'
+        ].forEach(key => {
+            const value = localStorage.getItem(key);
+            if (value) {
+                if (key === 'randomMessages' && value === 'true') {
+                    elements[key].checked = true;
+                } else {
+                    elements[key].value = value;
+                }
+            }
+        });
+
+        // Load embeds
+        const savedEmbeds = localStorage.getItem('embeds');
+        if (savedEmbeds) {
+            embeds = JSON.parse(savedEmbeds);
+            embedCount = embeds.length;
+            renderEmbeds();
+        } else {
+            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+            renderEmbeds();
         }
-    };
 
-    const setupIntervalCollapse = () => {
-        const intervalToggle = getElement('interval-toggle-btn');
-        const intervalContent = getElement('interval-content');
-        const intervalIcon = intervalToggle?.querySelector('i');
-        if (intervalToggle && intervalContent && intervalIcon) {
-            intervalContent.style.maxHeight = '0';
-            intervalContent.classList.remove('expanded');
-            intervalIcon.classList.remove('fa-chevron-down');
-            intervalIcon.classList.add('fa-chevron-right');
-            intervalToggle.addEventListener('click', () => {
-                const expanded = intervalContent.classList.toggle('expanded');
-                intervalContent.style.maxHeight = expanded ? '500px' : '0';
-                intervalIcon.classList.toggle('fa-chevron-right', !expanded);
-                intervalIcon.classList.toggle('fa-chevron-down', expanded);
-            });
+        // Load stats
+        const savedStats = localStorage.getItem('stats');
+        if (savedStats) {
+            stats = JSON.parse(savedStats);
+            updateStats();
         }
-    };
 
-    const setupEmbedEventListeners = () => {
+        // Load sounds preference
+        elements.enableSounds.checked = localStorage.getItem('soundsEnabled') !== 'false';
+
+        // Initialize preview
+        if (elements.messageContent.value) updatePreview();
+        if (elements.avatarUrl.value) elements.previewAvatar.src = elements.avatarUrl.value;
+
+        // Setup event listeners
+        setupEventListeners();
+        setupEmbedEventListeners();
+        handleFileUploads();
+          setupAdvancedCollapse();  // Ήδη υπάρχει
+  setupIntervalCollapse();  // <-- ΠΡΟΣΘΕΣΕ ΑΥΤΟ!
+    }
+
+function setupAdvancedCollapse() {
+  const advToggle = document.getElementById('advanced-toggle-btn');
+  const advSections = document.querySelectorAll('.advanced-collapsible');
+  if (advToggle && advSections.length) {
+    // Ensure default state is collapsed
+    advToggle.classList.add('collapsed');
+    advSections.forEach(el => el.classList.add('collapsed-adv'));
+    advToggle.addEventListener('click', function () {
+      this.classList.toggle('collapsed');
+      advSections.forEach(el => el.classList.toggle('collapsed-adv'));
+    });
+  }
+}
+
+
+
+    function setupEventListeners() {
+        // Theme selection
+        elements.themeCarousel.addEventListener('click', (e) => {
+            const themePreview = e.target.closest('.theme-preview');
+            if (!themePreview) return;
+            
+            const theme = themePreview.dataset.theme;
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            
+            // Update active state
+            document.querySelectorAll('.theme-preview').forEach(el => {
+                el.classList.remove('active');
+            });
+            themePreview.classList.add('active');
+            
+            showToast(`Theme changed to ${theme}`, 'success');
+        });
+
+        // Webhook URL visibility toggle
+        elements.toggleVisibility.addEventListener('click', () => {
+            const type = elements.webhookUrl.type === 'password' ? 'text' : 'password';
+            elements.webhookUrl.type = type;
+            elements.toggleVisibility.innerHTML = `<i class="fas fa-eye${type === 'password' ? '' : '-slash'}"></i>`;
+        });
+
+        // Input changes
+        elements.webhookUrl.addEventListener('input', () => {
+            localStorage.setItem('webhookUrl', elements.webhookUrl.value);
+            checkWebhookPrivacy(elements.webhookUrl.value);
+        });
+
+        elements.messageContent.addEventListener('input', () => {
+            localStorage.setItem('messageContent', elements.messageContent.value);
+            updatePreview();
+        });
+
+        elements.username.addEventListener('input', () => {
+            localStorage.setItem('username', elements.username.value);
+            updatePreview();
+        });
+
+        elements.avatarUrl.addEventListener('input', () => {
+            localStorage.setItem('avatarUrl', elements.avatarUrl.value);
+            updatePreview();
+        });
+
+        elements.randomMessages.addEventListener('change', () => {
+            localStorage.setItem('randomMessages', elements.randomMessages.checked);
+        });
+
+        elements.enableSounds.addEventListener('change', () => {
+            localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
+        });
+
+        // New input changes for attachments
+        elements.embedImageUrl.addEventListener('input', () => {
+            localStorage.setItem('embedImageUrl', elements.embedImageUrl.value);
+            updatePreview();
+        });
+
+        elements.embedThumbnailUrl.addEventListener('input', () => {
+            localStorage.setItem('embedThumbnailUrl', elements.embedThumbnailUrl.value);
+            updatePreview();
+        });
+
+        // Interval controls
+        elements.intervalUnit.addEventListener('change', updateIntervalDisplay);
+        elements.intervalValue.addEventListener('input', updateIntervalDisplay);
+        updateIntervalDisplay();
+
+        // Message limit input
+        elements.messageLimit.addEventListener('input', () => {
+            updateMessageLimitPlaceholder();
+            const value = elements.messageLimit.value;
+            let label = 'Ready';
+            if (value && value !== "0") {
+                label = `Ready (${value}/${value})`;
+            }
+            elements.statusText.textContent = label;
+        });
+
+        // Increment/Decrement buttons
+        document.querySelectorAll('.interval-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = btn.getAttribute('data-action');
+                const input = btn.closest('.input-with-buttons').querySelector('input');
+                let value = parseInt(input.value) || (input.id === 'message-limit' ? 0 : 10);
+
+                if (input.id === 'message-limit' && input.value === '') {
+                    value = 0;
+                }
+
+                if (action === 'increment') {
+                    if (input.id === 'message-limit' && input.value === '') {
+                        input.value = 1;
+                    } else {
+                        input.value = value + 1;
+                    }
+                } else if (action === 'decrement' && value > 0) {
+                    input.value = value - 1;
+                    if (input.value === '0') {
+                        input.value = '';
+                        updateMessageLimitPlaceholder(); // Ensure placeholder updates
+                    }
+                }
+
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        });
+
+        // Auto-select text on input focus
+        document.querySelectorAll('.input-with-buttons input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.select();
+            });
+        });
+
+        // Buttons
+        elements.startBtn.addEventListener('click', startSending);
+        elements.stopBtn.addEventListener('click', stopSending);
+        elements.testBtn.addEventListener('click', sendTestMessage);
+        elements.resetStats.addEventListener('click', resetStatistics);
+        elements.clearLogs.addEventListener('click', clearLogs);
+        elements.historyBtn.addEventListener('click', showHistoryModal);
+        elements.suggestMessage.addEventListener('click', showMessageSuggestions);
+        elements.formatHelp.addEventListener('click', showFormatHelp);
+
+        // Export/Import
+        elements.exportJsonMenu.addEventListener('click', exportLogsAsJson);
+        elements.exportScreenshotMenu.addEventListener('click', exportLogsAsScreenshot);
+        elements.importJsonMenu.addEventListener('click', importLogsFromJson);
+
+        // Modals
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.closest('.modal').classList.add('hidden');
+            });
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.add('hidden');
+            }
+        });
+
+        // Initialize message-limit placeholder on page load
+        updateMessageLimitPlaceholder();
+    }
+
+    // In the handleFileUploads function, update the maxFileSizeMB check:
+    function handleFileUploads() {
+        elements.messageAttachments.addEventListener('change', (e) => {
+            let newFiles = Array.from(e.target.files);
+            const maxFileSizeMB = 10; // Discord's actual limit is 8MB
+            const maxAttachments = 10;
+
+            // Keep only valid files
+            let validFiles = [];
+            newFiles.forEach(file => {
+                const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+                if (file.size > maxFileSizeMB * 1024 * 1024) {
+                    addLog('error', `Attachment '${file.name}' is too large (${fileSizeMB} MB > ${maxFileSizeMB} MB limit)`);
+                    showToast(`File '${file.name}' is too large (${fileSizeMB} MB / limit ${maxFileSizeMB} MB)`, 'error');
+                } else {
+                    validFiles.push(file);
+                    addLog('success', `Attachment '${file.name}' uploaded (${fileSizeMB} MB)`);
+                }
+            });
+
+            if (validFiles.length > maxAttachments) {
+                addLog('warning', `Too many attachments (${validFiles.length}). Maximum allowed is ${maxAttachments}.`);
+                validFiles = validFiles.slice(0, maxAttachments);
+            }
+
+            attachments = validFiles;
+
+            // Sync with file input
+            const dataTransfer = new DataTransfer();
+            attachments.forEach(file => dataTransfer.items.add(file));
+            elements.messageAttachments.files = dataTransfer.files;
+
+            renderAttachmentsPreview();
+            updatePreview();
+
+            // Clear input if no attachments remain
+            if (attachments.length === 0) {
+                elements.messageAttachments.value = '';
+            }
+        });
+    }
+
+    function renderAttachmentsPreview() {
+        elements.messageAttachmentsPreview.innerHTML = '';
+        attachments.forEach((file, i) => {
+            const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
+            const fileId = `${file.name}_${file.size}`; // Unique ID
+
+            // Determine icon for non-image/video files
+            let iconClass = 'fa-file';
+            if (file.type === 'application/pdf') iconClass = 'fa-file-pdf';
+            else if (file.type.includes('zip') || file.type.includes('compressed')) iconClass = 'fa-file-archive';
+            else if (file.type.includes('msword') || file.type.includes('officedocument')) iconClass = 'fa-file-word';
+
+            let innerHTML = '';
+            if (file.type.startsWith('image/')) {
+                innerHTML = `
+                    <img src="${URL.createObjectURL(file)}" alt="${file.name}">
+                    <span>${file.name} (${fileSizeMB} MB)</span>
+                    <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            } else if (file.type.startsWith('video/')) {
+                innerHTML = `
+                    <video controls>
+                        <source src="${URL.createObjectURL(file)}" type="${file.type}">
+                    </video>
+                    <span>${file.name} (${fileSizeMB} MB)</span>
+                    <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            } else {
+                innerHTML = `
+                    <i class="fas ${iconClass}"></i>
+                    <span>${file.name} (${fileSizeMB} MB)</span>
+                    <button class="btn-icon-small remove-attachment" data-fid="${fileId}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            }
+
+            const previewElement = document.createElement('div');
+            previewElement.className = 'attachment-preview-item';
+            previewElement.innerHTML = innerHTML;
+            elements.messageAttachmentsPreview.appendChild(previewElement);
+
+            // Remove button
+            previewElement.querySelector('.remove-attachment').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fileId = e.currentTarget.getAttribute('data-fid');
+                attachments = attachments.filter(f => (`${f.name}_${f.size}` !== fileId));
+
+                // Update file input
+                const dataTransfer = new DataTransfer();
+                attachments.forEach(file => dataTransfer.items.add(file));
+                elements.messageAttachments.files = dataTransfer.files;
+
+                renderAttachmentsPreview();
+                updatePreview();
+
+                // Clear input if no attachments remain
+                if (attachments.length === 0) {
+                    elements.messageAttachments.value = '';
+                }
+            });
+        });
+    }
+
+    function setupEmbedEventListeners() {
         elements.addEmbedBtn.addEventListener('click', () => {
             if (embedCount >= 10) {
                 showToast('Maximum 10 embeds allowed', 'warning');
                 return;
             }
-            embeds.push({ title: '', description: '', color: '#5865F2', footer: '', imageUrl: '', thumbnailUrl: '' });
+            embeds.push({ title: '', description: '', color: '#5865F2', footer: '' });
             embedCount++;
-            saveToLocalStorage('embeds', embeds);
+            localStorage.setItem('embeds', JSON.stringify(embeds));
             renderEmbeds();
             updatePreview();
             showToast('New embed added', 'success');
@@ -267,14 +447,53 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.embedToggleBtn.addEventListener('click', () => {
             const isExpanded = elements.embedContent.classList.toggle('expanded');
             elements.embedToggleBtn.classList.toggle('collapsed', !isExpanded);
-            elements.embedContent.style.maxHeight = isExpanded ? (window.innerWidth < 768 ? '300px' : embedCount > 1 ? '500px' : 'none') : '0';
+            if (isExpanded) {
+                if (window.innerWidth < 768) {
+                    elements.embedContent.style.maxHeight = '300px';
+                } else {
+                    if (embedCount > 1) {
+                        elements.embedContent.style.maxHeight = '500px';
+                    } else {
+                        elements.embedContent.style.maxHeight = 'none';
+                    }
+                }
+            } else {
+                elements.embedContent.style.maxHeight = '0';
+            }
         });
-    };
+    }
 
-    const renderEmbeds = () => {
+    function setupIntervalCollapse() {
+    const intervalToggle = document.getElementById('interval-toggle-btn');
+    const intervalContent = document.getElementById('interval-content');
+    const intervalIcon = intervalToggle.querySelector('i');
+    if (intervalToggle && intervalContent) {
+        // Προεπιλογή: κλειστό
+        intervalContent.style.maxHeight = '0';
+        intervalContent.classList.remove('expanded');
+        intervalIcon.classList.remove('fa-chevron-down');
+        intervalIcon.classList.add('fa-chevron-right');
+        
+        intervalToggle.addEventListener('click', function () {
+        const expanded = intervalContent.classList.toggle('expanded');
+        if (expanded) {
+            intervalContent.style.maxHeight = '500px'; // Ή όσο θέλεις
+            intervalIcon.classList.remove('fa-chevron-right');
+            intervalIcon.classList.add('fa-chevron-down');
+        } else {
+            intervalContent.style.maxHeight = '0';
+            intervalIcon.classList.remove('fa-chevron-down');
+            intervalIcon.classList.add('fa-chevron-right');
+        }
+        });
+    }
+    }
+
+    function renderEmbeds() {
         elements.embedList.innerHTML = '';
         embeds.forEach((embed, index) => {
-            embed.index = index;
+            embed.index = index; // Re-index
+
             const embedItem = document.createElement('div');
             embedItem.className = 'embed-item';
             embedItem.dataset.embedIndex = index;
@@ -307,245 +526,284 @@ document.addEventListener('DOMContentLoaded', () => {
                         <label for="embed-thumbnail-url-${index}"><i class="fas fa-image"></i> Embed Thumbnail URL</label>
                         <input type="url" id="embed-thumbnail-url-${index}" placeholder="https://example.com/thumbnail.png" value="${embed.thumbnailUrl || ''}">
                     </div>
-                </div>`;
+                </div>
+            `;
             elements.embedList.appendChild(embedItem);
 
-            const inputs = {
-                title: embedItem.querySelector(`#embed-title-${index}`),
-                description: embedItem.querySelector(`#embed-description-${index}`),
-                color: embedItem.querySelector(`#embed-color-${index}`),
-                footer: embedItem.querySelector(`#embed-footer-${index}`),
-                imageUrl: embedItem.querySelector(`#embed-image-url-${index}`),
-                thumbnailUrl: embedItem.querySelector(`#embed-thumbnail-url-${index}`)
-            };
+            const titleInput = embedItem.querySelector(`#embed-title-${index}`);
+            const descriptionInput = embedItem.querySelector(`#embed-description-${index}`);
+            const colorInput = embedItem.querySelector(`#embed-color-${index}`);
+            const footerInput = embedItem.querySelector(`#embed-footer-${index}`);
+            const imageUrlInput = embedItem.querySelector(`#embed-image-url-${index}`);
+            const thumbnailUrlInput = embedItem.querySelector(`#embed-thumbnail-url-${index}`);
+            
+            titleInput.addEventListener('input', () => {
+                embeds[index].title = titleInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+            });
+            
+            descriptionInput.addEventListener('input', () => {
+                embeds[index].description = descriptionInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+            });
+            
+            colorInput.addEventListener('input', () => {
+                embeds[index].color = colorInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+            });
+            
+            footerInput.addEventListener('input', () => {
+                embeds[index].footer = footerInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+            });
+            
+            imageUrlInput.addEventListener('input', () => {
+                embeds[index].imageUrl = imageUrlInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+            });
+            
+            thumbnailUrlInput.addEventListener('input', () => {
+                embeds[index].thumbnailUrl = thumbnailUrlInput.value;
+                localStorage.setItem('embeds', JSON.stringify(embeds));
+                updatePreview();
+            });
+        });
 
-            for (const [key, input] of Object.entries(inputs)) {
-                input.addEventListener('input', () => {
-                    embeds[index][key] = input.value;
-                    saveToLocalStorage('embeds', embeds);
+        // Delete button
+        document.querySelectorAll('.delete-embed-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const index = parseInt(btn.dataset.embedIndex);
+                if (index > 0) {
+                    embeds.splice(index, 1);
+                    embedCount--;
+                    localStorage.setItem('embeds', JSON.stringify(embeds));
+                    renderEmbeds();
                     updatePreview();
-                });
-            }
-
-            const deleteBtn = embedItem.querySelector('.delete-embed-btn');
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', () => {
-                    if (index > 0) {
-                        embeds.splice(index, 1);
-                        embedCount--;
-                        saveToLocalStorage('embeds', embeds);
-                        renderEmbeds();
-                        updatePreview();
-                        showToast('Embed deleted', 'success');
-                    }
-                });
-            }
+                    showToast('Embed deleted', 'success');
+                }
+            });
         });
 
         if (elements.embedContent.classList.contains('expanded')) {
-            elements.embedContent.style.maxHeight = window.innerWidth < 768 ? '300px' : embedCount > 1 ? '500px' : 'none';
-        }
-    };
-
-    const handleFileUploads = () => {
-        elements.messageAttachments.addEventListener('change', (e) => {
-            const maxFileSizeMB = 8;
-            const maxAttachments = 10;
-            const newFiles = Array.from(e.target.files);
-            const validFiles = [];
-
-            newFiles.forEach(file => {
-                const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
-                if (file.size > maxFileSizeMB * 1024 * 1024) {
-                    addLog('error', `Attachment '${file.name}' too large (${fileSizeMB} MB > ${maxFileSizeMB} MB)`);
-                    showToast(`File '${file.name}' too large (${fileSizeMB} MB / ${maxFileSizeMB} MB)`, 'error');
+            if (window.innerWidth < 768) { // Mobile
+                elements.embedContent.style.maxHeight = '300px';
+            } else { // Tablet/Desktop
+                if (embedCount > 1) {
+                    elements.embedContent.style.maxHeight = '500px';
                 } else {
-                    validFiles.push(file);
-                    addLog('success', `Attachment '${file.name}' uploaded (${fileSizeMB} MB)`);
+                    elements.embedContent.style.maxHeight = 'none';
                 }
-            });
-
-            if (validFiles.length > maxAttachments) {
-                addLog('warning', `Too many attachments (${validFiles.length}). Max ${maxAttachments}.`);
-                validFiles.splice(maxAttachments);
             }
+        }
+    }
 
-            attachments = validFiles;
-            const dataTransfer = new DataTransfer();
-            attachments.forEach(f => dataTransfer.items.add(f));
-            elements.messageAttachments.files = dataTransfer.files;
-            renderAttachmentsPreview();
-            updatePreview();
-            if (!attachments.length) elements.messageAttachments.value = '';
-        });
-    };
+    function loadLayout() {
+        const defaultLayout = ["settings", "preview", "stats", "controls", "logs"];
+        const savedLayout = localStorage.getItem('layout');
+        const container = document.querySelector('.app-content');
+        
+        if (!container) {
+            console.error('Error: .app-content container not found in DOM');
+            addLog('error', 'Failed to load layout: App content container missing');
+            return;
+        }
 
-    const renderAttachmentsPreview = () => {
-        elements.messageAttachmentsPreview.innerHTML = '';
-        attachments.forEach((file, i) => {
-            const fileSizeMB = (file.size / 1024 / 1024).toFixed(2);
-            const fileId = `${file.name}_${file.size}`;
-            const iconClass = file.type === 'application/pdf' ? 'fa-file-pdf' :
-                             file.type.includes('zip') || file.type.includes('compressed') ? 'fa-file-archive' :
-                             file.type.includes('msword') || file.type.includes('officedocument') ? 'fa-file-word' : 'fa-file';
-
-            const previewElement = document.createElement('div');
-            previewElement.className = 'attachment-preview-item';
-            previewElement.innerHTML = file.type.startsWith('image/') ? `
-                <img src="${URL.createObjectURL(file)}" alt="${file.name}">
-                <span>${file.name} (${fileSizeMB} MB)</span>
-                <button class="btn-icon-small remove-attachment" data-fid="${fileId}"><i class="fas fa-times"></i></button>
-            ` : file.type.startsWith('video/') ? `
-                <video controls><source src="${URL.createObjectURL(file)}" type="${file.type}"></video>
-                <span>${file.name} (${fileSizeMB} MB)</span>
-                <button class="btn-icon-small remove-attachment" data-fid="${fileId}"><i class="fas fa-times"></i></button>
-            ` : `
-                <i class="fas ${iconClass}"></i>
-                <span>${file.name} (${fileSizeMB} MB)</span>
-                <button class="btn-icon-small remove-attachment" data-fid="${fileId}"><i class="fas fa-times"></i></button>
-            `;
-            elements.messageAttachmentsPreview.appendChild(previewElement);
-
-            previewElement.querySelector('.remove-attachment').addEventListener('click', (e) => {
-                e.stopPropagation();
-                attachments = attachments.filter(f => `${f.name}_${f.size}` !== fileId);
-                const dataTransfer = new DataTransfer();
-                attachments.forEach(f => dataTransfer.items.add(f));
-                elements.messageAttachments.files = dataTransfer.files;
-                renderAttachmentsPreview();
-                updatePreview();
-                if (!attachments.length) elements.messageAttachments.value = '';
-            });
-        });
-    };
-
-    const setupEventListeners = () => {
-        elements.themeCarousel.addEventListener('click', (e) => {
-            const themePreview = e.target.closest('.theme-preview');
-            if (!themePreview) return;
-            const theme = themePreview.dataset.theme;
-            document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-            document.body.setAttribute('data-theme', theme);
-            saveToLocalStorage('theme', theme);
-            document.querySelectorAll('.theme-preview').forEach(el => el.classList.remove('active'));
-            themePreview.classList.add('active');
-            showToast(`Theme changed to ${theme}`, 'success');
-            setTimeout(() => { document.body.style.transition = ''; }, 300);
-        });
-
-        elements.toggleVisibility.addEventListener('click', () => {
-            const type = elements.webhookUrl.type === 'password' ? 'text' : 'password';
-            elements.webhookUrl.type = type;
-            elements.toggleVisibility.innerHTML = `<i class="fas fa-eye${type === 'password' ? '' : '-slash'}"></i>`;
-        });
-
-        const inputHandlers = {
-            webhookUrl: () => { saveToLocalStorage('webhookUrl', elements.webhookUrl.value); checkWebhookPrivacy(elements.webhookUrl.value); },
-            messageContent: () => { saveToLocalStorage('messageContent', elements.messageContent.value); updatePreview(); },
-            username: () => { saveToLocalStorage('username', elements.username.value); updatePreview(); },
-            avatarUrl: () => { saveToLocalStorage('avatarUrl', elements.avatarUrl.value); updatePreview(); },
-            randomMessages: () => saveToLocalStorage('randomMessages', elements.randomMessages.checked),
-            enableSounds: () => saveToLocalStorage('soundsEnabled', elements.enableSounds.checked),
-            embedImageUrl: () => { saveToLocalStorage('embedImageUrl', elements.embedImageUrl.value); updatePreview(); },
-            embedThumbnailUrl: () => { saveToLocalStorage('embedThumbnailUrl', elements.embedThumbnailUrl.value); updatePreview(); },
-            intervalUnit: updateIntervalDisplay,
-            intervalValue: updateIntervalDisplay,
-            messageLimit: updateMessageLimitPlaceholder
-        };
-
-        for (const [key, handler] of Object.entries(inputHandlers)) {
-            elements[key].addEventListener('input', debounce(handler, 200));
-            if (key === 'randomMessages' || key === 'enableSounds') {
-                elements[key].addEventListener('change', handler);
+        // Use saved layout if valid, otherwise use default
+        let layout = defaultLayout;
+        if (savedLayout) {
+            try {
+                const parsedLayout = JSON.parse(savedLayout);
+                if (Array.isArray(parsedLayout) && parsedLayout.length === defaultLayout.length &&
+                    defaultLayout.every(card => parsedLayout.includes(card))) {
+                    layout = parsedLayout;
+                } else {
+                    console.warn('Invalid saved layout, using default:', parsedLayout);
+                }
+            } catch (e) {
+                console.error('Error parsing saved layout:', e);
             }
         }
 
-        document.querySelectorAll('.interval-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const action = btn.dataset.action;
-                const input = btn.closest('.input-with-buttons').querySelector('input');
-                let value = parseInt(input.value) || (input.id === 'message-limit' ? 0 : 10);
-                if (action === 'increment') {
-                    input.value = input.id === 'message-limit' && input.value === '' ? 1 : value + 1;
-                } else if (action === 'decrement' && value > 0) {
-                    input.value = value - 1;
-                    if (input.value === '0' && input.id === 'message-limit') input.value = '';
-                }
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-            });
-        });
-
-        document.querySelectorAll('.input-with-buttons input').forEach(input => input.addEventListener('focus', () => input.select()));
-
-        const buttonHandlers = {
-            startBtn: startSending,
-            stopBtn: stopSending,
-            testBtn: sendTestMessage,
-            resetStats: resetStatistics,
-            clearLogs: clearLogs,
-            historyBtn: showHistoryModal,
-            suggestMessage: showMessageSuggestions,
-            formatHelp: showFormatHelp,
-            exportJsonMenu: exportLogsAsJson,
-            exportScreenshotMenu: exportLogsAsScreenshot,
-            importJsonMenu: importLogsFromJson,
-            saveProfileBtn: saveProfile,
-            manageProfilesBtn: manageProfiles
-        };
-
-        for (const [key, handler] of Object.entries(buttonHandlers)) {
-            elements[key].addEventListener('click', handler);
-        }
-
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', () => btn.closest('.modal').classList.add('hidden'));
-        });
-
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) e.target.classList.add('hidden');
-        });
-
-        elements.avatarMenuBtn?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            elements.avatarMenuBtn.nextElementSibling?.classList.toggle('show');
-        });
-
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.dropdown-content.show').forEach(dropdown => dropdown.classList.remove('show'));
-        });
-
-        elements.loginBtn?.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
-            if (error) {
-                addLog('error', `Login failed: ${error.message}`);
+        // Store card elements to ensure they exist
+        const cardElements = {};
+        layout.forEach(card => {
+            const el = document.querySelector(`[data-card="${card}"]`);
+            if (el) {
+                cardElements[card] = el;
+            } else {
+                console.error(`Error: Card element for "${card}" not found in DOM`);
             }
         });
 
-        elements.logoutBtn?.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await supabase.auth.signOut();
-            updateAuthUI(null);
-            addLog('success', 'Logged out successfully');
-            playSound('notification');
-        });
-    };
+        // Check if all cards were found
+        if (Object.keys(cardElements).length !== defaultLayout.length) {
+            console.error('Missing card elements:', defaultLayout.filter(card => !cardElements[card]));
+            addLog('error', 'Failed to load layout: One or more card elements missing');
+            // Fallback: Append all available cards in default order
+            defaultLayout.forEach(card => {
+                const el = document.querySelector(`[data-card="${card}"]`);
+                if (el && !container.contains(el)) {
+                    container.appendChild(el);
+                }
+            });
+            return;
+        }
 
-    const getRandomMessage = () => {
-        if (!elements.randomMessages.checked) return elements.messageContent.value.trim();
+        // Remove cards from container and re-append in the correct order
+        layout.forEach(card => {
+            const el = cardElements[card];
+            if (el && !container.contains(el)) {
+                container.appendChild(el);
+            }
+        });
+    }
+
+    function updateIntervalDisplay() {
+        const value = elements.intervalValue.value;
+        const unit = elements.intervalUnit.value;
+        const symbolMap = {
+            seconds: 's',
+            minutes: 'm',
+            hours: 'h'
+        };
+        const symbol = symbolMap[unit] || '';
+        elements.intervalDisplay.textContent = `${value} ${symbol}`;
+    }
+
+    function checkWebhookPrivacy(url) {
+        if (!elements.webhookWarning) return; // Skip if element doesn't exist
+        const isPublic = url.includes('discord.com/api/webhooks/') && !url.includes('localhost');
+        elements.webhookWarning.classList.toggle('hidden', !isPublic);
+    }
+
+    function updatePreview() {
+        let messageContent = elements.messageContent.value || 'Your message will appear here...';
+        messageContent = formatDiscordMarkdown(messageContent, 'description');
+        elements.previewText.innerHTML = messageContent;
+        elements.previewUsername.textContent = elements.username.value || 'Webhook Sender';
+        elements.previewAvatar.src = elements.avatarUrl.value || 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+        // Remove old preview elements
+        document.querySelectorAll('.embed-preview').forEach(preview => preview.remove());
+        const attachmentsPreview = document.querySelector('.preview-attachments');
+        if (attachmentsPreview) attachmentsPreview.remove();
+
+        // Render attachments first
+        if (attachments.length > 0) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'preview-attachments';
+            previewContainer.style.display = 'flex';
+            previewContainer.style.gap = '15px';
+            previewContainer.style.flexWrap = 'wrap';
+            attachments.forEach(file => {
+                const attachmentItem = document.createElement('div');
+                attachmentItem.className = 'attachment-preview-item';
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.alt = file.name;
+                    attachmentItem.appendChild(img);
+                } else {
+                    // Only icon for non-image files
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-file';
+                    attachmentItem.appendChild(icon);
+                }
+                // Attachment info
+                const info = document.createElement('div');
+                info.className = 'attachment-info';
+                if (!file.type.startsWith('image/')) {
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-file';
+                    info.appendChild(icon);
+                }
+                const name = document.createElement('span');
+                name.style.color = '#4d73fa';
+                name.textContent = file.name;
+                info.appendChild(name);
+                const size = document.createElement('span');
+                size.style.color = '#b9bbbe';
+                size.textContent = `(${(file.size/1024/1024).toFixed(2)} MB)`;
+                info.appendChild(size);
+
+                attachmentItem.appendChild(info);
+                previewContainer.appendChild(attachmentItem);
+            });
+            document.querySelector('.discord-content').appendChild(previewContainer);
+        }
+
+        // Render embeds
+        embeds.forEach(embed => {
+            if (embed.title.trim() || embed.description.trim() || embed.imageUrl || embed.thumbnailUrl) {
+                const embedPreview = document.createElement('div');
+                embedPreview.className = 'embed-preview';
+                const embedColor = embed.color || '#5865F2';
+                embedPreview.innerHTML = `
+                    <div class="embed" style="border-left: 4px solid ${embedColor}">
+                        ${embed.title.trim() ? `<div class="embed-title">${formatDiscordMarkdown(embed.title.trim(), 'title')}</div>` : ''}
+                        ${embed.description.trim() ? `<div class="embed-description">${formatDiscordMarkdown(embed.description.trim(), 'description')}</div>` : ''}
+                        ${embed.imageUrl ? `<div class="embed-image"><img src="${embed.imageUrl}" alt="Embed Image"></div>` : ''}
+                        ${embed.thumbnailUrl && isValidImageUrl(embed.thumbnailUrl) ? `<div class="embed-thumbnail"><img src="${embed.thumbnailUrl}" alt="Embed Thumbnail"></div>` : ''}
+                        ${embed.footer.trim() ? `<div class="embed-footer">${formatDiscordMarkdown(embed.footer.trim(), 'description')}</div>` : ''}
+                    </div>
+                `;
+                document.querySelector('.discord-content').appendChild(embedPreview);
+            }
+        });
+    }
+
+    function formatDiscordMarkdown(text, context = 'description') {
+        let formattedText = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/~~(.*?)~~/g, '<s>$1</s>')
+            .replace(/`(.*?)`/g, '<code>$1</code>')
+            .replace(/\n/g, '<br>');
+
+        if (context === 'title') {
+            // For embed titles, keep mentions as raw IDs
+            return formattedText;
+        } else {
+            // For descriptions and other content, format mentions as resolved names
+            return formattedText
+                .replace(/<@!?(\d+)>/g, '<span class="discord-mention">@user</span>')
+                .replace(/<#(\d+)>/g, '<span class="discord-mention">#channel</span>')
+                .replace(/<@&(\d+)>/g, '<span class="discord-mention">@role</span>')
+                .replace(/<a?:(\w+):(\d+)>/g, '<img class="discord-emoji" src="https://cdn.discordapp.com/emojis/$2.png" alt="$1">');
+        }
+    }
+
+    function getRandomMessage() {
+        if (!elements.randomMessages.checked) {
+            return elements.messageContent.value.trim();
+        }
         const messages = elements.messageContent.value.split('\n').filter(line => line.trim());
         return messages.length ? messages[Math.floor(Math.random() * messages.length)] : elements.messageContent.value;
-    };
+    }
 
-    const showHistoryModal = () => {
+    function showHistoryModal() {
         elements.historyList.innerHTML = '';
         let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
-        history = [...new Set(history.map(item => item.url))].map(url => ({ url, lastUsed: new Date().toISOString() })).slice(0, 10);
-        saveToLocalStorage('webhookHistory', history);
 
-        if (!history.length) {
+        // Καθάρισε duplicates αν υπάρχουν (κρατάει το πιο πρόσφατο)
+        const seen = new Set();
+        history = history.filter(item => {
+            if (seen.has(item.url)) return false;
+            seen.add(item.url);
+            return true;
+        });
+        // Κράτα μόνο τα 10 πιο πρόσφατα
+        if (history.length > 10) history = history.slice(0, 10);
+        // Ανανέωσε το localStorage
+        localStorage.setItem('webhookHistory', JSON.stringify(history));
+
+        if (history.length === 0) {
             elements.historyList.innerHTML = '<p>No history yet</p>';
-            elements.historyModal.classList.remove('hidden');
             return;
         }
 
@@ -553,13 +811,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const historyItem = document.createElement('div');
             historyItem.className = 'history-item';
             const url = item.url;
-            const prettyUrl = url.indexOf('/api/') !== -1 ? url.substring(url.indexOf('/api/') + 5) : url;
+            const idx = url.indexOf('/api/');
+            const prettyUrl = idx !== -1 ? url.substring(idx + 5) : url;
+
             historyItem.innerHTML = `<span>${prettyUrl}</span><i class="fas fa-arrow-right"></i>`;
             historyItem.title = url;
+
             historyItem.addEventListener('click', () => {
-                elements.webhookUrl.value = url;
-                saveToLocalStorage('webhookUrl', url);
-                checkWebhookPrivacy(url);
+                elements.webhookUrl.value = item.url;
+                localStorage.setItem('webhookUrl', item.url);
+                checkWebhookPrivacy(item.url);
                 elements.historyModal.classList.add('hidden');
                 showToast('Webhook URL loaded from history', 'success');
             });
@@ -567,9 +828,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         elements.historyModal.classList.remove('hidden');
-    };
+    }
 
-    const showMessageSuggestions = () => {
+    function showMessageSuggestions() {
         const suggestions = [
             "Hello world! 👋",
             "This is a test message 🧪",
@@ -582,9 +843,10 @@ document.addEventListener('DOMContentLoaded', () => {
             "Warning: Something happened ⚠️",
             "Information update ℹ️"
         ];
-
+        
         const list = elements.suggestionsModal.querySelector('.suggestions-list');
         list.innerHTML = '';
+        
         suggestions.forEach(msg => {
             const div = document.createElement('div');
             div.textContent = msg;
@@ -596,39 +858,101 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             list.appendChild(div);
         });
-
+        
         elements.suggestionsModal.classList.remove('hidden');
-    };
+    }
 
-    const showFormatHelp = () => {
+    function showFormatHelp() {
         elements.formatHelpModal.classList.remove('hidden');
-    };
+    }
 
-    const updateStats = () => {
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `<i class="fas ${getToastIcon(type)}"></i><span>${message}</span>`;
+        elements.toastContainer.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }, 100);
+    }
+
+    function getToastIcon(type) {
+        const icons = {
+            success: 'check-circle',
+            error: 'times-circle',
+            warning: 'exclamation-circle',
+            info: 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+
+    function playSound(type) {
+        if (!elements.enableSounds.checked) return;
+        const sound = { 
+            success: elements.successSound, 
+            error: elements.errorSound, 
+            notification: elements.notificationSound 
+        }[type];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play().catch(e => console.error('Error playing sound:', e));
+        }
+    }
+
+    function addLog(type, message) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        const iconClass = { 
+            success: 'fa-check-circle', 
+            error: 'fa-times-circle', 
+            warning: 'fa-exclamation-circle' 
+        }[type] || 'fa-info-circle';
+        logEntry.innerHTML = `<i class="fas ${iconClass}"></i><span class="log-time">${timestamp}</span><span class="log-message">${message}</span>`;
+        elements.logContainer.prepend(logEntry);
+        elements.logContainer.scrollTop = 0;
+        if (elements.logContainer.children.length > 100) {
+            elements.logContainer.removeChild(elements.logContainer.lastChild);
+        }
+    }
+
+    function updateStats() {
         elements.statTotal.textContent = stats.total;
         elements.statSuccess.textContent = stats.success;
         elements.statFailed.textContent = stats.failed;
         elements.statAvgTime.textContent = stats.responseTimes.length
             ? `${Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)}ms`
             : '0ms';
-    };
+    }
 
-    const saveStats = () => saveToLocalStorage('stats', stats);
+    function saveStats() {
+        localStorage.setItem('stats', JSON.stringify(stats));
+    }
 
-    const saveToHistory = (url) => {
+    function saveToHistory(url) {
         if (!url) return;
         let history = JSON.parse(localStorage.getItem('webhookHistory') || '[]');
+        // Φίλτρο: κρατά μόνο το πρώτο κάθε μοναδικού url (δηλ. αν υπάρχει, το αφαιρεί)
         history = history.filter(item => item.url !== url);
         history.unshift({ url, lastUsed: new Date().toISOString() });
-        saveToLocalStorage('webhookHistory', history.slice(0, 10));
-    };
+        if (history.length > 10) history = history.slice(0, 10);
+        localStorage.setItem('webhookHistory', JSON.stringify(history));
+    }
 
-    const startSending = async () => {
+    async function startSending() {
         const webhookUrl = elements.webhookUrl.value.trim();
         const message = elements.messageContent.value.trim();
         const intervalValue = parseInt(elements.intervalValue.value);
         const intervalUnit = elements.intervalUnit.value.toLowerCase();
-        let messageLimit = parseInt(elements.messageLimit.value) || 0;
+        let messageLimit = parseInt(elements.messageLimit.value);
+        if (isNaN(messageLimit) || elements.messageLimit.value === '') {
+            messageLimit = 0;
+        }
         let sentCount = 1;
 
         if (!webhookUrl) {
@@ -636,13 +960,13 @@ document.addEventListener('DOMContentLoaded', () => {
             playSound('error');
             return;
         }
-        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && !attachments.length) {
-            addLog('error', 'Please enter a message, add an embed, or attach a file');
+        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && attachments.length === 0) {
+            addLog('error', 'Please enter a message, add an embed, or attach a file to send');
             playSound('error');
             return;
         }
         if (isNaN(intervalValue) || intervalValue <= 0) {
-            addLog('error', 'Please enter a valid interval (> 0)');
+            addLog('error', 'Please enter a valid interval (greater than 0)');
             playSound('error');
             return;
         }
@@ -658,41 +982,44 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (intervalUnit === 'hours') intervalMs *= 3600;
         if (intervalMs < 2000) {
             intervalMs = 2000;
-            addLog('warning', 'Interval too short. Using minimum 2 seconds.');
+            addLog('warning', 'Interval too short. Using minimum 2 seconds to avoid rate limits.');
         }
 
         saveToHistory(webhookUrl);
 
-        const updateStatusText = () => {
+        // Helper for status update
+        function updateStatusText() {
             const unitText = intervalValue === 1 ? intervalUnit.replace(/s$/, '') : intervalUnit;
-            elements.statusText.textContent = `Sending every ${intervalValue} ${unitText}` +
-                (messageLimit === 0 ? ' (Unlimited)' : ` (${sentCount}/${messageLimit})`);
-        };
+            elements.statusText.textContent =
+                `Sending every ${intervalValue} ${unitText}` +
+                (messageLimit === 0 ? ' (Unlimited)' : messageLimit ? ` (${sentCount}/${messageLimit})` : '');
+        }
 
-        const sendAndSchedule = async () => {
+        async function sendAndSchedule() {
             sentCount++;
             updateStatusText();
-            if (messageLimit !== 0 && sentCount > messageLimit) {
+            if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount > messageLimit) {
                 stopSending();
                 addLog('success', `Stopped after sending ${messageLimit} messages`);
                 return;
             }
             intervalId = setTimeout(async () => {
-                await sendMessage(webhookUrl, getRandomMessage(), true);
+                await sendMessage(webhookUrl, getRandomMessage());
                 sendAndSchedule();
             }, intervalMs);
-        };
+        }
 
         try {
+            // Send first message
             await sendMessage(webhookUrl, getRandomMessage());
             updateStatusText();
-            if (messageLimit !== 0 && sentCount >= messageLimit) {
+            if (!isNaN(messageLimit) && messageLimit !== 0 && sentCount >= messageLimit) {
                 stopSending();
                 addLog('success', `Stopped after sending ${sentCount} messages`);
                 return;
             }
             intervalId = setTimeout(async () => {
-                await sendMessage(webhookUrl, getRandomMessage(), true);
+                await sendMessage(webhookUrl, getRandomMessage());
                 sendAndSchedule();
             }, intervalMs);
 
@@ -700,15 +1027,16 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.startBtn.disabled = true;
             elements.stopBtn.disabled = false;
             elements.statusDot.classList.add('active');
-            addLog('success', `Started sending every ${intervalValue} ${intervalUnit}${messageLimit === 0 ? ' (unlimited)' : ` for ${messageLimit} messages`}`);
+            updateStatusText();
+            addLog('success', `Started sending messages every ${intervalValue} ${intervalUnit}` + (messageLimit === 0 ? ' (unlimited)' : messageLimit ? ` for ${messageLimit} messages` : ''));
             playSound('success');
         } catch (error) {
             addLog('error', `Failed to start sending: ${error.message}`);
             playSound('error');
         }
-    };
+    }
 
-    const stopSending = () => {
+    function stopSending() {
         if (intervalId) clearTimeout(intervalId);
         intervalId = null;
         isSending = false;
@@ -718,9 +1046,9 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.statusText.textContent = 'Ready';
         addLog('warning', 'Stopped sending messages');
         playSound('notification');
-    };
+    }
 
-    const sendTestMessage = async () => {
+    async function sendTestMessage() {
         const webhookUrl = elements.webhookUrl.value.trim();
         const message = elements.messageContent.value.trim();
         if (!webhookUrl) {
@@ -728,20 +1056,21 @@ document.addEventListener('DOMContentLoaded', () => {
             playSound('error');
             return;
         }
-        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && !attachments.length) {
-            addLog('error', 'Please enter a message, add an embed, or attach a file');
+        if (!message && !embeds.some(embed => embed.title.trim() || embed.description.trim()) && attachments.length === 0) {
+            addLog('error', 'Please enter a message, add an embed, or attach a file to send');
             playSound('error');
             return;
         }
         saveToHistory(webhookUrl);
-        await sendMessage(webhookUrl, getRandomMessage());
-    };
+        sendMessage(webhookUrl, getRandomMessage());
+    }
 
-    const sendMessage = async (webhookUrl, message, isScheduled = false) => {
+    async function sendMessage(webhookUrl, message, isScheduled = false) {
         const startTime = Date.now();
         const username = elements.username.value.trim() || 'Webhook Sender';
         const avatarUrl = elements.avatarUrl.value.trim() || 'https://cdn.discordapp.com/embed/avatars/0.png';
-
+        
+        // Validate webhook URL
         if (!webhookUrl.includes('discord.com/api/webhooks/')) {
             throw new Error('Invalid Discord webhook URL');
         }
@@ -758,6 +1087,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 timestamp: new Date().toISOString()
             }));
 
+        // Create progress indicator with progress bar
         const progressToast = document.createElement('div');
         progressToast.className = 'toast toast-info';
         progressToast.innerHTML = `
@@ -765,20 +1095,25 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>Uploading...</span>
             <div class="progress-bar">
                 <div class="progress-bar-fill" style="width: 0%"></div>
-            </div>`;
+            </div>
+        `;
         elements.toastContainer.appendChild(progressToast);
         progressToast.classList.add('show');
 
         try {
-            if (attachments.length) {
+            if (attachments.length > 0) {
                 const formData = new FormData();
-                attachments.forEach((file, index) => formData.append(`file${index}`, file, file.name));
+                
+                attachments.forEach((file, index) => {
+                    formData.append(`file${index}`, file, file.name);
+                });
+                
                 formData.append('payload_json', JSON.stringify({
                     allowed_mentions: { parse: ["users", "roles", "everyone"] },
                     content: message,
                     username,
                     avatar_url: avatarUrl,
-                    embeds: embedsToSend.length ? embedsToSend : undefined
+                    embeds: embedsToSend.length > 0 ? embedsToSend : undefined
                 }));
 
                 const xhr = new XMLHttpRequest();
@@ -795,16 +1130,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressToast.remove();
                     try {
                         if (xhr.status >= 200 && xhr.status < 300) {
-                            const responseTime = Date.now() - startTime;
-                            stats.total++;
-                            stats.success++;
-                            stats.responseTimes.push(responseTime);
-                            if (stats.responseTimes.length > 10) stats.responseTimes.shift();
-                            updateStats();
-                            saveStats();
-                            addLog('success', `${isScheduled ? '[Scheduled] ' : ''}Message sent successfully (${responseTime}ms)`);
-                            playSound('success');
+                            // Success case
                         } else {
+                            let errorMessage = `HTTP error! Status: ${xhr.status}`;
+                            // Add specific error messages
                             const errorMap = {
                                 400: 'Invalid request. Check file format or webhook URL.',
                                 401: 'Unauthorized. Invalid webhook URL or token.',
@@ -812,13 +1141,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 413: 'File size too large for Discord (max 8 MB).',
                                 429: 'Rate limit exceeded. Please try again later.'
                             };
-                            throw new Error(errorMap[xhr.status] || `HTTP error! Status: ${xhr.status}`);
+                            errorMessage = errorMap[xhr.status] || errorMessage;
+                            throw new Error(errorMessage);
                         }
                     } catch (error) {
-                        stats.total++;
-                        stats.failed++;
-                        updateStats();
-                        saveStats();
                         addLog('error', `${isScheduled ? '[Scheduled] ' : ''}Failed to send message: ${error.message}`);
                         playSound('error');
                     }
@@ -826,12 +1152,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 xhr.onerror = () => {
                     progressToast.remove();
-                    stats.total++;
-                    stats.failed++;
-                    updateStats();
-                    saveStats();
-                    addLog('error', `${isScheduled ? '[Scheduled] ' : ''}Failed to send message: Network error`);
-                    playSound('error');
+                    throw new Error('Network error: Could not connect to the server.');
+                };
+
+                xhr.onabort = () => {
+                    progressToast.remove();
+                    throw new Error('Request aborted.');
                 };
 
                 xhr.send(formData);
@@ -844,21 +1170,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         content: message,
                         username,
                         avatar_url: avatarUrl,
-                        embeds: embedsToSend.length ? embedsToSend : undefined
+                        embeds: embedsToSend.length > 0 ? embedsToSend : undefined
                     })
                 });
-
+                
                 progressToast.remove();
                 if (!response.ok) {
-                    const errorMap = {
-                        400: 'Invalid request. Check message content or webhook URL.',
-                        401: 'Unauthorized. Invalid webhook URL or token.',
-                        404: 'Webhook not found. Check the URL.',
-                        429: 'Rate limit exceeded. Please try again later.'
-                    };
-                    throw new Error(errorMap[response.status] || `HTTP error! Status: ${response.status}`);
+                    let errorMessage = `HTTP error! Status: ${response.status}`;
+                    if (response.status === 400) {
+                        errorMessage = 'Invalid request. Check message content or webhook URL.';
+                    } else if (response.status === 401) {
+                        errorMessage = 'Unauthorized. Invalid webhook URL or token.';
+                    } else if (response.status === 404) {
+                        errorMessage = 'Webhook not found. Check the URL.';
+                    } else if (response.status === 429) {
+                        errorMessage = 'Rate limit exceeded. Please try again later.';
+                    }
+                    throw new Error(errorMessage);
                 }
-
+                
                 const responseTime = Date.now() - startTime;
                 stats.total++;
                 stats.success++;
@@ -878,114 +1208,148 @@ document.addEventListener('DOMContentLoaded', () => {
             addLog('error', `${isScheduled ? '[Scheduled] ' : ''}Failed to send message: ${error.message}`);
             playSound('error');
         }
-    };
+    }
 
-    const resetStatistics = () => {
-        if (!confirm('Are you sure you want to reset ALL settings and data? This cannot be undone!')) return;
-        stopSending();
+    function resetStatistics() {
+        console.log('resetStatistics called');
+        if (confirm('Are you sure you want to reset ALL settings and data? This cannot be undone!')) {
+            console.log('Calling updateMessageLimitPlaceholder');
+            stopSending();
+            
+            // Reset input fields
+            elements.webhookUrl.value = '';
+            elements.messageContent.value = '';
+            elements.intervalValue.value = '10';
+            elements.intervalUnit.value = 'seconds';
+            elements.messageLimit.value = ''; // Set to empty for 'Unlimited'
+            elements.username.value = '';
+            elements.avatarUrl.value = '';
+            elements.randomMessages.checked = false;
+            elements.embedImageUrl.value = '';
+            elements.embedThumbnailUrl.value = '';
+            elements.messageAttachments.value = '';
+            elements.messageAttachmentsPreview.innerHTML = '';
+            attachments = [];
+            
+            // Reset embeds
+            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
+            embedCount = 1;
+            renderEmbeds();
+            
+            // Reset preview
+            elements.previewText.textContent = 'Your message will appear here...';
+            elements.previewUsername.textContent = 'Webhook Sender';
+            elements.previewAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+            
+            // Reset stats
+            stats = { total: 0, success: 0, failed: 0, responseTimes: [] };
+            updateStats();
+            
+            // Clear logs
+            elements.logContainer.innerHTML = '';
+            
+            // Clear localStorage
+            localStorage.removeItem('webhookUrl');
+            localStorage.removeItem('messageContent');
+            localStorage.removeItem('username');
+            localStorage.removeItem('avatarUrl');
+            localStorage.removeItem('randomMessages');
+            localStorage.removeItem('stats');
+            localStorage.removeItem('embeds');
+            localStorage.removeItem('layout');
+            localStorage.removeItem('embedImageUrl');
+            localStorage.removeItem('embedThumbnailUrl');
+            localStorage.removeItem('logs');
+            
+            // Update UI
+            elements.statusText.textContent = 'Ready';
+            elements.statusDot.classList.remove('active');
+            
+            addLog('warning', 'Reset all settings and data');
+            playSound('notification');
+            
+            loadLayout();
+            updateMessageLimitPlaceholder();
+        }
+    }
 
-        elements.webhookUrl.value = '';
-        elements.messageContent.value = '';
-        elements.intervalValue.value = '10';
-        elements.intervalUnit.value = 'seconds';
-        elements.messageLimit.value = '';
-        elements.username.value = '';
-        elements.avatarUrl.value = '';
-        elements.randomMessages.checked = false;
-        elements.embedImageUrl.value = '';
-        elements.embedThumbnailUrl.value = '';
-        elements.messageAttachments.value = '';
-        elements.messageAttachmentsPreview.innerHTML = '';
-        attachments = [];
+    function clearLogs() {
+        if (confirm('Are you sure you want to clear all logs?')) {
+            elements.logContainer.innerHTML = '';
+            localStorage.removeItem('logs');
+            addLog('warning', 'Cleared all logs');
+        }
+    }
 
-        embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
-        embedCount = 1;
-        renderEmbeds();
-
-        elements.previewText.textContent = 'Your message will appear here...';
-        elements.previewUsername.textContent = 'Webhook Sender';
-        elements.previewAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-
-        stats = { total: 0, success: 0, failed: 0, responseTimes: [] };
-        updateStats();
-
-        elements.logContainer.innerHTML = '';
-        localStorage.clear();
-
-        elements.statusText.textContent = 'Ready';
-        elements.statusDot.classList.remove('active');
-
-        addLog('warning', 'Reset all settings and data');
-        playSound('notification');
-        loadLayout();
-        updateMessageLimitPlaceholder();
-    };
-
-    const clearLogs = () => {
-        if (!confirm('Are you sure you want to clear all logs?')) return;
-        elements.logContainer.innerHTML = '';
-        saveToLocalStorage('logs', []);
-        addLog('warning', 'Cleared all logs');
-    };
-
-    const exportLogsAsJson = () => {
+    function exportLogsAsJson() {
         const exportData = {
-            metadata: { app: "Webhook Sender PRO", version: "3.0", exportDate: new Date().toISOString() },
+            metadata: {
+                app: "Webhook Sender PRO",
+                version: "3.0",
+                exportDate: new Date().toISOString()
+            },
             settings: {
                 webhookUrl: elements.webhookUrl.value,
                 messageContent: elements.messageContent.value,
                 username: elements.username.value,
                 avatarUrl: elements.avatarUrl.value,
                 randomMessages: elements.randomMessages.checked,
-                interval: { value: elements.intervalValue.value, unit: elements.intervalUnit.value },
+                interval: {
+                    value: elements.intervalValue.value,
+                    unit: elements.intervalUnit.value
+                },
                 messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
                 enableSounds: elements.enableSounds.checked,
-                embeds
+                embeds: embeds
             },
             statistics: {
                 totalMessages: stats.total,
                 successful: stats.success,
                 failed: stats.failed,
-                averageResponseTime: stats.responseTimes.length
+                averageResponseTime: stats.responseTimes.length 
                     ? Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)
                     : 0
             },
             logs: Array.from(elements.logContainer.querySelectorAll('.log-entry')).map(log => ({
                 time: log.querySelector('.log-time').textContent,
                 message: log.querySelector('.log-message').textContent,
-                type: log.classList.contains('log-success') ? 'success' :
+                type: log.classList.contains('log-success') ? 'success' : 
                       log.classList.contains('log-error') ? 'error' : 'warning'
             }))
         };
 
-        downloadFile(JSON.stringify(exportData, null, 2), `webhook-sender-export-${new Date().toISOString().slice(0, 10)}.json`, 'application/json');
-        saveToLocalStorage('logs', exportData.logs);
+        const fileName = `webhook-sender-export-${new Date().toISOString().slice(0, 10)}.json`;
+        downloadFile(JSON.stringify(exportData, null, 2), fileName, 'application/json');
+        localStorage.setItem('logs', JSON.stringify(exportData.logs));
         addLog('success', 'Exported application data as JSON');
         playSound('success');
-    };
+    }
 
-    const exportLogsAsScreenshot = () => {
+    function exportLogsAsScreenshot() {
         html2canvas(elements.logContainer, {
             backgroundColor: getComputedStyle(document.body).getPropertyValue('--card-color'),
             scale: 2
         }).then(canvas => {
-            downloadFile(canvas.toDataURL('image/png'), `webhook-logs-${new Date().toISOString().slice(0, 10)}.png`, 'image/png', true);
+            const url = canvas.toDataURL('image/png');
+            downloadFile(url, `webhook-logs-${new Date().toISOString().slice(0, 10)}.png`, 'image/png', true);
             addLog('success', 'Exported logs as screenshot');
             playSound('success');
         });
-    };
+    }
 
-    const importLogsFromJson = () => {
+    function importLogsFromJson() {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.json';
         input.onchange = e => {
             const file = e.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
             reader.onload = event => {
                 try {
-                    importJsonData(JSON.parse(event.target.result));
+                    const jsonData = JSON.parse(event.target.result);
+                    importJsonData(jsonData);
                 } catch (err) {
                     addLog('error', `Failed to parse JSON: ${err.message}`);
                     playSound('error');
@@ -994,11 +1358,13 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsText(file);
         };
         input.click();
-    };
+    }
 
-    const importJsonData = (jsonData) => {
+    function importJsonData(jsonData) {
         try {
             stopSending();
+
+            // Import settings
             if (jsonData.settings) {
                 elements.webhookUrl.value = jsonData.settings.webhookUrl || '';
                 elements.messageContent.value = jsonData.settings.messageContent || '';
@@ -1006,6 +1372,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.avatarUrl.value = jsonData.settings.avatarUrl || '';
                 elements.randomMessages.checked = jsonData.settings.randomMessages || false;
                 elements.enableSounds.checked = jsonData.settings.enableSounds !== false;
+                
+                // Import embeds
                 if (jsonData.settings.embeds && Array.isArray(jsonData.settings.embeds)) {
                     embeds = jsonData.settings.embeds;
                     embedCount = embeds.length;
@@ -1015,13 +1383,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     embedCount = 1;
                     renderEmbeds();
                 }
+                
+                // Import interval settings
                 if (jsonData.settings.interval) {
                     elements.intervalValue.value = jsonData.settings.interval.value || '10';
                     elements.intervalUnit.value = jsonData.settings.interval.unit || 'seconds';
                 }
+                
                 elements.messageLimit.value = jsonData.settings.messageLimit === 'Unlimited' ? '' : jsonData.settings.messageLimit || '';
+                
                 updatePreview();
             }
+            
+            // Import statistics
             if (jsonData.statistics) {
                 stats = {
                     total: jsonData.statistics.totalMessages || 0,
@@ -1031,144 +1405,136 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 updateStats();
             }
+            
+            // Import and render logs
             if (jsonData.logs && Array.isArray(jsonData.logs)) {
                 elements.logContainer.innerHTML = '';
-                jsonData.logs.forEach(log => addLog(log.type || 'info', log.message || 'Imported log'));
+                jsonData.logs.forEach(log => {
+                    addLog(log.type || 'info', log.message || 'Imported log');
+                });
             }
-            saveToLocalStorage('webhookUrl', elements.webhookUrl.value);
-            saveToLocalStorage('messageContent', elements.messageContent.value);
-            saveToLocalStorage('username', elements.username.value);
-            saveToLocalStorage('avatarUrl', elements.avatarUrl.value);
-            saveToLocalStorage('randomMessages', elements.randomMessages.checked);
-            saveToLocalStorage('stats', stats);
-            saveToLocalStorage('soundsEnabled', elements.enableSounds.checked);
-            saveToLocalStorage('embeds', embeds);
-            saveToLocalStorage('logs', jsonData.logs || []);
+            
+            // Save settings to localStorage
+            localStorage.setItem('webhookUrl', elements.webhookUrl.value);
+            localStorage.setItem('messageContent', elements.messageContent.value);
+            localStorage.setItem('username', elements.username.value);
+            localStorage.setItem('avatarUrl', elements.avatarUrl.value);
+            localStorage.setItem('randomMessages', elements.randomMessages.checked);
+            localStorage.setItem('stats', JSON.stringify(stats));
+            localStorage.setItem('soundsEnabled', elements.enableSounds.checked);
+            localStorage.setItem('embeds', JSON.stringify(embeds));
+            localStorage.setItem('logs', JSON.stringify(jsonData.logs || []));
+            
             loadLayout();
             updateMessageLimitPlaceholder();
-            addLog('success', 'Imported settings and data from JSON');
+            addLog('success', 'Successfully imported settings and data from JSON');
             playSound('success');
         } catch (error) {
             addLog('error', `Failed to import data: ${error.message}`);
             playSound('error');
         }
-    };
+    }
 
-    const downloadFile = (content, fileName, type, isUrl = false) => {
+    function downloadFile(content, fileName, type, isUrl = false) {
         const a = document.createElement('a');
         a.href = isUrl ? content : URL.createObjectURL(new Blob([content], { type }));
         a.download = fileName;
         a.click();
         if (!isUrl) URL.revokeObjectURL(a.href);
-    };
+    }
 
-    const loadLayout = () => {
-        const defaultLayout = ["settings", "preview", "stats", "controls", "logs"];
-        const savedLayout = localStorage.getItem('layout');
-        const container = document.querySelector('.app-content');
-        if (!container) {
-            addLog('error', 'Failed to load layout: App content container missing');
-            return;
+    // --- SUPABASE JS ---
+    const SUPABASE_URL = 'https://trxxmujjyjtmpewwthdk.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRyeHhtdWpqeWp0bXBld3d0aGRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc5NDkyMjgsImV4cCI6MjA2MzUyNTIyOH0.5_Pl0wZikbRPBfdsCNt6Xczt2e2a8B1t-hkbKDR8HaA';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // === Elements ===
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const userInfo = document.getElementById('user-info');
+    const exportCloudBtn = document.getElementById('export-json-cloud');
+    const importCloudBtn = document.getElementById('import-json-cloud');
+
+    // === Login with Discord ===
+    loginBtn.addEventListener('click', async () => {
+        const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
+        if (error) {
+            console.error('Login failed:', error.message);
+            addLog('error', `Login failed: ${error.message}`);
         }
+    });
 
-        let layout = defaultLayout;
-        if (savedLayout) {
-            try {
-                const parsedLayout = JSON.parse(savedLayout);
-                if (Array.isArray(parsedLayout) && parsedLayout.length === defaultLayout.length &&
-                    defaultLayout.every(card => parsedLayout.includes(card))) {
-                    layout = parsedLayout;
-                }
-            } catch (e) {
-                console.error('Error parsing saved layout:', e);
-            }
-        }
+    logoutBtn.addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        if (userInfo) userInfo.textContent = 'Not logged in';
+        addLog('success', 'Logged out successfully');
+        playSound('notification');
+    });
 
-        const cardElements = {};
-        layout.forEach(card => {
-            const el = document.querySelector(`[data-card="${card}"]`);
-            if (el) cardElements[card] = el;
-        });
-
-        if (Object.keys(cardElements).length !== defaultLayout.length) {
-            defaultLayout.forEach(card => {
-                const el = document.querySelector(`[data-card="${card}"]`);
-                if (el && !container.contains(el)) container.appendChild(el);
-            });
-            return;
-        }
-
-        layout.forEach(card => {
-            const el = cardElements[card];
-            if (el && !container.contains(el)) container.appendChild(el);
-        });
-    };
-
-    // Supabase Functions
-    const updateAuthUI = (user) => {
-        if (!elements.userAvatar || !elements.userUsername || !elements.loginBtn || !elements.logoutBtn) return;
-        if (user) {
-            elements.loginBtn.style.display = 'none';
-            elements.logoutBtn.style.display = 'block';
-            elements.userAvatar.src = user.user_metadata?.avatar_url || 'https://cdn.discordapp.com/embed/avatars/0.png';
-            elements.userAvatar.style.display = 'block';
-            elements.userUsername.textContent = user.user_metadata?.name || user.email || user.id;
-            elements.userUsername.style.display = 'block';
-        } else {
-            elements.loginBtn.style.display = 'block';
-            elements.logoutBtn.style.display = 'none';
-            elements.userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
-            elements.userAvatar.style.display = 'block';
-            elements.userUsername.textContent = 'Guest User';
-            elements.userUsername.style.display = 'block';
-        }
-    };
-
-    const initAuth = async () => {
+    // Replace the checkUserSession function with this:
+    async function checkUserSession() {
         try {
             const { data: { user }, error } = await supabase.auth.getUser();
-            if (error && error.message !== 'Auth session missing!') {
-                addLog('error', `Session check failed: ${error.message}`);
+            if (!userInfo) return; // Exit if element doesn't exist
+            
+            if (error) {
+                if (error.message === 'Auth session missing!') {
+                    userInfo.textContent = 'Not logged in';
+                } else {
+                    console.error('Error checking user session:', error.message);
+                    addLog('error', `Error checking user session: ${error.message}`);
+                }
+                return;
             }
-            updateAuthUI(user);
+            userInfo.textContent = user ? `Logged in as ${user.email || user.id}` : 'Not logged in';
         } catch (e) {
-            addLog('error', `Auth initialization error: ${e.message}`);
+            if (userInfo) userInfo.textContent = 'Session error';
+            console.error('Unexpected error in checkUserSession:', e.message);
+            addLog('error', `Unexpected error checking session: ${e.message}`);
         }
-    };
+    }
 
-    const exportCloud = async () => {
+    // === Export JSON to Supabase Cloud ===
+    exportCloudBtn.addEventListener('click', async () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
-            addLog('error', 'Export failed: User not logged in');
             alert('❌ You must be logged in!');
+            addLog('error', 'Export failed: User not logged in');
             return;
         }
 
         const exportData = {
-            metadata: { app: "Webhook Sender PRO", version: "3.0", exportDate: new Date().toISOString() },
+            metadata: {
+                app: "Webhook Sender PRO",
+                version: "3.0",
+                exportDate: new Date().toISOString()
+            },
             settings: {
                 webhookUrl: elements.webhookUrl.value,
                 messageContent: elements.messageContent.value,
                 username: elements.username.value,
                 avatarUrl: elements.avatarUrl.value,
                 randomMessages: elements.randomMessages.checked,
-                interval: { value: elements.intervalValue.value, unit: elements.intervalUnit.value },
+                interval: {
+                    value: elements.intervalValue.value,
+                    unit: elements.intervalUnit.value
+                },
                 messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
                 enableSounds: elements.enableSounds.checked,
-                embeds
+                embeds: embeds
             },
             statistics: {
                 totalMessages: stats.total,
                 successful: stats.success,
                 failed: stats.failed,
-                averageResponseTime: stats.responseTimes.length
+                averageResponseTime: stats.responseTimes.length 
                     ? Math.round(stats.responseTimes.reduce((a, b) => a + b, 0) / stats.responseTimes.length)
                     : 0
             },
             logs: Array.from(elements.logContainer.querySelectorAll('.log-entry')).map(log => ({
                 time: log.querySelector('.log-time').textContent,
                 message: log.querySelector('.log-message').textContent,
-                type: log.classList.contains('log-success') ? 'success' :
+                type: log.classList.contains('log-success') ? 'success' : 
                       log.classList.contains('log-error') ? 'error' : 'warning'
             }))
         };
@@ -1178,21 +1544,23 @@ document.addEventListener('DOMContentLoaded', () => {
             .upsert({ user_id: user.id, data: exportData }, { onConflict: 'user_id' });
 
         if (error) {
-            addLog('error', `Upload failed: ${error.message}`);
+            console.error('Upload error:', error.message);
             alert('❌ Upload failed.');
+            addLog('error', `Upload failed: ${error.message}`);
         } else {
-            saveToLocalStorage('logs', exportData.logs);
-            addLog('success', 'Exported application data to cloud');
+            localStorage.setItem('logs', JSON.stringify(exportData.logs));
             alert('✅ Logs saved to cloud!');
+            addLog('success', 'Exported application data to cloud');
             playSound('success');
         }
-    };
+    });
 
-    const importCloud = async () => {
+    // === Import JSON from Supabase Cloud ===
+    importCloudBtn.addEventListener('click', async () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
-            addLog('error', 'Import failed: User not logged in');
             alert('❌ You must be logged in!');
+            addLog('error', 'Import failed: User not logged in');
             return;
         }
 
@@ -1203,26 +1571,69 @@ document.addEventListener('DOMContentLoaded', () => {
             .single();
 
         if (error || !data?.data) {
-            addLog('error', `Failed to load data: ${error?.message || 'No data found'}`);
+            console.error('Fetch error:', error?.message);
             alert('❌ Failed to load data.');
+            addLog('error', `Failed to load data: ${error?.message || 'No data found'}`);
             return;
         }
 
         try {
             importJsonData(data.data);
-            addLog('success', 'Imported application data from cloud');
             alert('✅ Logs imported from cloud!');
+            addLog('success', 'Imported application data from cloud');
         } catch (e) {
-            addLog('error', `Invalid cloud data: ${e.message}`);
+            console.error('Invalid JSON:', e);
             alert('❌ Invalid cloud data.');
+            addLog('error', `Invalid cloud data: ${e.message}`);
         }
-    };
+    });
 
-    const saveProfile = async () => {
+    // === Handle OAuth redirect ===
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+
+    if (code && state) {
+        (async () => {
+            try {
+                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+                if (sessionError) {
+                    console.error('Error checking session:', sessionError.message);
+                    addLog('error', `Session check failed: ${sessionError.message}`);
+                    return;
+                }
+
+                if (!sessionData.session) {
+                    const { data, error } = await supabase.auth.exchangeCodeForSession({ code });
+                    if (error) {
+                        console.error('Error exchanging code:', error.message);
+                        addLog('error', `OAuth exchange failed: ${error.message}`);
+                        return;
+                    }
+                    console.log('OAuth session established:', data);
+                    userInfo.textContent = `Logged in as ${data.user.email || data.user.id}`;
+                    addLog('success', 'Successfully logged in via OAuth');
+                    playSound('success');
+                }
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (e) {
+                console.error('Unexpected error in OAuth handling:', e.message);
+                addLog('error', `OAuth error: ${e.message}`);
+            }
+        })();
+    } else {
+        checkUserSession();
+    }
+
+    // === Profile Management ===
+    const MAX_PROFILES = 10;
+
+    // Save current configuration as a profile
+    elements.saveProfileBtn.addEventListener('click', async () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
-            addLog('error', 'Profile save failed: User not logged in');
             alert('❌ You must be logged in to save profiles!');
+            addLog('error', 'Profile save failed: User not logged in');
             return;
         }
 
@@ -1231,9 +1642,9 @@ document.addEventListener('DOMContentLoaded', () => {
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id);
 
-        if (count >= 10) {
-            addLog('error', `Profile save failed: Maximum of 10 profiles reached`);
-            alert('❌ You’ve reached the maximum of 10 saved profiles. Please delete one first.');
+        if (count >= MAX_PROFILES) {
+            alert(`❌ You've reached the maximum of ${MAX_PROFILES} saved profiles. Please delete one first.`);
+            addLog('error', `Profile save failed: Maximum of ${MAX_PROFILES} profiles reached`);
             return;
         }
 
@@ -1246,31 +1657,41 @@ document.addEventListener('DOMContentLoaded', () => {
             username: elements.username.value,
             avatarUrl: elements.avatarUrl.value,
             randomMessages: elements.randomMessages.checked,
-            interval: { value: elements.intervalValue.value, unit: elements.intervalUnit.value },
+            interval: {
+                value: elements.intervalValue.value,
+                unit: elements.intervalUnit.value
+            },
             messageLimit: elements.messageLimit.value === '' ? 'Unlimited' : elements.messageLimit.value,
             enableSounds: elements.enableSounds.checked,
-            embeds
+            embeds: embeds
         };
 
         const { error } = await supabase
             .from('user_profiles')
-            .insert({ user_id: user.id, name: profileName, data: profileData });
+            .insert({
+                user_id: user.id,
+                name: profileName,
+                data: profileData
+                // last_updated will be automatically set by the default value
+            });
 
         if (error) {
-            addLog('error', `Profile save failed: ${error.message}`);
+            console.error('Profile save error:', error.message);
             alert('❌ Failed to save profile.');
+            addLog('error', `Profile save failed: ${error.message}`);
         } else {
-            addLog('success', `Profile "${profileName}" saved to cloud`);
             alert('✅ Profile saved successfully!');
+            addLog('success', `Profile "${profileName}" saved to cloud`);
             playSound('success');
         }
-    };
+    });
 
-    const manageProfiles = async () => {
+    // Update the manageProfilesBtn event listener to handle null cases
+    elements.manageProfilesBtn.addEventListener('click', async () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) {
-            addLog('error', 'Profile management failed: User not logged in');
             alert('❌ You must be logged in to manage profiles!');
+            addLog('error', 'Profile management failed: User not logged in');
             return;
         }
 
@@ -1280,58 +1701,94 @@ document.addEventListener('DOMContentLoaded', () => {
                 .select('*')
                 .eq('user_id', user.id)
                 .order('last_updated', { ascending: false });
-
+            
             if (error) throw error;
+            
+            // Ensure we always pass an array to renderProfilesList
             renderProfilesList(profiles || []);
             elements.profilesModal.classList.remove('hidden');
         } catch (error) {
-            addLog('error', `Profile load failed: ${error.message}`);
+            console.error('Profile fetch error:', error.message);
             alert('❌ Failed to load profiles.');
+            addLog('error', `Profile load failed: ${error.message}`);
+            // Still open modal but show empty state
             renderProfilesList([]);
             elements.profilesModal.classList.remove('hidden');
         }
-    };
+    });
 
-    const renderProfilesList = (profiles) => {
-        elements.profilesList.innerHTML = '';
-        elements.noProfilesMessage.style.display = (!profiles || !Array.isArray(profiles) || !profiles.length) ? 'block' : 'none';
-
+    function renderProfilesList(profiles) {
+        const profilesList = document.getElementById('profiles-list');
+        const noProfilesMsg = document.getElementById('no-profiles-message');
+        
+        profilesList.innerHTML = '';
+        
+        // Handle null/undefined or empty array cases
+        if (!profiles || !Array.isArray(profiles) || profiles.length === 0) {
+            noProfilesMsg.style.display = 'block';
+            return;
+        }
+        
+        noProfilesMsg.style.display = 'none';
+        
         profiles.forEach(profile => {
             const profileItem = document.createElement('div');
             profileItem.className = 'profile-item';
+
             const date = new Date(profile.last_updated || profile.created_at || new Date());
             const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
             profileItem.innerHTML = `
                 <div class="profile-info">
                     <div class="profile-name">${profile.name || 'Unnamed Profile'}</div>
                     <div class="profile-date">${formattedDate}</div>
                 </div>
                 <div class="profile-actions">
-                    <button class="btn-icon-small load-profile" title="Load Profile"><i class="fas fa-download"></i></button>
-                    <button class="btn-icon-small delete-profile" title="Delete Profile"><i class="fas fa-trash"></i></button>
-                </div>`;
+                    <button class="btn-icon-small load-profile" title="Load Profile">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="btn-icon-small delete-profile" title="Delete Profile">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+
+            // Listeners
             profileItem.querySelector('.load-profile').addEventListener('click', () => loadProfile(profile));
             profileItem.querySelector('.delete-profile').addEventListener('click', () => deleteProfile(profile.id));
-            elements.profilesList.appendChild(profileItem);
+            profilesList.appendChild(profileItem);
         });
-    };
+    }
 
-    const loadProfile = async (profile) => {
-        if (!confirm(`Load profile "${profile.name}"? This will overwrite your current settings.`)) return;
+    async function loadProfile(profile) {
+        if (!confirm(`Load profile "${profile.name}"? This will overwrite your current settings.`)) {
+            return;
+        }
+        
         try {
+            // Stop any active sending
             stopSending();
+            
+            // Load profile data
             const profileData = profile.data;
+            
+            // Update UI elements
             elements.webhookUrl.value = profileData.webhookUrl || '';
             elements.messageContent.value = profileData.messageContent || '';
             elements.username.value = profileData.username || '';
             elements.avatarUrl.value = profileData.avatarUrl || '';
             elements.randomMessages.checked = profileData.randomMessages || false;
             elements.enableSounds.checked = profileData.enableSounds !== false;
+            
+            // Update interval settings
             if (profileData.interval) {
                 elements.intervalValue.value = profileData.interval.value || '10';
                 elements.intervalUnit.value = profileData.interval.unit || 'seconds';
             }
+            
             elements.messageLimit.value = profileData.messageLimit === 'Unlimited' ? '' : profileData.messageLimit || '';
+            
+            // Update embeds
             if (profileData.embeds && Array.isArray(profileData.embeds)) {
                 embeds = profileData.embeds;
                 embedCount = embeds.length;
@@ -1341,37 +1798,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 embedCount = 1;
                 renderEmbeds();
             }
+            
+            // Update preview
             updatePreview();
-            saveToLocalStorage('webhookUrl', elements.webhookUrl.value);
-            saveToLocalStorage('messageContent', elements.messageContent.value);
-            saveToLocalStorage('username', elements.username.value);
-            saveToLocalStorage('avatarUrl', elements.avatarUrl.value);
-            saveToLocalStorage('randomMessages', elements.randomMessages.checked);
-            saveToLocalStorage('enableSounds', elements.enableSounds.checked);
-            saveToLocalStorage('embeds', embeds);
+            
+            // Save to localStorage
+            localStorage.setItem('webhookUrl', elements.webhookUrl.value);
+            localStorage.setItem('messageContent', elements.messageContent.value);
+            localStorage.setItem('username', elements.username.value);
+            localStorage.setItem('avatarUrl', elements.avatarUrl.value);
+            localStorage.setItem('randomMessages', elements.randomMessages.checked);
+            localStorage.setItem('enableSounds', elements.enableSounds.checked);
+            localStorage.setItem('embeds', JSON.stringify(embeds));
+            
+            // Close modal
             elements.profilesModal.classList.add('hidden');
+            
             addLog('success', `Profile "${profile.name}" loaded successfully`);
-            showToast(`Profile "${profile.name}" loaded`, 'success');
             playSound('success');
+            showToast(`Profile "${profile.name}" loaded`, 'success');
         } catch (error) {
             addLog('error', `Failed to load profile: ${error.message}`);
             playSound('error');
         }
-    };
+    }
 
-    const deleteProfile = async (profileId) => {
-        if (!confirm('Are you sure you want to delete this profile? This cannot be undone.')) return;
+    async function deleteProfile(profileId) {
+        if (!confirm('Are you sure you want to delete this profile? This cannot be undone.')) {
+            return;
+        }
+        
         const { error } = await supabase
             .from('user_profiles')
             .delete()
             .eq('id', profileId);
-
+        
         if (error) {
-            addLog('error', `Profile delete failed: ${error.message}`);
+            console.error('Profile delete error:', error.message);
             alert('❌ Failed to delete profile.');
+            addLog('error', `Profile delete failed: ${error.message}`);
             return;
         }
-
+        
+        // Refresh the profiles list
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const { data: profiles, error: fetchError } = await supabase
@@ -1379,94 +1848,130 @@ document.addEventListener('DOMContentLoaded', () => {
                 .select('*')
                 .eq('user_id', user.id)
                 .order('last_updated', { ascending: false });
-
+            
             if (fetchError) throw fetchError;
+            
+            // Make sure profiles is an array even if empty
             renderProfilesList(profiles || []);
             addLog('warning', 'Profile deleted successfully');
             playSound('notification');
         } catch (e) {
+            console.error('Error refreshing profiles:', e.message);
             addLog('error', `Error refreshing profiles: ${e.message}`);
         }
-    };
-
-    // Handle OAuth Redirect
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-    const state = urlParams.get('state');
-
-    if (code && state) {
-        (async () => {
-            try {
-                const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-                if (sessionError) {
-                    addLog('error', `Session check failed: ${sessionError.message}`);
-                    return;
-                }
-                if (!sessionData.session) {
-                    const { data, error } = await supabase.auth.exchangeCodeForSession({ code });
-                    if (error) {
-                        addLog('error', `OAuth exchange failed: ${error.message}`);
-                        return;
-                    }
-                    updateAuthUI(data.user);
-                    addLog('success', 'Successfully logged in via OAuth');
-                    playSound('success');
-                }
-                window.history.replaceState({}, document.title, window.location.pathname);
-            } catch (e) {
-                addLog('error', `OAuth error: ${e.message}`);
-            }
-        })();
     }
 
-    // Initialize
-    const initApp = () => {
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        document.body.setAttribute('data-theme', savedTheme);
-        document.querySelector(`.theme-preview[data-theme="${savedTheme}"]`)?.classList.add('active');
+    // === User Authentication ===
+    const userAuthMenu = document.getElementById('user-auth-menu');
+    const avatarMenuBtn = document.getElementById('avatar-menu-btn');
+    const userAvatar = document.getElementById('user-avatar');
+    const userUsername = document.getElementById('user-username');
 
-        const savedSettings = ['webhookUrl', 'messageContent', 'username', 'avatarUrl', 'randomMessages', 'embedImageUrl', 'embedThumbnailUrl'];
-        for (const key of savedSettings) {
-            const value = localStorage.getItem(key);
-            if (value) {
-                elements[key][key === 'randomMessages' ? 'checked' : 'value'] = key === 'randomMessages' ? value === 'true' : value;
-            }
+    // Toggle dropdown menu
+    if (avatarMenuBtn) {
+      avatarMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const dropdown = avatarMenuBtn.nextElementSibling;
+        if (dropdown) {
+          dropdown.classList.toggle('show');
         }
+      });
+    }
 
-        const savedEmbeds = localStorage.getItem('embeds');
-        if (savedEmbeds) {
-            embeds = JSON.parse(savedEmbeds);
-            embedCount = embeds.length;
-            renderEmbeds();
+    // Close dropdown when clicking elsewhere
+    document.addEventListener('click', () => {
+      const dropdowns = document.querySelectorAll('.dropdown-content');
+      dropdowns.forEach(dropdown => {
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+        }
+      });
+    });
+
+    // 1. Login handler
+    if (loginBtn) {
+      loginBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const { error } = await supabase.auth.signInWithOAuth({ provider: 'discord' });
+        if (error) {
+          console.error('Login error:', error.message);
+          addLog('error', `Login failed: ${error.message}`);
+        }
+      });
+    }
+
+    // 2. Logout handler
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await supabase.auth.signOut();
+        updateAuthUI(null);
+        addLog('success', 'Logged out successfully');
+        playSound('notification');
+      });
+    }
+    // 3. Update UI based on auth state
+    function updateAuthUI(user) {
+        const userAvatar = document.getElementById('user-avatar');
+        const userUsername = document.getElementById('user-username');
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        
+        if (!userAvatar || !userUsername || !loginBtn || !logoutBtn) return;
+
+        if (user) {
+            // User is logged in
+            loginBtn.style.display = 'none';
+            logoutBtn.style.display = 'block';
+            
+            // Update avatar
+            const avatarUrl = user.user_metadata?.avatar_url || 
+                            'https://cdn.discordapp.com/embed/avatars/0.png';
+            userAvatar.src = avatarUrl;
+            userAvatar.style.display = 'block';
+            userAvatar.style.visibility = 'visible';
+            
+            // Update username
+            const username = user.user_metadata?.name || user.email || user.id;
+            userUsername.textContent = username;
+            userUsername.style.display = 'block';
         } else {
-            embeds = [{ title: '', description: '', color: '#5865F2', footer: '' }];
-            renderEmbeds();
+            // User is not logged in
+            loginBtn.style.display = 'block';
+            logoutBtn.style.display = 'none';
+            
+            // Set default avatar
+            userAvatar.src = 'https://cdn.discordapp.com/embed/avatars/0.png';
+            userAvatar.style.display = 'block';
+            userAvatar.style.visibility = 'visible';
+            
+            // Set default username
+            userUsername.textContent = 'Guest User';
+            userUsername.style.display = 'block';
         }
-
-        const savedStats = localStorage.getItem('stats');
-        if (savedStats) {
-            stats = JSON.parse(savedStats);
-            updateStats();
+    }
+    // Replace the initAuth function with this:
+    async function initAuth() {
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (error && error.message !== 'Auth session missing!') {
+                console.error('Error checking user session:', error.message);
+                addLog('error', `Session check failed: ${error.message}`);
+            }
+            updateAuthUI(user);
+        } catch (e) {
+            console.error('Unexpected error in initAuth:', e.message);
+            addLog('error', `Auth initialization error: ${e.message}`);
         }
+    }
 
-        elements.enableSounds.checked = localStorage.getItem('soundsEnabled') !== 'false';
-        if (elements.messageContent.value) updatePreview();
-        if (elements.avatarUrl.value) elements.previewAvatar.src = elements.avatarUrl.value;
 
-        setupEventListeners();
-        setupEmbedEventListeners();
-        handleFileUploads();
-        setupAdvancedCollapse();
-        setupIntervalCollapse();
-        updateMessageLimitPlaceholder();
-        updateIntervalDisplay();
-    };
 
+
+
+    // Initialize app
     initAuth();
     initApp();
     loadLayout();
 
-    // Bind cloud export/import buttons
-    elements.exportJsonCloud?.addEventListener('click', exportCloud);
-    elements.importJsonCloud?.addEventListener('click', importCloud);
 });
