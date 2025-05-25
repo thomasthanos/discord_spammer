@@ -392,4 +392,16 @@
     flex-direction: row !important;
     gap: 8px !important;
   }
+  .app-header {
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-controls {
+    flex-wrap: nowrap;
+    gap: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+  }
 }
